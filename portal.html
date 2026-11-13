@@ -1259,6 +1259,16 @@
   .inc-seg.is-dim{opacity:.22;}
   .inc-seg-paid{width:100%;}
   .income-chart-note{font-size:12px; color:var(--ink-soft); margin-top:6px;}
+  .sy-sum{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
+  .sy-pill{border:1px solid var(--line); border-radius:12px; padding:6px 12px; background:#fff; font-size:13px;}
+  .sy-pill b{font-size:17px; display:block;}
+  .sy-ok{background:#E3F5EA; border-color:#BFE3CD;}
+  .sy-warn{background:#FFF3D6; border-color:#F0D08A;}
+  .sy-bad{background:#FBE6E3; border-color:#EFC0B9;}
+  .sy-h{font-weight:700; margin:12px 0 4px; font-size:13.5px;}
+  .sy-row{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; padding:5px 0; border-bottom:1px dashed var(--line); font-size:13.5px;}
+  .sy-tag{font-size:11.5px; font-weight:700; border-radius:999px; padding:1px 9px; white-space:nowrap;}
+  .sy-tag.ok{background:#CDEED9; color:#1F6B43;} .sy-tag.warn{background:#FCE7B2; color:#7A5200;} .sy-tag.bad{background:#F8CFC9; color:#8A2A1D;}
 
   [hidden]{display:none !important;}
   .brand h1{display:none;}
@@ -1372,6 +1382,7 @@
           <div class="row-actions"><button class="btn-outline small" id="pl-auto" type="button">Tự khớp theo tên</button></div>
           <details id="pl-un-d" style="margin-top:8px" hidden><summary>Học sinh trong sổ chưa liên kết <span id="pl-un-n"></span></summary><div id="pl-un"></div></details>
           <details id="pl-miss-d" style="margin-top:8px" hidden><summary>Học sinh có trong portal nhưng chưa có trong sổ <span id="pl-miss-n"></span></summary><div id="pl-miss"></div></details>
+          <details id="sy-d" style="margin-top:12px" open><summary><b>Trung tâm đồng bộ</b> <span class="hint">(chỉ xem, chưa ghi gì lên portal)</span></summary><div id="sy-body"></div></details>
         </div>
         <div class="lh-actions">
           <button class="btn-primary" id="lh-one-toggle" type="button">+ Thêm học sinh 1:1</button>
@@ -3797,6 +3808,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       qs('select', row).addEventListener('change', function(){
         if(!this.value) return;
         it.st.portalId = this.value;
+        var pp = pById[this.value]; if(pp) it.st.portalCode = pp.code;
         saveClasses().then(function(){ showToast('Đã liên kết '+it.st.name); renderPortalLink(); });
       });
       un.appendChild(row);
@@ -3816,25 +3828,27 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         if(raw===null){ this.value=''; return; }
         var price = parsePriceInput(raw);
         if(!(price>0)){ alert('Giá/buổi phải lớn hơn 0đ.'); this.value=''; return; }
-        var ns = {id:genId(), name:p.name, price:price, priceHistory:[{from:PRICE_BASE, price:price}], contact:'', joinedAt:todayStr(), portalId:p.id};
+        var ns = {id:genId(), name:p.name, price:price, priceHistory:[{from:PRICE_BASE, price:price}], contact:'', joinedAt:todayStr(), portalId:p.id, portalCode:p.code};
         if(v==='__new') state.classes.push({id:genId(), hue:nextHue(), name:p.name, students:[ns]});
         else { var cls = state.classes.find(function(c){return c.id===v;}); if(!cls) return; cls.students.push(ns); }
         saveClasses().then(function(){ showToast('Đã thêm '+p.name+' vào sổ'); afterClassChange(); });
       });
       miss.appendChild(row);
     });
+    try{ renderSyncCenter(); }catch(e){ console.warn(e); }
   }
+  function keyOf(x){ return normName(x).replace(/\s+/g,''); }
+  // Một học sinh portal khớp học sinh sổ khi tên (bỏ dấu, bỏ khoảng trắng) hoặc mã trùng nhau
+  function portalMatches(p, st){ var k = keyOf(st.name); return !!k && (keyOf(p.name)===k || keyOf(p.code)===k); }
   qs('#pl-auto').addEventListener('click', function(){
     if(!portalRoster) return;
-    var byName = {};
-    portalRoster.forEach(function(p){ var k = normName(p.name); (byName[k] = byName[k]||[]).push(p); });
     var taken = {};
     state.classes.forEach(function(c){ c.students.forEach(function(st){ if(st.portalId) taken[st.portalId] = true; }); });
     var n = 0, amb = 0;
     state.classes.forEach(function(c){ c.students.forEach(function(st){
       if(st.portalId || isArchived(st)) return;
-      var m = (byName[normName(st.name)]||[]).filter(function(p){ return !taken[p.id]; });
-      if(m.length===1){ st.portalId = m[0].id; taken[m[0].id] = true; n++; }
+      var m = portalRoster.filter(function(p){ return !taken[p.id] && portalMatches(p, st); });
+      if(m.length===1){ st.portalId = m[0].id; st.portalCode = m[0].code; taken[m[0].id] = true; n++; }
       else if(m.length>1) amb++;
     }); });
     saveClasses().then(function(){
@@ -3842,6 +3856,88 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       renderPortalLink();
     });
   });
+  // ---------- Trung tâm đồng bộ (chỉ xem) ----------
+  var portalClasses = [];
+  function renderSyncCenter(){
+    var box = qs('#sy-body'); if(!box || !portalRoster) return;
+    var pById = {}; portalRoster.forEach(function(p){ pById[p.id] = p; });
+    var linked = {}, rows = [];
+    state.classes.forEach(function(c){ c.students.forEach(function(st){
+      if(isArchived(st)) return;
+      rows.push({cls:c, st:st});
+      if(st.portalId && pById[st.portalId]) linked[st.portalId] = true;
+    }); });
+    var okN = 0, sure = [], dup = [], none = [];
+    rows.forEach(function(r){
+      if(r.st.portalId && pById[r.st.portalId]){ okN++; return; }
+      var m = portalRoster.filter(function(p){ return !linked[p.id] && portalMatches(p, r.st); });
+      if(m.length===1) sure.push({r:r, p:m[0]});
+      else if(m.length>1) dup.push({r:r, m:m});
+      else none.push(r);
+    });
+    var onlyPortal = portalRoster.filter(function(p){ return !linked[p.id] && !rows.some(function(r){ return portalMatches(p, r.st); }); });
+
+    // Đối chiếu lớp: lớp sổ ↔ lớp portal (ưu tiên trùng tên, sau đó theo số thành viên chung)
+    var clsRows = [];
+    state.classes.forEach(function(c){
+      var act = c.students.filter(function(st){ return !isArchived(st); });
+      if(!act.length) return;
+      var mine = {}; act.forEach(function(st){ if(st.portalId && pById[st.portalId]) mine[st.portalId] = st; });
+      var best = null, bestN = 0, tie = false;
+      portalClasses.forEach(function(pc){
+        var nm = keyOf(pc.name)===keyOf(c.name) ? 1000 : 0;
+        var ov = pc.memberIds.filter(function(id){ return mine[id]; }).length + nm;
+        if(ov>bestN){ best = pc; bestN = ov; tie = false; } else if(ov===bestN && ov>0) tie = true;
+      });
+      if(!best || tie){ clsRows.push({c:c, state:'none', tie:tie}); return; }
+      var inPortalOnly = best.memberIds.filter(function(id){ return !mine[id]; }).map(function(id){ return pById[id] ? pById[id].name : '(không rõ)'; });
+      var inSoOnly = act.filter(function(st){ return !(st.portalId && best.memberIds.indexOf(st.portalId)>=0); }).map(function(st){ return st.name; });
+      clsRows.push({c:c, pc:best, state:(!inPortalOnly.length && !inSoOnly.length) ? 'ok' : 'diff', inPortalOnly:inPortalOnly, inSoOnly:inSoOnly});
+    });
+
+    function pill(cls, n, label){ return '<div class="sy-pill '+cls+'"><b>'+n+'</b>'+label+'</div>'; }
+    var h = '<div class="sy-sum">'+
+      pill('sy-ok', okN, 'học sinh đã liên kết')+
+      pill(sure.length?'sy-warn':'', sure.length, 'khớp chắc, bấm “Tự khớp theo tên”')+
+      pill(dup.length?'sy-warn':'', dup.length, 'nghi trùng, cần chọn tay')+
+      pill(none.length?'sy-bad':'', none.length, 'chưa có tài khoản trên portal')+
+      pill('', onlyPortal.length, 'có trên portal, chưa có trong sổ')+'</div>';
+
+    if(sure.length){
+      h += '<div class="sy-h">Khớp chắc chắn (chưa liên kết)</div>' + sure.map(function(x){
+        return '<div class="sy-row">'+tagHtml(x.r.cls)+'<b>'+escapeHtml(x.r.st.name)+'</b> ↔ '+escapeHtml(x.p.name)+' <span class="hint">('+escapeHtml(x.p.code||'')+')</span><span class="sy-tag warn">chờ liên kết</span></div>';
+      }).join('');
+    }
+    if(dup.length){
+      h += '<div class="sy-h">Nghi trùng, chọn tay ở mục “chưa liên kết” phía trên</div>' + dup.map(function(x){
+        return '<div class="sy-row">'+tagHtml(x.r.cls)+'<b>'+escapeHtml(x.r.st.name)+'</b> có thể là: '+x.m.map(function(p){ return escapeHtml(p.name)+' ('+escapeHtml(p.code||'')+')'; }).join(' · ')+'</div>';
+      }).join('');
+    }
+    if(none.length){
+      h += '<div class="sy-h">Chưa có tài khoản trên portal (cần tạo)</div>' + none.map(function(r){
+        return '<div class="sy-row">'+tagHtml(r.cls)+'<b>'+escapeHtml(r.st.name)+'</b> <span class="hint">mã gợi ý: '+escapeHtml(keyOf(r.st.name).toUpperCase())+'</span><span class="sy-tag bad">thiếu</span></div>';
+      }).join('') + '<div class="row-actions" style="margin-top:8px"><button type="button" class="btn-outline small" id="sy-copy">Sao chép danh sách cần tạo</button></div>';
+    }
+    h += '<div class="sy-h">Đối chiếu lớp</div>';
+    if(!clsRows.length) h += '<p class="hint">Chưa có lớp nào đang học.</p>';
+    clsRows.forEach(function(r){
+      var head = tagHtml(r.c)+'<b>'+escapeHtml(r.c.name)+'</b> '+kindBadgeHtml(r.c)+' ';
+      if(r.state==='ok') h += '<div class="sy-row">'+head+'↔ '+escapeHtml(r.pc.name)+' <span class="sy-tag ok">khớp thành viên</span></div>';
+      else if(r.state==='none') h += '<div class="sy-row">'+head+'<span class="sy-tag bad">'+(r.tie?'nhiều lớp portal giống nhau, cần chọn tay':'chưa thấy lớp tương ứng trên portal')+'</span></div>';
+      else h += '<div class="sy-row">'+head+'↔ '+escapeHtml(r.pc.name)+' <span class="sy-tag warn">lệch thành viên</span>'+
+        (r.inSoOnly.length?'<span class="hint">Chỉ ở sổ: '+r.inSoOnly.map(escapeHtml).join(', ')+'</span>':'')+
+        (r.inPortalOnly.length?'<span class="hint">Chỉ ở portal: '+r.inPortalOnly.map(escapeHtml).join(', ')+'</span>':'')+'</div>';
+    });
+    box.innerHTML = h;
+    var cp = qs('#sy-copy', box);
+    if(cp) cp.addEventListener('click', function(){
+      var txt = 'Mã gợi ý\tHọ tên\tLớp\n' + none.map(function(r){ return keyOf(r.st.name).toUpperCase()+'\t'+r.st.name+'\t'+r.cls.name; }).join('\n');
+      var done = function(){ showToast('Đã sao chép '+none.length+' học sinh'); };
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function(){ prompt('Sao chép danh sách:', txt); });
+      else prompt('Sao chép danh sách:', txt);
+    });
+  }
+  window.__ddSetPortalClasses = function(list){ portalClasses = Array.isArray(list) ? list : []; try{ renderSyncCenter(); }catch(e){} };
   window.__ddSetRoster = function(list){ portalRoster = Array.isArray(list) ? list : []; renderPortalLink(); };
 
   // ---------- Init ----------
@@ -4809,6 +4905,8 @@ function ddLoadScript(src){
 function ddPushRoster(){
   if(typeof window.__ddSetRoster === 'function')
     window.__ddSetRoster((state.students || []).map(s => ({ id: s.id, name: s.full_name, code: s.code })));
+  if(typeof window.__ddSetPortalClasses === 'function')
+    window.__ddSetPortalClasses((state.classes || []).map(c => ({ id: c.id, name: c.name, memberIds: (c.class_members || []).map(m => m.student_id) })));
 }
 function loadDD(){
   const host = document.getElementById('dd-host');
