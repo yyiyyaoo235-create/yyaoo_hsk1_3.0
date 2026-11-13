@@ -1,0 +1,404 @@
+<!DOCTYPE html>
+<html lang="vi">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Yyaoo · Học tiếng Trung</title>
+<link href="https://fonts.googleapis.com/css2?family=Nunito:wght@400;600;700;800&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --pink:#e0457b; --pink-soft:#fde7ef; --bg:#fff8fb; --ink:#2b2a3a; --muted:#8a8799;
+    --yellow-soft:#fff3cf; --yellow:#9a6a12; --blue-soft:#e3eeff; --blue:#2f6bc2;
+    --green-soft:#ddf5e8; --green:#27845a; --gray-soft:#eeeef3; --line:#f1e4ea;
+  }
+  *{box-sizing:border-box}
+  html{font-size:22px}
+  body{margin:0;background:var(--bg);color:var(--ink);
+       font-family:'Nunito',KaiTi,'楷体','STKaiti',sans-serif;line-height:1.5}
+  .zh{font-family:KaiTi,'楷体','STKaiti','Nunito',serif}
+  button{font:inherit;cursor:pointer}
+  .hidden{display:none!important}
+
+  /* khung chung */
+  .wrap{max-width:1100px;margin:0 auto;padding:1rem 1.2rem 3rem}
+  .topbar{display:flex;align-items:center;justify-content:space-between;gap:1rem;margin-bottom:1rem;flex-wrap:wrap}
+  h1{font-size:1.7rem;margin:.2rem 0;font-weight:800}
+  h2{font-size:1.2rem;margin:0 0 .6rem;font-weight:800}
+  .muted{color:var(--muted);font-size:.8rem}
+  .card{background:#fff;border:1px solid var(--line);border-radius:20px;padding:1rem 1.1rem;margin-bottom:1rem}
+  .btn{border:1px solid var(--line);background:#fff;border-radius:12px;padding:.4rem .9rem;font-weight:700;color:var(--ink)}
+  .btn.pri{background:var(--pink);border-color:var(--pink);color:#fff}
+  .btn.ghost{color:var(--pink);border-color:var(--pink)}
+  .btn:disabled{opacity:.45;cursor:not-allowed}
+  input,select,textarea{font:inherit;width:100%;padding:.45rem .7rem;border:1px solid var(--line);border-radius:12px;background:#fff;color:var(--ink)}
+  label{display:block;font-weight:700;font-size:.8rem;margin:.6rem 0 .2rem}
+  .row{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:.8rem}
+
+  /* chip trạng thái */
+  .chip{display:inline-block;padding:.1rem .7rem;border-radius:999px;font-weight:700;font-size:.75rem;white-space:nowrap}
+  .c-pink{background:var(--pink-soft);color:var(--pink)}
+  .c-yellow{background:var(--yellow-soft);color:var(--yellow)}
+  .c-blue{background:var(--blue-soft);color:var(--blue)}
+  .c-green{background:var(--green-soft);color:var(--green)}
+  .c-gray{background:var(--gray-soft);color:var(--muted)}
+
+  /* đăng nhập */
+  #view-login{min-height:100vh;display:flex;align-items:center;justify-content:center;padding:1rem}
+  .login-box{width:100%;max-width:460px;text-align:center;padding:1.6rem}
+  .login-box .logo{font-size:2.6rem}
+  .err{color:#c0392b;font-weight:700;font-size:.8rem;min-height:1.2rem;margin-top:.5rem}
+
+  /* thẻ bài học sinh */
+  .sec-title{display:flex;align-items:center;gap:.5rem;margin:1.2rem 0 .6rem}
+  .a-card{display:flex;align-items:center;justify-content:space-between;gap:1rem;flex-wrap:wrap}
+  .a-info{flex:1;min-width:240px}
+  .a-title{font-weight:800}
+  .cmt{background:var(--yellow-soft);border-radius:12px;padding:.4rem .7rem;margin-top:.5rem;font-size:.8rem}
+
+  /* thống kê giáo viên */
+  .stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:.8rem;margin-bottom:1rem}
+  .stat{background:#fff;border:1px solid var(--line);border-top:6px solid;border-radius:20px;padding:.8rem 1rem}
+  .stat b{display:block;font-size:2rem;line-height:1.2}
+  .stat.s1{border-top-color:#f080a8}.stat.s1 b{color:var(--pink)}
+  .stat.s2{border-top-color:#f4d36b}.stat.s2 b{color:var(--yellow)}
+  .stat.s3{border-top-color:#79a8f0}.stat.s3 b{color:var(--blue)}
+  .stat.s4{border-top-color:#9ad9b8}.stat.s4 b{color:var(--green)}
+  .tabs{display:flex;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+  .tabs .btn.on{background:var(--pink);color:#fff;border-color:var(--pink)}
+  table{width:100%;border-collapse:collapse;font-size:.8rem}
+  th{background:#f8f6fa;text-align:left;padding:.5rem .6rem;color:var(--muted)}
+  td{padding:.55rem .6rem;border-bottom:1px solid var(--line);vertical-align:middle}
+  .scroll{overflow-x:auto}
+  .checks{display:flex;flex-wrap:wrap;gap:.4rem .9rem}
+  .checks label{display:flex;align-items:center;gap:.4rem;margin:0;font-weight:600}
+  .checks input{width:auto}
+
+  /* hộp thoại chấm bài */
+  .modal-bg{position:fixed;inset:0;background:rgba(43,42,58,.45);display:flex;align-items:flex-start;justify-content:center;padding:1rem;overflow:auto;z-index:50}
+  .modal{background:#fff;border-radius:22px;max-width:760px;width:100%;padding:1.2rem 1.3rem;margin:1rem 0}
+  .ans{border:1px solid var(--line);border-radius:14px;padding:.5rem .8rem;margin:.4rem 0;font-size:.8rem}
+  .ans.bad{background:#fff3f3;border-color:#f3c4c4}
+  .ans.manual{background:var(--blue-soft);border-color:#c6dbfa}
+  .ans .txt{font-size:1rem;margin-top:.2rem}
+</style>
+</head>
+<body>
+
+<!-- ===================== ĐĂNG NHẬP ===================== -->
+<section id="view-login" class="hidden">
+  <div class="card login-box">
+    <div class="logo">🌸</div>
+    <h1>Yyaoo · <span class="zh">汉语</span></h1>
+    <p class="muted">Đăng nhập bằng mã học sinh do cô/thầy cấp</p>
+    <form id="login-form">
+      <label for="code" style="text-align:left">Mã học sinh</label>
+      <input id="code" placeholder="Ví dụ: YSG005" autocomplete="username" required>
+      <label for="pw" style="text-align:left">Mật khẩu</label>
+      <input id="pw" type="password" autocomplete="current-password" required>
+      <div class="err" id="login-err"></div>
+      <button class="btn pri" style="width:100%;margin-top:.6rem" type="submit">Đăng nhập</button>
+    </form>
+  </div>
+</section>
+
+<!-- ===================== HỌC SINH ===================== -->
+<section id="view-student" class="hidden">
+  <div class="wrap">
+    <div class="topbar">
+      <div>
+        <h1>Xin chào, <span class="zh" id="st-name"></span> 👋</h1>
+        <div class="muted">Chúc bạn học tốt hôm nay!</div>
+      </div>
+      <div><button class="btn" onclick="reloadStudent()">Làm mới</button> <button class="btn" onclick="doLogout()">Đăng xuất</button></div>
+    </div>
+    <div class="sec-title"><h2>📝 Bài kiểm tra</h2></div>
+    <div id="st-tests"></div>
+    <div class="sec-title"><h2>📚 Bài tập về nhà</h2></div>
+    <div id="st-homework"></div>
+  </div>
+</section>
+
+<!-- ===================== GIÁO VIÊN ===================== -->
+<section id="view-teacher" class="hidden">
+  <div class="wrap">
+    <div class="topbar">
+      <h1>Tổng quan</h1>
+      <div><button class="btn" onclick="reloadTeacher()">Làm mới</button> <button class="btn" onclick="doLogout()">Đăng xuất</button></div>
+    </div>
+
+    <div class="stats">
+      <div class="stat s1"><span>Chờ chấm</span><b id="n-pending">0</b></div>
+      <div class="stat s2"><span>Cần làm lại</span><b id="n-redo">0</b></div>
+      <div class="stat s3"><span>Quá hạn</span><b id="n-over">0</b></div>
+      <div class="stat s4"><span>Hoàn thành</span><b id="n-done">0</b></div>
+    </div>
+
+    <div class="tabs">
+      <button class="btn on" data-tab="overview">Giám sát bài làm</button>
+      <button class="btn" data-tab="assign">Giao bài</button>
+      <button class="btn" data-tab="people">Lớp &amp; học sinh</button>
+    </div>
+
+    <!-- tab: giám sát -->
+    <div id="tab-overview" class="card">
+      <div class="topbar" style="margin-bottom:.5rem">
+        <h2 style="margin:0">Danh sách bài</h2>
+        <select id="flt-status" style="width:auto">
+          <option value="">Tất cả trạng thái</option>
+          <option value="pending_review">Chờ chấm</option>
+          <option value="needs_redo">Cần làm lại</option>
+          <option value="overdue">Quá hạn</option>
+          <option value="todo">Chưa làm</option>
+          <option value="done">Hoàn thành</option>
+        </select>
+      </div>
+      <div class="scroll"><table>
+        <thead><tr><th>Học sinh</th><th>Bài</th><th>Loại</th><th>Hạn nộp</th><th>Điểm</th><th>Trạng thái</th><th></th></tr></thead>
+        <tbody id="tb-rows"></tbody>
+      </table></div>
+    </div>
+
+    <!-- tab: giao bài -->
+    <div id="tab-assign" class="card hidden">
+      <h2>Giao bài mới</h2>
+      <form id="assign-form">
+        <div class="row">
+          <div><label>Loại</label>
+            <select id="as-kind"><option value="test">📝 Bài kiểm tra</option><option value="homework">📚 Bài tập về nhà</option></select></div>
+          <div><label>Tên bài</label><input id="as-title" placeholder="Kiểm tra HSK1 · Bài 1–3" required></div>
+          <div><label>Bài học</label><input id="as-lesson" placeholder="Bài 4"></div>
+        </div>
+        <label>Đường dẫn file đề HTML (đã đẩy lên GitHub Pages)</label>
+        <input id="as-url" placeholder="de/hsk1-bai4.html" required>
+        <div class="row">
+          <div><label>Mở lúc (để trống = mở ngay)</label><input id="as-open" type="datetime-local"></div>
+          <div><label>Hạn nộp</label><input id="as-due" type="datetime-local"></div>
+        </div>
+        <div class="row">
+          <div><label>Số lần được làm</label><input id="as-max" type="number" min="1" value="2"></div>
+          <div><label>% đạt (dưới mức này → làm lại)</label><input id="as-pass" type="number" min="0" max="100" value="80"></div>
+          <div><label>Lượt nghe mỗi audio</label><input id="as-listen" type="number" min="1" value="3"></div>
+        </div>
+        <label>Giao cho lớp</label><div class="checks" id="as-classes"></div>
+        <label>Hoặc giao riêng cho học sinh</label><div class="checks" id="as-students"></div>
+        <div class="err" id="as-msg"></div>
+        <button class="btn pri" type="submit">Giao bài</button>
+      </form>
+    </div>
+
+    <!-- tab: lớp và học sinh -->
+    <div id="tab-people" class="hidden">
+      <div class="card">
+        <h2>Lớp học</h2>
+        <div id="pp-classes"></div>
+        <form id="class-form" class="row" style="margin-top:.6rem;align-items:end">
+          <div><label>Tên lớp mới</label><input id="cl-name" placeholder="Lớp HSK1 tối T3-T5" required></div>
+          <div><label>Hình thức</label><select id="cl-kind"><option value="group">Nhóm 2–3 người</option><option value="one_on_one">Lớp 1-1</option></select></div>
+          <div><button class="btn pri" type="submit">Tạo lớp</button></div>
+        </form>
+      </div>
+      <div class="card">
+        <h2>Học sinh</h2>
+        <div class="muted" style="margin-bottom:.4rem">Tạo tài khoản mới: Supabase → Authentication → Add user (xem HUONG_DAN.md)</div>
+        <div class="scroll"><table>
+          <thead><tr><th>Mã</th><th>Họ tên</th><th>Thêm vào lớp</th></tr></thead>
+          <tbody id="pp-students"></tbody>
+        </table></div>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- hộp thoại chấm bài -->
+<div id="modal" class="modal-bg hidden"><div class="modal" id="modal-body"></div></div>
+
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="yyaoo-supabase.js"></script>
+<script>
+const $ = (s) => document.querySelector(s);
+const esc = (s) => String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const fmt = (d) => d ? new Date(d).toLocaleString('vi-VN', {hour:'2-digit',minute:'2-digit',day:'2-digit',month:'2-digit',year:'numeric'}) : '—';
+const STATUS = {
+  todo:['Chưa làm','c-gray'], overdue:['Quá hạn','c-blue'], pending_review:['Chờ chấm','c-pink'],
+  needs_redo:['Cần làm lại','c-yellow'], done:['Hoàn thành','c-green']
+};
+const chip = (s) => { const [t,c] = STATUS[s] || [s,'c-gray']; return `<span class="chip ${c}">${t}</span>`; };
+const state = { me:null, rows:[], students:[], classes:[] };
+
+function show(id){ ['login','student','teacher'].forEach(v => $('#view-'+v).classList.toggle('hidden', v !== id)); }
+
+/* ---------------- khởi động ---------------- */
+async function boot(){
+  try{
+    const me = await YY.getProfile();
+    if(!me){ show('login'); return; }
+    state.me = me;
+    if(me.role === 'teacher'){ show('teacher'); await reloadTeacher(); }
+    else { show('student'); await reloadStudent(); }
+  }catch(e){ show('login'); $('#login-err').textContent = 'Lỗi kết nối: ' + e.message; }
+}
+
+$('#login-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); $('#login-err').textContent = '';
+  try{
+    await YY.login($('#code').value, $('#pw').value);
+    const next = new URLSearchParams(location.search).get('next');
+    if(next && next.startsWith(location.origin)){ location.href = next; return; }
+    await boot();
+  }catch(e){ $('#login-err').textContent = 'Sai mã học sinh hoặc mật khẩu'; }
+});
+async function doLogout(){ await YY.logout(); location.href = YY.config.PORTAL_URL; }
+
+/* ---------------- HỌC SINH ---------------- */
+async function reloadStudent(){
+  $('#st-name').textContent = state.me.full_name;
+  const rows = await YY.listMyAssignments();
+  const now = Date.now();
+  const render = (list) => list.length ? list.map(r => {
+    const locked = r.open_at && new Date(r.open_at).getTime() > now;
+    let btn = '';
+    if(locked) btn = `<button class="btn" disabled>🔒 Mở lúc ${fmt(r.open_at)}</button>`;
+    else if(r.status === 'todo' || r.status === 'overdue')
+      btn = `<button class="btn pri" onclick="openQuiz('${r.assignment_id}','${esc(r.content_url)}')">Làm bài</button>`;
+    else if(r.status === 'needs_redo')
+      btn = r.attempt < r.max_attempts
+        ? `<button class="btn pri" onclick="openQuiz('${r.assignment_id}','${esc(r.content_url)}')">Làm lại</button>`
+        : `<button class="btn" disabled>Hết lượt làm</button>`;
+    const score = r.percent != null ? ` · Điểm: <b>${r.percent}%</b>` : '';
+    const cmt = r.teacher_comment ? `<div class="cmt">💬 ${esc(r.teacher_comment)}</div>` : '';
+    return `<div class="card a-card"><div class="a-info">
+      <div class="a-title">${esc(r.title)} ${r.lesson ? '· ' + esc(r.lesson) : ''}</div>
+      <div class="muted">Hạn nộp: ${fmt(r.due_at)}${score}${r.is_late ? ' · nộp muộn' : ''}</div>${cmt}
+    </div><div>${chip(r.status)} ${btn}</div></div>`;
+  }).join('') : '<div class="muted">Chưa có bài nào được giao.</div>';
+  $('#st-tests').innerHTML = render(rows.filter(r => r.kind === 'test'));
+  $('#st-homework').innerHTML = render(rows.filter(r => r.kind === 'homework'));
+}
+function openQuiz(id, url){ location.href = url + (url.includes('?') ? '&' : '?') + 'a=' + id; }
+
+/* ---------------- GIÁO VIÊN ---------------- */
+async function reloadTeacher(){
+  const [rows, students, classes] = await Promise.all([YY.listAllAssignmentRows(), YY.listStudents(), YY.listClasses()]);
+  Object.assign(state, { rows, students, classes });
+  const cnt = (s) => rows.filter(r => r.status === s).length;
+  $('#n-pending').textContent = cnt('pending_review');
+  $('#n-redo').textContent = cnt('needs_redo');
+  $('#n-over').textContent = cnt('overdue');
+  $('#n-done').textContent = cnt('done');
+  renderRows(); renderAssignForm(); renderPeople();
+}
+
+function renderRows(){
+  const f = $('#flt-status').value;
+  const order = {pending_review:0, needs_redo:1, overdue:2, todo:3, done:4};
+  const list = state.rows.filter(r => !f || r.status === f).sort((a,b) => order[a.status] - order[b.status]);
+  $('#tb-rows').innerHTML = list.length ? list.map(r => `<tr>
+    <td><span class="zh">${esc(r.full_name)}</span><div class="muted">${esc(r.code)}</div></td>
+    <td>${esc(r.title)}${r.lesson ? ' · ' + esc(r.lesson) : ''}${r.attempt ? `<div class="muted">Lần ${r.attempt}</div>` : ''}</td>
+    <td>${r.kind === 'test' ? 'Kiểm tra' : 'Bài tập'}</td>
+    <td>${fmt(r.due_at)}</td>
+    <td>${r.percent != null ? r.percent + '%' : '—'}</td>
+    <td>${chip(r.status)}</td>
+    <td>${r.submission_id ? `<button class="btn ${r.status === 'pending_review' ? 'ghost' : ''}" onclick="openGrade('${r.submission_id}')">${r.status === 'pending_review' ? 'Chấm bài' : 'Xem'}</button>` : ''}</td>
+  </tr>`).join('') : '<tr><td colspan="7" class="muted">Chưa có dữ liệu.</td></tr>';
+}
+$('#flt-status').addEventListener('change', renderRows);
+
+document.querySelectorAll('.tabs .btn').forEach(b => b.addEventListener('click', () => {
+  document.querySelectorAll('.tabs .btn').forEach(x => x.classList.toggle('on', x === b));
+  ['overview','assign','people'].forEach(t => $('#tab-'+t).classList.toggle('hidden', t !== b.dataset.tab));
+}));
+
+/* --- giao bài --- */
+function renderAssignForm(){
+  $('#as-classes').innerHTML = state.classes.map(c =>
+    `<label><input type="checkbox" name="cls" value="${c.id}"> ${esc(c.name)}</label>`).join('') || '<span class="muted">Chưa có lớp</span>';
+  $('#as-students').innerHTML = state.students.map(s =>
+    `<label><input type="checkbox" name="stu" value="${s.id}"> <span class="zh">${esc(s.full_name)}</span> (${esc(s.code)})</label>`).join('') || '<span class="muted">Chưa có học sinh</span>';
+}
+$('#assign-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault(); const msg = $('#as-msg'); msg.textContent = '';
+  const targets = [
+    ...[...document.querySelectorAll('input[name=cls]:checked')].map(i => ({class_id:i.value})),
+    ...[...document.querySelectorAll('input[name=stu]:checked')].map(i => ({student_id:i.value}))
+  ];
+  if(!targets.length){ msg.textContent = 'Hãy chọn ít nhất 1 lớp hoặc 1 học sinh'; return; }
+  const iso = (v) => v ? new Date(v).toISOString() : null;
+  try{
+    await YY.createAssignment({
+      kind: $('#as-kind').value, title: $('#as-title').value.trim(), lesson: $('#as-lesson').value.trim() || null,
+      content_url: $('#as-url').value.trim(), open_at: iso($('#as-open').value), due_at: iso($('#as-due').value),
+      max_attempts: +$('#as-max').value, pass_percent: +$('#as-pass').value, listen_limit: +$('#as-listen').value
+    }, targets);
+    ev.target.reset(); msg.style.color = 'var(--green)'; msg.textContent = '✅ Đã giao bài!';
+    await reloadTeacher();
+  }catch(e){ msg.style.color = '#c0392b'; msg.textContent = 'Lỗi: ' + e.message; }
+});
+
+/* --- lớp & học sinh --- */
+function renderPeople(){
+  $('#pp-classes').innerHTML = state.classes.map(c => `<div style="margin:.4rem 0">
+    <b>${esc(c.name)}</b> <span class="chip c-gray">${c.kind === 'one_on_one' ? '1-1' : 'Nhóm'}</span>
+    <div class="muted">${(c.class_members || []).map(m => `<span class="zh">${esc(m.profiles?.full_name)}</span> <a href="#" onclick="rmMember('${c.id}','${m.student_id}');return false">✕</a>`).join(' · ') || 'Chưa có học sinh'}</div>
+  </div>`).join('') || '<div class="muted">Chưa có lớp nào.</div>';
+  const opts = '<option value="">Chọn lớp…</option>' + state.classes.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
+  $('#pp-students').innerHTML = state.students.map(s => `<tr>
+    <td>${esc(s.code)}</td><td><span class="zh">${esc(s.full_name)}</span></td>
+    <td><select onchange="addMember(this,'${s.id}')">${opts}</select></td></tr>`).join('');
+}
+$('#class-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  await YY.createClass($('#cl-name').value.trim(), $('#cl-kind').value);
+  ev.target.reset(); await reloadTeacher();
+});
+async function addMember(sel, studentId){
+  if(!sel.value) return;
+  try{ await YY.addToClass(sel.value, studentId); }catch(e){ alert('Không thêm được: ' + e.message); }
+  await reloadTeacher();
+}
+async function rmMember(c, s){ await YY.removeFromClass(c, s); await reloadTeacher(); }
+
+/* --- chấm bài --- */
+async function openGrade(id){
+  const s = await YY.getSubmission(id);
+  const ans = Array.isArray(s.answers) ? s.answers : [];
+  const auto = ans.filter(a => !a.needs_manual);
+  const bad = auto.filter(a => !a.is_correct);
+  const manual = ans.filter(a => a.needs_manual);
+  const manualMax = manual.reduce((t,a) => t + (Number(a.max) || 1), 0);
+  $('#modal-body').innerHTML = `
+    <div class="topbar"><h2 style="margin:0"><span class="zh">${esc(s.profiles?.full_name)}</span> · ${esc(s.assignments?.title)} (lần ${s.attempt})</h2>
+      <button class="btn" onclick="closeModal()">Đóng</button></div>
+    <div class="muted">Nộp lúc ${fmt(s.submitted_at)} · Làm trong ${s.time_spent_sec ? Math.round(s.time_spent_sec/60) + ' phút' : '—'} · Tự chấm: <b>${s.auto_correct}/${s.auto_total}</b> câu đúng</div>
+    ${manual.length ? '<h2 style="margin-top:.8rem">Câu chấm tay</h2>' : ''}
+    ${manual.map(a => `<div class="ans manual"><b>${esc(a.q)}</b> ${a.section ? '· ' + esc(a.section) : ''}${a.prompt ? `<div class="muted">${esc(a.prompt)}</div>` : ''}<div class="txt zh">${esc(a.text) || '<i>(bỏ trống)</i>'}</div></div>`).join('')}
+    <h2 style="margin-top:.8rem">Câu sai (${bad.length})</h2>
+    ${bad.map(a => `<div class="ans bad"><b>${esc(a.q)}</b> ${a.section ? '· ' + esc(a.section) : ''}<div>Chọn: <b class="zh">${esc(a.chosen) || '—'}</b> · Đáp án: <b class="zh">${esc(a.correct)}</b></div></div>`).join('') || '<div class="muted">Không có câu sai 🎉</div>'}
+    <div class="row" style="margin-top:.8rem">
+      ${manual.length ? `<div><label>Điểm phần chấm tay (tối đa ${manualMax})</label><input id="g-manual" type="number" min="0" max="${manualMax}" step="0.5" value="0"></div>` : ''}
+      <div><label>Ngưỡng đạt</label><input value="${s.assignments?.pass_percent ?? 80}%" disabled></div>
+    </div>
+    <label>Nhận xét gửi học sinh</label>
+    <textarea id="g-comment" rows="3" placeholder="Ví dụ: Em nhớ chú ý thanh điệu của 谢谢 nhé!">${esc(s.teacher_comment || '')}</textarea>
+    <div style="display:flex;gap:.6rem;margin-top:.8rem;flex-wrap:wrap">
+      <button class="btn pri" onclick="saveGrade('${id}',${s.auto_correct},${s.auto_total},${manualMax},'done')">✅ Hoàn thành</button>
+      <button class="btn ghost" onclick="saveGrade('${id}',${s.auto_correct},${s.auto_total},${manualMax},'needs_redo')">🔁 Yêu cầu làm lại</button>
+    </div>`;
+  $('#modal').classList.remove('hidden');
+}
+function closeModal(){ $('#modal').classList.add('hidden'); }
+async function saveGrade(id, autoCorrect, autoTotal, manualMax, status){
+  const m = $('#g-manual') ? Math.min(+$('#g-manual').value || 0, manualMax) : 0;
+  try{
+    await YY.gradeSubmission(id, {
+      score: autoCorrect + m, max_score: autoTotal + manualMax,
+      comment: $('#g-comment').value.trim(), status
+    });
+    closeModal(); await reloadTeacher();
+  }catch(e){ alert('Lỗi lưu: ' + e.message); }
+}
+
+boot();
+</script>
+</body>
+</html>
