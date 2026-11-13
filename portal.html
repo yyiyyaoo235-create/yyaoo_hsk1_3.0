@@ -131,6 +131,9 @@
   .shell.collapsed .side-foot{padding:.6rem 0 0;width:100%;display:flex;justify-content:center}
   .shell.collapsed .badge{position:absolute;top:-.1rem;right:-.15rem;min-width:1rem;height:1rem;font-size:.55rem;padding:0 .25rem;margin:0;border:2px solid #fff;box-sizing:content-box}
   /* tên nổi khi rê chuột vào icon lúc thu gọn */
+  #st-side-tip{position:fixed;z-index:80;pointer-events:none;background:#1b3a46;color:#fff;font-weight:700;font-size:.78rem;padding:.3rem .65rem;border-radius:10px;white-space:nowrap;opacity:0;transform:translateX(-4px);transition:opacity .12s,transform .12s;box-shadow:0 4px 14px rgba(27,58,70,.25)}
+  #st-side-tip.show{opacity:1;transform:none}
+  #st-side-tip::before{content:"";position:absolute;left:-.3rem;top:50%;width:.6rem;height:.6rem;background:#1b3a46;transform:translateY(-50%) rotate(45deg);border-radius:2px}
   #side-tip{position:fixed;z-index:80;pointer-events:none;background:#1b3a46;color:#fff;font-weight:700;font-size:.78rem;padding:.3rem .65rem;border-radius:10px;white-space:nowrap;opacity:0;transform:translateX(-4px);transition:opacity .12s,transform .12s;box-shadow:0 4px 14px rgba(27,58,70,.25)}
   #side-tip.show{opacity:1;transform:none}
   #side-tip::before{content:"";position:absolute;left:-.3rem;top:50%;width:.6rem;height:.6rem;background:#1b3a46;transform:translateY(-50%) rotate(45deg);border-radius:2px}
@@ -292,6 +295,49 @@
   .album{margin:.4rem 0 1rem}
   .album-h{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.4rem}
 
+  /* ===== khung học sinh: thanh bên như cô, điện thoại thì thanh nút ở đáy ===== */
+  .st-in{max-width:64rem}
+  .only-mobile{display:none}
+  .seg{display:flex;gap:.4rem;flex-wrap:wrap;margin:.2rem 0 .8rem}
+  .seg .btn{display:inline-flex;align-items:center;gap:.35rem}
+  .seg .btn b{background:var(--gray-soft);border-radius:99px;padding:0 .45rem;font-size:.7rem}
+  .seg .btn.pri b{background:rgba(255,255,255,.3)}
+  .todo-h{display:flex;align-items:center;justify-content:space-between;gap:.5rem;margin:1.1rem 0 .5rem}
+  .todo-h h2{margin:0}
+  .rank-card{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+  .rank-card .rk-fish{width:5.2rem;flex:none}
+  .rank-card .rk-fish svg{width:100%;height:auto;display:block}
+  .rank-card .rk-main{flex:1;min-width:12rem}
+  .cal{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);grid-template-columns:repeat(12,1fr);gap:.25rem;max-width:26rem}
+  .cal i{display:block;aspect-ratio:1;border-radius:.3rem;background:rgba(160,185,195,.25)}
+  .cal i.on{background:#2bb5c4}
+  .cal i.today{outline:2px solid var(--pink);outline-offset:1px}
+  .cal i.fut{visibility:hidden}
+  @media(max-width:880px){
+    .st-shell{grid-template-columns:1fr}
+    .st-shell .side,.st-shell.collapsed .side{position:fixed;left:0;right:0;bottom:0;top:auto;height:auto;z-index:60;flex-direction:row;justify-content:space-around;align-items:stretch;gap:0;
+      padding:.3rem .4rem calc(.3rem + env(safe-area-inset-bottom));border-right:0;border-bottom:0;border-top:1px solid var(--line);overflow:visible;background:rgba(255,255,255,.97)!important}
+    .st-shell .side .brand,.st-shell .side .side-h,.st-shell .side .side-foot{display:none}
+    .st-shell .nav-i,.st-shell.collapsed .nav-i{flex:1;flex-direction:column;gap:.1rem;padding:.35rem .1rem;border-radius:12px;width:auto;justify-content:center;font-size:.62rem;text-align:center}
+    .st-shell .nav-i .lbl,.st-shell.collapsed .nav-i .lbl{display:block;white-space:normal;line-height:1.1}
+    .st-shell .nav-i .ico{font-size:1.3rem}
+    .st-shell .badge,.st-shell.collapsed .badge{position:absolute;top:0;right:18%;margin:0;min-width:1.1rem;height:1.1rem;font-size:.6rem}
+    .st-shell .main{padding:1rem 1rem 6.2rem}
+    .st-shell .topbar{flex-wrap:nowrap;gap:.5rem;align-items:flex-start}
+    .st-shell .topbar h1{font-size:1.2rem}
+    .st-shell .topbar .btn{padding:.3rem .65rem;font-size:.74rem}
+    .st-shell .topbar > div:last-child{display:flex;gap:.3rem;flex:none}
+    .st-shell .streak-row{grid-template-columns:repeat(3,1fr);gap:.4rem}
+    .st-shell .streak-card{flex-direction:column;gap:.1rem;padding:.55rem .35rem;text-align:center;border-left-width:4px}
+    .st-shell .streak-card > div:last-child{width:100%}
+    .st-shell .streak-flame{font-size:1.5rem}
+    .st-shell .streak-n{font-size:1.25rem}
+    .st-shell .streak-card .muted{font-size:.62rem;line-height:1.2}
+    .st-shell .streak-card .bar + .muted,.st-shell .streak-warn{display:none}
+    .st-shell .mascot{margin-bottom:.4rem}
+    .only-mobile{display:inline-flex}
+  }
+
   /* ===== NỀN GỢN NƯỚC (WebGL, có nền dự phòng) ===== */
   body{background:#7fb0dc}
   .water{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
@@ -340,31 +386,71 @@
 
 <!-- ===================== HỌC SINH ===================== -->
 <section id="view-student" class="hidden">
-  <div class="wrap">
+<div class="shell st-shell" id="st-shell">
+  <aside class="side">
+    <div class="brand" data-tip="yyaoo"><div class="logo-img sm" role="img" aria-label="yyaoo"></div><span>yyaoo</span>
+      <button class="side-toggle" id="st-side-toggle" type="button" aria-label="Thu gọn / mở rộng thanh trái" data-tip="Thu gọn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button></div>
+    <div class="side-h">HỌC TẬP</div>
+    <button class="nav-i on" data-st="home" data-tip="Trang chủ"><span class="ico">🏠</span><span class="lbl">Trang chủ</span></button>
+    <button class="nav-i" data-st="tasks" data-tip="Bài của tôi"><span class="ico">📝</span><span class="lbl">Bài của tôi</span><span class="badge hidden" id="st-bd-tasks"></span></button>
+    <button class="nav-i" data-st="practice" data-tip="Luyện tập"><span class="ico">🧩</span><span class="lbl">Luyện tập</span></button>
+    <button class="nav-i" data-st="fish" data-tip="Cá của tôi"><span class="ico">🎀</span><span class="lbl">Cá của tôi</span></button>
+    <button class="nav-i" data-st="achieve" data-tip="Thành tích"><span class="ico">🏅</span><span class="lbl">Thành tích</span></button>
+    <div class="side-foot"><div class="muted" id="st-sbname"></div><button class="foot-btn" onclick="doLogout()" data-tip="Đăng xuất"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="lbl">Đăng xuất</span></button></div>
+  </aside>
+  <div id="st-side-tip" role="tooltip"></div>
+
+  <main class="main">
+   <div class="st-in">
     <div class="topbar">
-      <div>
-        <h1>Xin chào, <span class="zh" id="st-name"></span> 👋</h1>
-        <div class="muted">Chúc bạn học tốt hôm nay!</div>
-      </div>
-      <div><button class="btn" onclick="reloadStudent()">Làm mới</button> <button class="btn" onclick="doLogout()">Đăng xuất</button></div>
+      <div><h1 id="st-pg-title"></h1><div class="muted" id="st-pg-sub"></div></div>
+      <div><button class="btn" onclick="reloadStudent()">Làm mới</button> <button class="btn only-mobile" onclick="doLogout()">Đăng xuất</button></div>
     </div>
-    <div class="mascot" id="st-mascot"></div>
-    <div class="streak-row" id="st-streak"></div>
-    <div class="sec-title"><h2>🧩 Luyện tập hằng ngày</h2><span class="chip c-yellow" id="st-prac-n"></span></div>
-    <div id="st-practice" class="prac-grid"></div>
-    <div class="sec-title"><h2>📝 Bài kiểm tra</h2></div>
-    <div id="st-tests"></div>
-    <div class="sec-title"><h2>📚 Bài tập về nhà</h2></div>
-    <div id="st-homework"></div>
-    <div class="sec-title"><h2>🎖️ Sticker của tôi</h2><span class="chip c-pink" id="st-stk-n">0</span></div>
-    <div id="st-stickers" class="stk-grid"></div>
-    <div class="sec-title"><h2>🎀 Tủ đồ của cá</h2><span class="chip c-yellow" id="st-pts"></span></div>
-    <div class="ward" id="st-ward"></div>
-    <div class="sec-title"><h2>📚 Album sưu tập</h2></div>
-    <div id="st-album"></div>
-    <div class="sec-title"><h2>🏅 Bộ sưu tập huy hiệu</h2><span class="chip c-yellow" id="st-badge-n">0/10</span></div>
-    <div id="st-badges" class="stk-grid"></div>
-  </div>
+
+    <!-- trang chủ -->
+    <div id="stab-home">
+      <div class="mascot" id="st-mascot"></div>
+      <div class="streak-row" id="st-streak"></div>
+      <div class="todo-h"><h2>✅ Việc cần làm hôm nay</h2></div>
+      <div id="st-todo"></div>
+    </div>
+
+    <!-- bài của tôi -->
+    <div id="stab-tasks" class="hidden">
+      <div class="seg" id="st-seg"></div>
+      <div class="sec-title"><h2>📝 Bài kiểm tra</h2></div>
+      <div id="st-tests"></div>
+      <div class="sec-title"><h2>📚 Bài tập về nhà</h2></div>
+      <div id="st-homework"></div>
+    </div>
+
+    <!-- luyện tập -->
+    <div id="stab-practice" class="hidden">
+      <div class="sec-title"><h2>🧩 Luyện tập hằng ngày</h2><span class="chip c-yellow" id="st-prac-n"></span></div>
+      <div id="st-practice" class="prac-grid"></div>
+      <div class="sec-title"><h2>🗓️ Những ngày bạn đã luyện</h2><span class="chip c-green" id="st-cal-n"></span></div>
+      <div class="card"><div class="cal" id="st-cal"></div><div class="muted" style="margin-top:.5rem">12 tuần gần nhất · ô màu xanh là ngày đã luyện tập, ô có viền đậm là hôm nay.</div></div>
+    </div>
+
+    <!-- cá của tôi -->
+    <div id="stab-fish" class="hidden">
+      <div class="card rank-card" id="st-rank"></div>
+      <div class="sec-title"><h2>🎀 Tủ đồ của cá</h2><span class="chip c-yellow" id="st-pts"></span></div>
+      <div class="ward" id="st-ward"></div>
+    </div>
+
+    <!-- thành tích -->
+    <div id="stab-achieve" class="hidden">
+      <div class="sec-title"><h2>🎖️ Sticker của tôi</h2><span class="chip c-pink" id="st-stk-n">0</span></div>
+      <div id="st-stickers" class="stk-grid"></div>
+      <div class="sec-title"><h2>📚 Album sưu tập</h2></div>
+      <div id="st-album"></div>
+      <div class="sec-title"><h2>🏅 Bộ sưu tập huy hiệu</h2><span class="chip c-yellow" id="st-badge-n">0/10</span></div>
+      <div id="st-badges" class="stk-grid"></div>
+    </div>
+   </div>
+  </main>
+</div>
 </section>
 
 <!-- ===================== GIÁO VIÊN ===================== -->
@@ -1310,44 +1396,113 @@ async function doLogout(){ await YY.logout(); location.href = YY.config.PORTAL_U
 
 /* ---------------- HỌC SINH ---------------- */
 async function reloadStudent(){
-  $('#st-name').textContent = state.me.full_name;
+  $('#st-sbname').textContent = state.me.full_name;
   // luyện tập + huy hiệu cô tặng: nếu chưa chạy migration-dot2.sql thì bỏ qua, portal vẫn chạy
   const [rows, practice, awards, style, items] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => []),
     YY.getMyStyle().catch(() => null), YY.listMyItems().catch(() => [])]);
   state.practice = practice; state.awards = awards; state.myRows = rows;
   state.style = style || {}; state.items = items;
-  const now = Date.now();
   const ev = detectEvents(rows);
-  const render = (list) => list.length ? list.map(r => {
-    const locked = r.open_at && new Date(r.open_at).getTime() > now;
-    let btn = '';
-    if(locked) btn = `<button class="btn" disabled>🔒 Mở lúc ${fmt(r.open_at)}</button>`;
-    else if(r.status === 'todo' || r.status === 'overdue')
-      btn = `<button class="btn pri" onclick="openQuiz('${r.assignment_id}','${esc(r.content_url)}')">Làm bài</button>`;
-    else if(r.status === 'needs_redo')
-      btn = r.attempt < r.max_attempts
-        ? `<button class="btn pri" onclick="openQuiz('${r.assignment_id}','${esc(r.content_url)}')">Làm lại</button>`
-        : `<button class="btn" disabled>Hết lượt làm</button>`;
-    const score = r.percent != null ? ` · Điểm: <b>${r.percent}%</b>` : '';
-    const cmt = r.teacher_comment ? `<div class="cmt">💬 ${esc(r.teacher_comment)}</div>` : '';
-    return `<div class="card a-card">${miniFish(r)}<div class="a-info">
-      <div class="a-title">${esc(r.title)} ${r.lesson ? '· ' + esc(r.lesson) : ''}</div>
-      <div class="muted">Hạn nộp: ${fmt(r.due_at)}${score}${r.is_late ? ' · nộp muộn' : ''}</div>${cmt}
-    </div><div>${chip(r.status)} ${btn}</div></div>`;
-  }).join('') : '<div class="muted">Chưa có bài nào được giao.</div>';
-  $('#st-tests').innerHTML = render(rows.filter(r => r.kind === 'test'));
-  $('#st-homework').innerHTML = render(rows.filter(r => r.kind === 'homework'));
+  renderTasks(rows);
+  renderTodo(rows);
   renderMascot(rows, ev);
   renderStreaks(rows);
   renderPractice();
   renderStickers(rows);
   renderAlbum(rows);
   renderWardrobe(rows);
+  renderRank(rows);
+  renderCal();
   const gotBadges = renderBadges(rows), freshBadges = newBadges(gotBadges);
+  let tab = state.stTab; try{ tab = tab || sessionStorage.getItem('yy_st_tab'); }catch(e){}
+  stGo((ev.done.length || ev.submitted.length) ? 'home' : (tab || 'home'), true);   // vừa nộp/được chấm: về Trang chủ để thấy cá ăn mừng
   if(ev.done.length) showStickerPop(ev.done);
   if(freshBadges.length) showBadgePop(freshBadges);
   if(needProfile() && !state.skipProfile) showProfilePop();
 }
+/* ===== khung học sinh: các trang + bộ lọc bài ===== */
+const ST_TABS = {home:'', tasks:'Bài của tôi', practice:'Luyện tập', fish:'Cá của tôi', achieve:'Thành tích'};
+const OPEN_ST = ['todo', 'overdue', 'needs_redo'];
+const isLockedRow = (r) => r.open_at && new Date(r.open_at).getTime() > Date.now();
+function stGo(tab, keep){
+  if(!ST_TABS.hasOwnProperty(tab)) tab = 'home';
+  state.stTab = tab;
+  try{ sessionStorage.setItem('yy_st_tab', tab); }catch(e){}
+  Object.keys(ST_TABS).forEach(t => $('#stab-' + t).classList.toggle('hidden', t !== tab));
+  document.querySelectorAll('#st-shell .nav-i[data-st]').forEach(n => n.classList.toggle('on', n.dataset.st === tab));
+  const nm = state.me ? esc(state.me.full_name) : '';
+  $('#st-pg-title').innerHTML = tab === 'home' ? `Xin chào, <span class="zh">${nm}</span> 👋` : ST_TABS[tab];
+  $('#st-pg-sub').textContent = tab === 'home' ? 'Chúc bạn học tốt hôm nay!' : '';
+  if(!keep) window.scrollTo(0, 0);
+}
+function taskCard(r){
+  const locked = isLockedRow(r);
+  let btn = '';
+  if(locked) btn = `<button class="btn" disabled>🔒 Mở lúc ${fmt(r.open_at)}</button>`;
+  else if(r.status === 'todo' || r.status === 'overdue')
+    btn = `<button class="btn pri" onclick="openQuiz('${r.assignment_id}','${esc(r.content_url)}')">Làm bài</button>`;
+  else if(r.status === 'needs_redo')
+    btn = r.attempt < r.max_attempts
+      ? `<button class="btn pri" onclick="openQuiz('${r.assignment_id}','${esc(r.content_url)}')">Làm lại</button>`
+      : `<button class="btn" disabled>Hết lượt làm</button>`;
+  const score = r.percent != null ? ` · Điểm: <b>${r.percent}%</b>` : '';
+  const cmt = r.teacher_comment ? `<div class="cmt">💬 ${esc(r.teacher_comment)}</div>` : '';
+  return `<div class="card a-card">${miniFish(r)}<div class="a-info">
+      <div class="a-title">${esc(r.title)} ${r.lesson ? '· ' + esc(r.lesson) : ''}</div>
+      <div class="muted">Hạn nộp: ${fmt(r.due_at)}${score}${r.is_late ? ' · nộp muộn' : ''}</div>${cmt}
+    </div><div>${chip(r.status)} ${btn}</div></div>`;
+}
+const TASK_FILTERS = [['open', 'Cần làm', r => OPEN_ST.includes(r.status)], ['pending', 'Chờ chấm', r => r.status === 'pending_review'],
+                      ['done', 'Đã xong', r => r.status === 'done'], ['all', 'Tất cả', () => true]];
+function renderTasks(rows){
+  const f = state.taskFilter || 'open', fn = TASK_FILTERS.find(x => x[0] === f)[2];
+  $('#st-seg').innerHTML = TASK_FILTERS.map(([k, l, test]) =>
+    `<button class="btn${k === f ? ' pri' : ''}" onclick="setTaskFilter('${k}')">${l} <b>${rows.filter(test).length}</b></button>`).join('');
+  const list = (kind) => { const a = rows.filter(r => r.kind === kind && fn(r)); return a.length ? a.map(taskCard).join('') : '<div class="muted">Không có bài nào trong mục này.</div>'; };
+  $('#st-tests').innerHTML = list('test');
+  $('#st-homework').innerHTML = list('homework');
+  const n = rows.filter(r => OPEN_ST.includes(r.status) && !isLockedRow(r)).length, bd = $('#st-bd-tasks');
+  bd.textContent = n; bd.classList.toggle('hidden', !n);
+}
+function setTaskFilter(k){ state.taskFilter = k; renderTasks(state.myRows); }
+function renderTodo(rows){
+  const order = {overdue: 0, needs_redo: 1, todo: 2};
+  const open = rows.filter(r => OPEN_ST.includes(r.status) && !isLockedRow(r))
+    .sort((a, b) => order[a.status] - order[b.status] || (a.due_at ? +new Date(a.due_at) : 9e15) - (b.due_at ? +new Date(b.due_at) : 9e15));
+  const sd = calcDayStreak(state.practice);
+  let h = open.slice(0, 3).map(taskCard).join('');
+  if(open.length > 3) h += `<div style="margin:-.3rem 0 .8rem"><button class="link" onclick="stGo('tasks')">Xem tất cả ${open.length} bài cần làm →</button></div>`;
+  if(!sd.todayDone && PRACTICE.length)
+    h += `<div class="card a-card"><div class="a-info"><div class="a-title">🧩 Luyện tập hôm nay</div><div class="muted">Làm một lượt để giữ chuỗi ngày${sd.cur ? ' (đang ' + sd.cur + ' ngày)' : ''}</div></div><button class="btn pri" onclick="stGo('practice')">Luyện</button></div>`;
+  if(!h) h = '<div class="card a-card"><div class="a-info"><div class="a-title">🎉 Bạn đã làm hết việc hôm nay!</div><div class="muted">Cá rất tự hào về bạn. Nghỉ ngơi hoặc xem thành tích của mình nhé.</div></div><button class="btn" onclick="stGo(\'achieve\')">Xem thành tích</button></div>';
+  $('#st-todo').innerHTML = h;
+}
+function renderCal(){
+  const days = new Set((state.practice || []).map(p => dnum(p.day))), today = dnum(todayVN());
+  const start = today - ((today + 3) % 7) - 11 * 7;      // thứ Hai của tuần cách đây 11 tuần
+  let h = '', n = 0;
+  for(let d = start; d < start + 84; d++){
+    const on = days.has(d); if(on) n++;
+    h += `<i class="${on ? 'on' : ''}${d === today ? ' today' : ''}${d > today ? ' fut' : ''}" title="${new Date(d * 864e5).toISOString().slice(0, 10)}"></i>`;
+  }
+  $('#st-cal').innerHTML = h;
+  $('#st-cal-n').textContent = n + ' ngày';
+}
+function renderRank(rows){
+  const done = doneRows(rows).length, rk = rankOf(done), nextI = RANK_AT.findIndex(x => done < x);
+  const set = rankSet();
+  let main;
+  if(nextI < 0) main = `<b>Bạn đã đạt hạng cao nhất!</b><div class="muted">Đã hoàn thành ${done} bài.</div>`;
+  else{
+    const prev = nextI ? RANK_AT[nextI - 1] : 0, pct = Math.round((done - prev) / (RANK_AT[nextI] - prev) * 100);
+    main = `<b>${rk ? esc(rk.name) + ' ' + rk.emo : 'Chưa có hạng'}</b>
+      <div class="muted">Còn ${RANK_AT[nextI] - done} bài nữa để thành <b>${esc(set[nextI][0])}</b> ${set[nextI][2]}</div>
+      <div class="bar" style="margin-top:.4rem"><i style="width:${pct}%"></i></div>
+      <div class="muted">${done}/${RANK_AT[nextI]} bài</div>`;
+  }
+  $('#st-rank').innerHTML = `<div class="rk-fish">${fishSVG('happy', {...lookOpts(rows), still:true})}</div><div class="rk-main">${main}</div>`;
+}
+
 function openQuiz(id, url){ location.href = url + (url.includes('?') ? '&' : '?') + 'a=' + id; }
 
 /* ---------------- GIÁO VIÊN ---------------- */
@@ -1607,6 +1762,41 @@ boot();
   side.addEventListener('mouseleave', hideTip);
   side.addEventListener('click', hideTip);
   side.addEventListener('scroll', hideTip);
+})();
+
+/* ===== Thanh trái của học sinh: chuyển trang + thu gọn (dùng chung lựa chọn thu gọn với cô) ===== */
+(function(){
+  const shell = document.getElementById('st-shell');
+  const btn = document.getElementById('st-side-toggle');
+  const tip = document.getElementById('st-side-tip');
+  if(!shell || !btn || !tip) return;
+  shell.querySelectorAll('.nav-i[data-st]').forEach(n => n.addEventListener('click', () => stGo(n.dataset.st)));
+  const KEY = 'yy_side_collapsed';
+  function hideTip(){ tip.classList.remove('show'); }
+  function apply(c){
+    shell.classList.toggle('collapsed', c);
+    btn.setAttribute('data-tip', c ? 'Mở rộng' : 'Thu gọn');
+    btn.setAttribute('aria-expanded', String(!c));
+    hideTip();
+  }
+  try{ apply(localStorage.getItem(KEY) === '1'); }catch(e){ apply(false); }
+  btn.addEventListener('click', () => {
+    const c = !shell.classList.contains('collapsed');
+    apply(c);
+    try{ localStorage.setItem(KEY, c ? '1' : '0'); }catch(e){}
+  });
+  const side = shell.querySelector('.side');
+  side.addEventListener('mouseover', e => {
+    const el = e.target.closest('[data-tip]');
+    if(!el || (!shell.classList.contains('collapsed') && el !== btn) || window.innerWidth <= 880){ hideTip(); return; }
+    tip.textContent = (el === btn && !shell.classList.contains('collapsed')) ? 'Thu gọn' : el.getAttribute('data-tip');
+    const r = el.getBoundingClientRect();
+    tip.style.left = (r.right + 10) + 'px';
+    tip.style.top = (r.top + r.height / 2 - tip.offsetHeight / 2) + 'px';
+    tip.classList.add('show');
+  });
+  side.addEventListener('mouseleave', hideTip);
+  side.addEventListener('click', hideTip);
 })();
 
 /* ===== Nền nước: Bình minh trên biển ===== */
