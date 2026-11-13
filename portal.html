@@ -264,6 +264,19 @@
   .gender-pick label:has(input:checked){border-color:var(--pink);background:var(--pink-soft);color:var(--pink)}
   .stk-pop .modal label{text-align:left}
 
+  /* ===== đợt 2: sticker hiếm, luyện tập, tặng huy hiệu ===== */
+  a.btn{display:inline-block;text-decoration:none}
+  .stk.rare .stk-art{outline-color:#E8A93A;box-shadow:0 0 0 3px rgba(255,214,107,.55),0 0 18px rgba(255,201,60,.75);animation:rare-glow 2.2s ease-in-out infinite}
+  @keyframes rare-glow{0%,100%{filter:brightness(1)}50%{filter:brightness(1.12)}}
+  .rare-tag{display:inline-block;font-size:.62rem;font-weight:800;letter-spacing:.06em;color:#8a6410;background:#FFF3D2;border-radius:99px;padding:0 .45rem;margin-top:.1rem}
+  .prac-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(15rem,1fr));gap:.7rem}
+  .prac-card{display:flex;align-items:center;gap:.7rem;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:16px;padding:.6rem .8rem}
+  .gift-list{display:grid;grid-template-columns:repeat(auto-fill,minmax(9.5rem,1fr));gap:.5rem;margin:.5rem 0}
+  .gift-opt{margin:0;border:1px solid var(--line);border-radius:14px;padding:.45rem;text-align:center;cursor:pointer;font-weight:700;font-size:.78rem}
+  .gift-opt input{display:none}
+  .gift-opt:has(input:checked){border-color:var(--pink);background:var(--pink-soft)}
+  .gift-opt .emo{font-size:1.4rem;display:block}
+
   /* ===== NỀN GỢN NƯỚC (WebGL, có nền dự phòng) ===== */
   body{background:#7fb0dc}
   .water{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
@@ -322,6 +335,8 @@
     </div>
     <div class="mascot" id="st-mascot"></div>
     <div class="streak-row" id="st-streak"></div>
+    <div class="sec-title"><h2>🧩 Luyện tập hằng ngày</h2><span class="chip c-yellow" id="st-prac-n"></span></div>
+    <div id="st-practice" class="prac-grid"></div>
     <div class="sec-title"><h2>📝 Bài kiểm tra</h2></div>
     <div id="st-tests"></div>
     <div class="sec-title"><h2>📚 Bài tập về nhà</h2></div>
@@ -443,7 +458,7 @@
         <h2>Học sinh</h2>
         <div class="muted" style="margin-bottom:.4rem">Tạo tài khoản mới: Supabase → Authentication → Add user (xem HUONG_DAN.md)</div>
         <div class="scroll"><table>
-          <thead><tr><th>Mã</th><th>Họ tên</th><th>Năm sinh</th><th>Giới tính</th><th>Thêm vào lớp</th></tr></thead>
+          <thead><tr><th>Mã</th><th>Họ tên</th><th>Năm sinh</th><th>Giới tính</th><th>Thêm vào lớp</th><th>Huy hiệu</th></tr></thead>
           <tbody id="pp-students"></tbody>
         </table></div>
       </div>
@@ -454,7 +469,7 @@
       <h2>Bảng vàng học tập</h2>
       <div class="muted" style="margin-bottom:.4rem">Tính từ các bài đã chấm</div>
       <div class="scroll"><table>
-        <thead><tr><th>Hạng</th><th>Học sinh</th><th>Số bài</th><th>Cao nhất</th><th>Trung bình</th><th>Sticker</th><th>Chuỗi đúng hạn</th><th>Chuỗi tuần</th></tr></thead>
+        <thead><tr><th>Hạng</th><th>Học sinh</th><th>Số bài</th><th>Cao nhất</th><th>Trung bình</th><th>Sticker</th><th>Chuỗi đúng hạn</th><th>Chuỗi tuần</th><th>Chuỗi ngày</th></tr></thead>
         <tbody id="tb-records"></tbody></table></div>
     </div>
   </main>
@@ -481,7 +496,7 @@ const STATUS = {
   needs_redo:['Cần làm lại','c-yellow'], done:['Hoàn thành','c-green']
 };
 const chip = (s) => { const [t,c] = STATUS[s] || [s,'c-gray']; return `<span class="chip ${c}">${t}</span>`; };
-const state = { me:null, rows:[], students:[], classes:[] };
+const state = { me:null, rows:[], students:[], classes:[], practice:[], awards:[], practiceAll:[], awardsAll:[] };
 
 /* ---------------- CÁ MASCOT ---------------- */
 const HIGH_SCORE = 90;   // từ mức này trở lên: cá nhảy lên ăn mừng
@@ -513,6 +528,11 @@ const ACC = {
     hat:`<path d="M-12 -41 L-9.5 -33 L-1.5 -32.5 L-7.5 -27.5 L-5.5 -20 L-12 -24.5 L-18.5 -20 L-16.5 -27.5 L-22.5 -32.5 L-14.5 -33 Z" fill="#FFD66B" stroke="#E8A93A" stroke-width="1.4" stroke-linejoin="round"/>`},
   knight:{
     hat:`<path d="M-25 -20 Q-26 -37 -12 -37 Q2 -37 1 -20 Q-12 -17 -25 -20 Z" fill="#C5CDD9" stroke="#8E9BB0" stroke-width="1.8" stroke-linejoin="round"/><path d="M-12 -37 Q-6 -47 4 -44 Q-2 -42 -3 -36 Z" fill="#E8456B"/><path d="M-12 -36 L-12 -20" stroke="#8E9BB0" stroke-width="1.4"/>`},
+  sparkle:{
+    hat:`<path d="M-12 -42 L-10.6 -37.4 L-6 -36 L-10.6 -34.6 L-12 -30 L-13.4 -34.6 L-18 -36 L-13.4 -37.4 Z" fill="#FFD66B"/><path d="M-1 -35 L-0.1 -32 L2.9 -31 L-0.1 -30 L-1 -27 L-1.9 -30 L-4.9 -31 L-1.9 -32 Z" fill="#FFE9A8"/><path d="M-24 -34 L-23.1 -31.2 L-20.3 -30.3 L-23.1 -29.4 L-24 -26.6 L-24.9 -29.4 L-27.7 -30.3 L-24.9 -31.2 Z" fill="#FFE9A8"/>`},
+  dragon:{
+    hat:`<path d="M-22 -22 L-25 -37 L-16 -27 Z" fill="#E8456B" stroke="#B02A4C" stroke-width="1.2" stroke-linejoin="round"/><path d="M-4 -22 L-1 -37 L-10 -27 Z" fill="#E8456B" stroke="#B02A4C" stroke-width="1.2" stroke-linejoin="round"/>`,
+    face:`<path d="M-37 11 Q-44 8 -47 13 M-37 14 Q-44 15 -46 20" fill="none" stroke="#E8456B" stroke-width="1.6" stroke-linecap="round"/>`},
   lazy:{
     hat:`<path d="M-24 -21 Q-20 -36 -6 -33 Q4 -30 8 -18 Q0 -26 -4 -22 Q-12 -19 -24 -21 Z" fill="#9DB8F0" stroke="#6F8FD8" stroke-width="1.6" stroke-linejoin="round"/><path d="M-23 -22 Q-12 -18 -1 -22" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="8" cy="-17" r="3.2" fill="#fff" stroke="#AEB8C8" stroke-width=".8"/>`}
 };
@@ -692,7 +712,17 @@ function bonusStickers(r){
   }
   return out;
 }
-const stickersFor = (r) => [stickerInfo(r), ...bonusStickers(r)];
+// sticker hiếm: kết quả cố định theo (bài, lần làm, học sinh) nên tải lại trang không đổi
+const RARE_PCT = 10;
+function hashStr(t){ let h = 2166136261; for(let i = 0; i < t.length; i++){ h ^= t.charCodeAt(i); h = Math.imul(h, 16777619); } return h >>> 0; }
+function rareSticker(r){
+  const h = hashStr(String(r.assignment_id) + ':' + (r.attempt || 1) + ':' + (state.me?.id || ''));
+  if(h % 100 >= RARE_PCT) return null;
+  return (h >>> 8) % 2 === 1
+    ? {name:'Cá vàng lấp lánh', emo:'✨', mood:'jump', bg:'#FFE9A8', ring:'#E8A93A', acc:'sparkle', rare:true}
+    : {name:'Cá rồng',          emo:'🐉', mood:'jump', bg:'#FFD0D6', ring:'#E8456B', acc:'dragon',  rare:true};
+}
+const stickersFor = (r) => { const x = rareSticker(r); return [stickerInfo(r), ...bonusStickers(r), ...(x ? [x] : [])]; };
 
 // cá + phụ kiện + biểu tượng nhỏ ở góc (dùng cho sticker và huy hiệu)
 function emblemFish(s, o = {}){
@@ -705,9 +735,10 @@ function stickerCard(s, r, k){
   const rot = [-4, 3, -2, 5, -5, 2][k % 6];
   const p = r.percent != null ? ` · ${r.percent}%` : '';
   return `
-    <div class="stk" style="--rot:${rot}deg;--ring:${s.ring}">
+    <div class="stk${s.rare ? ' rare' : ''}" style="--rot:${rot}deg;--ring:${s.ring}">
       <div class="stk-art">${emblemFish(s, {still:true})}</div>
       <div class="stk-name">${esc(s.name)}</div>
+      ${s.rare ? '<div class="rare-tag">HIẾM</div>' : ''}
       <div class="muted">${esc(r.lesson || r.title)}${p}</div>
     </div>`;
 }
@@ -784,17 +815,83 @@ function streakCard(icon, cur, best, unit, label, miles, warn){
       <div class="bar"><i style="width:${pct}%"></i></div>
       <div class="muted">${next}</div>${warn ? `<div class="streak-warn">${warn}</div>` : ''}</div></div>`;
 }
+const MILE_D = [3, 7, 14, 30];
 function renderStreaks(rows){
-  if(!rows.length){ $('#st-streak').innerHTML = ''; return; }
-  const s = calcStreaks(rows), now = Date.now();
-  const soon = rows.filter(r => ['todo', 'needs_redo'].includes(r.status) && r.due_at && new Date(r.due_at) > now && new Date(r.due_at) - now <= 2 * 864e5)
-                   .sort((a, b) => new Date(a.due_at) - new Date(b.due_at))[0];
-  const warnA = soon && s.cur > 0 ? `⏰ Nộp trước ${fmt(soon.due_at)} để giữ chuỗi!` : '';
-  const warnW = s.curW > 0 && !s.thisWeek ? '⏰ Tuần này chưa nộp bài nào, nộp một bài để giữ chuỗi tuần!' : '';
-  $('#st-streak').innerHTML =
-    streakCard('🔥', s.cur, s.best, 'bài', 'Chuỗi đúng hạn', MILE_A, warnA) +
-    streakCard('📅', s.curW, s.bestW, 'tuần', 'Chuỗi tuần', MILE_W, warnW);
+  const sd = calcDayStreak(state.practice), now = Date.now();
+  let html = '';
+  if(rows.length){
+    const s = calcStreaks(rows);
+    const soon = rows.filter(r => ['todo', 'needs_redo'].includes(r.status) && r.due_at && new Date(r.due_at) > now && new Date(r.due_at) - now <= 2 * 864e5)
+                     .sort((a, b) => new Date(a.due_at) - new Date(b.due_at))[0];
+    const warnA = soon && s.cur > 0 ? `⏰ Nộp trước ${fmt(soon.due_at)} để giữ chuỗi!` : '';
+    const warnW = s.curW > 0 && !s.thisWeek ? '⏰ Tuần này chưa nộp bài nào, nộp một bài để giữ chuỗi tuần!' : '';
+    html += streakCard('🔥', s.cur, s.best, 'bài', 'Chuỗi đúng hạn', MILE_A, warnA) +
+            streakCard('📅', s.curW, s.bestW, 'tuần', 'Chuỗi tuần', MILE_W, warnW);
+  }
+  const left = sd.usedThis ? 0 : 1;
+  const warnD = sd.cur > 0 && !sd.todayDone ? '⏰ Hôm nay chưa luyện tập, làm một lượt để giữ chuỗi ngày!' : '';
+  html += streakCard('🌞', sd.cur, sd.best, 'ngày', `Chuỗi ngày · 🧊 còn ${left} băng tháng này`, MILE_D, warnD);
+  $('#st-streak').innerHTML = html;
 }
+
+/* ===== luyện tập hằng ngày: chuỗi ngày + băng đóng chuỗi (1 băng/tháng, tự động) ===== */
+// Cô thêm file luyện tập vào đây: {level:'HSK1', title:'Tên bài', url:'ten-file.html'}
+// level là chữ tự do (HSK1, HSK2, ... HSK9) để gom nhóm
+const PRACTICE = [
+  {level:'HSK1', title:'Luyện từ vựng (bài mẫu, thử nghiệm)', url:'luyen-tap-mau.html'}
+];
+const VN_TZ = 'Asia/Ho_Chi_Minh';
+const todayVN = () => new Date().toLocaleDateString('en-CA', {timeZone: VN_TZ});   // YYYY-MM-DD theo giờ Việt Nam
+const dnum = (t) => { const [y, m, d] = String(t).slice(0, 10).split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
+const mkey = (n) => new Date(n * 864e5).toISOString().slice(0, 7);                    // YYYY-MM của ngày số n
+function calcDayStreak(list){
+  const days = [...new Set((list || []).map(p => dnum(p.day)))].sort((a, b) => a - b);
+  if(!days.length) return {cur:0, best:0, days:0, usedThis:false, todayDone:false};
+  const used = {};          // tháng nào đã dùng băng
+  let run = 1, best = 1;
+  for(let i = 1; i < days.length; i++){
+    const gap = days[i] - days[i - 1], mk = mkey(days[i - 1] + 1);
+    if(gap === 1) run++;
+    else if(gap === 2 && !used[mk]){ used[mk] = true; run++; }   // bỏ lỡ đúng 1 ngày: băng của tháng đó tự bù
+    else run = 1;
+    best = Math.max(best, run);
+  }
+  const today = dnum(todayVN()), last = days[days.length - 1], diff = today - last;
+  let cur = 0;
+  if(diff <= 1) cur = run;                                        // hôm nay hoặc hôm qua còn kịp
+  else if(diff === 2 && !used[mkey(last + 1)]){ used[mkey(last + 1)] = true; cur = run; }   // băng bù cho hôm qua
+  return {cur, best, days: days.length, usedThis: !!used[mkey(today)], todayDone: diff <= 0};
+}
+function renderPractice(){
+  const sd = calcDayStreak(state.practice);
+  const chipEl = $('#st-prac-n');
+  chipEl.textContent = sd.todayDone ? '✓ Hôm nay đã luyện' : 'Hôm nay chưa luyện';
+  chipEl.className = 'chip ' + (sd.todayDone ? 'c-green' : 'c-yellow');
+  $('#st-practice').innerHTML = PRACTICE.length
+    ? PRACTICE.map(p => `<div class="prac-card"><div style="flex:1"><span class="chip c-pink">${esc(p.level)}</span><div class="a-title">${esc(p.title)}</div></div><a class="btn pri" href="${esc(p.url)}">Luyện</a></div>`).join('')
+    : '<div class="muted">Cô chưa thêm bài luyện tập nào.</div>';
+}
+
+/* ===== huy hiệu cô tặng thủ công ===== */
+const GIFTS = [
+  {key:'speak',    name:'Cá phát biểu hay',  emo:'🎤', bg:'#FFE9A8', ring:'#F2BC4A'},
+  {key:'helper',   name:'Cá giúp bạn',       emo:'🤝', bg:'#E3F6D8', ring:'#8CCB6B'},
+  {key:'progress', name:'Cá tiến bộ vượt bậc', emo:'🚀', bg:'#DCEBFF', ring:'#7FA8F0'},
+  {key:'creative', name:'Cá sáng tạo',       emo:'🎨', bg:'#FFD6E2', ring:'#FF8FB1'},
+  {key:'brave',    name:'Cá dũng cảm',       emo:'🦁', bg:'#FFE3C7', ring:'#FF9F43'},
+  {key:'focus',    name:'Cá tập trung',      emo:'🧠', bg:'#E6DDF8', ring:'#B9A2E6'},
+  {key:'tone',     name:'Cá phát âm chuẩn',  emo:'🗣️', bg:'#DDF4FF', ring:'#6FC0EA'},
+  {key:'hanzi',    name:'Cá viết chữ đẹp',   emo:'✍️', bg:'#D9F3F0', ring:'#7CC9C0'}
+];
+const giftBadges = () => GIFTS.map(g => ({id:'gift-' + g.key, name:g.name, emo:g.emo, mood:'jump', bg:g.bg, ring:g.ring, gift:true, key:g.key,
+  hint:'Cô tặng cho bạn', test:() => (state.awards || []).some(a => a.badge_key === g.key)}));
+const noteOf = (b) => { if(!b.gift) return ''; const n = (state.awards || []).find(a => a.badge_key === b.key)?.note; return n ? ' · Cô nhắn: ' + esc(n) : ''; };
+const DAY_BADGES = [
+  {id:'d7',  name:'Cá chăm mỗi ngày',      hint:'Chuỗi luyện tập 7 ngày',        emo:'🌞', mood:'happy', bg:'#FFF1BF', ring:'#F2C94C', test:c => c.bestD >= 7},
+  {id:'d30', name:'Cá thói quen',          hint:'Chuỗi luyện tập 30 ngày',       emo:'🏅', mood:'jump',  bg:'#E3F6D8', ring:'#8CCB6B', test:c => c.bestD >= 30},
+  {id:'p10', name:'Cá luyện tập',          hint:'Hoàn thành 10 lượt luyện tập',  emo:'🧩', mood:'happy', bg:'#DCEBFF', ring:'#7FA8F0', test:c => c.practices >= 10},
+  {id:'p50', name:'Cá luyện tập siêu cấp', hint:'Hoàn thành 50 lượt luyện tập',  emo:'🧠', mood:'jump',  bg:'#E6DDF8', ring:'#B9A2E6', test:c => c.practices >= 50}
+];
 
 /* ===== danh hiệu theo giới tính (thăng hạng theo số bài hoàn thành) ===== */
 const RANK_AT = [10, 30, 100];   // chỉnh số bài cho từng hạng ở đây
@@ -815,8 +912,9 @@ function isLazy(rows){
   const open = rows.filter(r => ['todo', 'overdue', 'needs_redo'].includes(r.status) && !(r.open_at && new Date(r.open_at) > now)).length;
   const overdue = rows.filter(r => r.status === 'overdue').length;
   const subs = rows.filter(r => r.submitted_at).map(r => +new Date(r.submitted_at));
-  const idle = subs.length ? (now - Math.max(...subs)) / 864e5 : 0;
-  return overdue >= 2 || (open > 0 && subs.length > 0 && idle >= 7);
+  const acts = [...subs, ...(state.practice || []).map(p => +new Date(p.day))];
+  const idle = acts.length ? (now - Math.max(...acts)) / 864e5 : 0;
+  return overdue >= 2 || (open > 0 && acts.length > 0 && idle >= 7);
 }
 
 const MSG = {
@@ -932,7 +1030,8 @@ function badgeStats(rows){
     three: Math.max(0, ...Object.values(perDay)),
     midnight: sub.some(r => { const d = new Date(r.submitted_at); return d.getHours() === 0 && d.getMinutes() < 10; }),
     lucky88: done.some(r => +r.percent === 88),
-    bestA: st.best, bestW: st.bestW
+    bestA: st.best, bestW: st.bestW,
+    bestD: calcDayStreak(state.practice).best, practices: (state.practice || []).length
   };
 }
 const EXTRA_BADGES = [
@@ -961,7 +1060,7 @@ function rankBadges(){
     hint: `Hoàn thành ${RANK_AT[i]} bài`, test: c => c.done >= RANK_AT[i]
   }));
 }
-const allBadges = () => [...BASE_BADGES, ...rankBadges(), ...EXTRA_BADGES];
+const allBadges = () => [...BASE_BADGES, ...rankBadges(), ...EXTRA_BADGES, ...DAY_BADGES, ...giftBadges()];
 const badgeFish = (b, o = {}) => emblemFish(b, o);
 function renderBadges(rows){
   const c = badgeStats(rows), L = allBadges(), got = L.filter(b => b.test(c));
@@ -972,7 +1071,7 @@ function renderBadges(rows){
     return `<div class="stk${ok ? '' : ' locked'}" style="--rot:${ok ? rot : 0}deg;--ring:${ok ? b.ring : '#c9d6dc'}" title="${esc(hide ? 'Huy hiệu bí mật' : b.hint)}">
       <div class="stk-art">${badgeFish(v, {still:true})}</div>
       <div class="stk-name">${hide ? '???' : esc(b.name)}</div>
-      <div class="stk-hint">${ok ? 'Đã nhận ✓' : '🔒 ' + (hide ? 'Huy hiệu bí mật' : esc(b.hint))}</div>
+      <div class="stk-hint">${ok ? 'Đã nhận ✓' + noteOf(b) : '🔒 ' + (hide ? 'Huy hiệu bí mật' : esc(b.hint))}</div>
     </div>`;
   }).join('');
   return got;
@@ -1011,9 +1110,10 @@ function showStickerPop(list){
   $('#stk-pop-body').innerHTML = `
     <h2>🎉 Bạn nhận được sticker mới!</h2>
     <div class="stk-row">
-      ${items.map(s => `<div class="stk" style="--ring:${s.ring}">
+      ${items.map(s => `<div class="stk${s.rare ? ' rare' : ''}" style="--ring:${s.ring}">
           <div class="stk-art stk-big">${emblemFish(s)}</div>
           <div class="stk-name">${esc(s.name)}</div>
+          ${s.rare ? '<div class="rare-tag">HIẾM</div>' : ''}
         </div>`).join('')}
     </div>
     <button class="btn pri" onclick="$('#stk-pop').classList.add('hidden')">Cất vào album</button>`;
@@ -1047,7 +1147,9 @@ async function doLogout(){ await YY.logout(); location.href = YY.config.PORTAL_U
 /* ---------------- HỌC SINH ---------------- */
 async function reloadStudent(){
   $('#st-name').textContent = state.me.full_name;
-  const rows = await YY.listMyAssignments();
+  // luyện tập + huy hiệu cô tặng: nếu chưa chạy migration-dot2.sql thì bỏ qua, portal vẫn chạy
+  const [rows, practice, awards] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => [])]);
+  state.practice = practice; state.awards = awards;
   const now = Date.now();
   const ev = detectEvents(rows);
   const render = (list) => list.length ? list.map(r => {
@@ -1071,6 +1173,7 @@ async function reloadStudent(){
   $('#st-homework').innerHTML = render(rows.filter(r => r.kind === 'homework'));
   renderMascot(rows, ev);
   renderStreaks(rows);
+  renderPractice();
   renderStickers(rows);
   const gotBadges = renderBadges(rows), freshBadges = newBadges(gotBadges);
   if(ev.done.length) showStickerPop(ev.done);
@@ -1081,8 +1184,9 @@ function openQuiz(id, url){ location.href = url + (url.includes('?') ? '&' : '?'
 
 /* ---------------- GIÁO VIÊN ---------------- */
 async function reloadTeacher(){
-  const [rows, students, classes] = await Promise.all([YY.listAllAssignmentRows(), YY.listStudents(), YY.listClasses()]);
-  Object.assign(state, { rows, students, classes });
+  const [rows, students, classes, practiceAll, awardsAll] = await Promise.all([YY.listAllAssignmentRows(), YY.listStudents(), YY.listClasses(),
+    YY.listAllPractice().catch(() => []), YY.listAllAwards().catch(() => [])]);
+  Object.assign(state, { rows, students, classes, practiceAll, awardsAll });
   const cnt = (s) => rows.filter(r => r.status === s).length;
   $('#n-pending').textContent = cnt('pending_review');
   $('#n-redo').textContent = cnt('needs_redo');
@@ -1153,10 +1257,11 @@ function renderRecords(){
   $('#tb-records').innerHTML = list.length ? list.map((o,k) => {
     const avg = Math.round(o.sum / o.n * 10) / 10;
     const sr = calcStreaks(state.rows.filter(r => r.student_id === o.sid));
+    const sdD = calcDayStreak(state.practiceAll.filter(p => p.student_id === o.sid));
     return `<tr><td class="medal">${medal[k] || (k+1)}</td><td>${who({full_name:o.name, code:o.code})}</td><td>${o.n}</td>
       <td><b>${o.best}%</b></td><td><div style="display:flex;align-items:center;gap:.5rem"><div class="bar"><i style="width:${Math.min(avg,100)}%"></i></div>${avg}%</div></td>
-      <td>${stk[o.sid] ? '🐟 × ' + stk[o.sid] : '—'}</td><td>🔥 <b>${sr.cur}</b> <span class="muted">(kỷ lục ${sr.best})</span></td><td>📅 <b>${sr.curW}</b> <span class="muted">(kỷ lục ${sr.bestW})</span></td></tr>`;
-  }).join('') : '<tr><td colspan="8" class="muted">Chưa có bài nào được chấm.</td></tr>';
+      <td>${stk[o.sid] ? '🐟 × ' + stk[o.sid] : '—'}</td><td>🔥 <b>${sr.cur}</b> <span class="muted">(kỷ lục ${sr.best})</span></td><td>📅 <b>${sr.curW}</b> <span class="muted">(kỷ lục ${sr.bestW})</span></td><td>🌞 <b>${sdD.cur}</b> <span class="muted">(kỷ lục ${sdD.best})</span></td></tr>`;
+  }).join('') : '<tr><td colspan="9" class="muted">Chưa có bài nào được chấm.</td></tr>';
 }
 $('#flt-status').addEventListener('change', renderRows);
 
@@ -1207,7 +1312,8 @@ function renderPeople(){
     <td>${esc(s.code)}</td><td><span class="zh">${esc(s.full_name)}</span></td>
     <td style="width:7.5rem"><input type="number" min="1950" max="2100" placeholder="Năm sinh" value="${s.birth_year ?? ''}" onchange="saveProf('${s.id}',{birth_year:this.value?+this.value:null})"></td>
     <td style="width:8rem"><select onchange="saveProf('${s.id}',{gender:this.value||null})"><option value="">—</option><option value="female"${s.gender === 'female' ? ' selected' : ''}>Nữ</option><option value="male"${s.gender === 'male' ? ' selected' : ''}>Nam</option></select></td>
-    <td><select onchange="addMember(this,'${s.id}')">${opts}</select></td></tr>`).join('');
+    <td><select onchange="addMember(this,'${s.id}')">${opts}</select></td>
+    <td><button class="btn" onclick="openGift('${s.id}')">🎁 Tặng</button></td></tr>`).join('');
 }
 $('#class-form').addEventListener('submit', async (ev) => {
   ev.preventDefault();
@@ -1224,6 +1330,35 @@ async function saveProf(id, patch){
     await YY.updateStudent(id, patch);
     Object.assign(state.students.find(x => x.id === id) || {}, patch);
   }catch(e){ alert('Không lưu được: ' + e.message); }
+}
+/* --- tặng huy hiệu --- */
+function openGift(sid){
+  const st = state.students.find(x => x.id === sid); if(!st) return;
+  const have = (state.awardsAll || []).filter(a => a.student_id === sid);
+  const haveHtml = have.map(a => { const g = GIFTS.find(x => x.key === a.badge_key); if(!g) return '';
+    return `<div class="li"><div>${g.emo} <b>${esc(g.name)}</b>${a.note ? `<div class="muted">${esc(a.note)}</div>` : ''}</div><button class="link" onclick="removeGift('${sid}','${g.key}')">Thu hồi</button></div>`; }).join('');
+  $('#modal-body').innerHTML = `
+    <div class="topbar"><h2 style="margin:0">🎁 Tặng huy hiệu cho <span class="zh">${esc(st.full_name)}</span></h2><button class="btn" onclick="closeModal()">Đóng</button></div>
+    <div class="gift-list">${GIFTS.map(g => `<label class="gift-opt"><input type="radio" name="gift" value="${g.key}"><span class="emo">${g.emo}</span>${esc(g.name)}${have.some(a => a.badge_key === g.key) ? '<div class="muted">đã tặng</div>' : ''}</label>`).join('')}</div>
+    <label for="gift-note">Lời nhắn của cô (không bắt buộc)</label>
+    <textarea id="gift-note" rows="2" placeholder="Ví dụ: Hôm nay em phát biểu rất tự tin!"></textarea>
+    <div class="err" id="gift-err"></div>
+    <button class="btn pri" onclick="saveGift('${sid}')">Tặng huy hiệu</button>
+    ${haveHtml ? '<h2 style="margin-top:1rem">Đã tặng</h2>' + haveHtml : ''}`;
+  $('#modal').classList.remove('hidden');
+}
+async function saveGift(sid){
+  const key = document.querySelector('input[name=gift]:checked')?.value;
+  if(!key){ $('#gift-err').textContent = 'Hãy chọn một huy hiệu'; return; }
+  try{
+    await YY.giveAward(sid, key, $('#gift-note').value.trim());
+    await reloadTeacher(); openGift(sid);
+  }catch(e){ $('#gift-err').textContent = 'Chưa tặng được: ' + e.message; }
+}
+async function removeGift(sid, key){
+  if(!confirm('Thu hồi huy hiệu này?')) return;
+  try{ await YY.removeAward(sid, key); await reloadTeacher(); openGift(sid); }
+  catch(e){ alert('Không thu hồi được: ' + e.message); }
 }
 async function rmMember(c, s){ await YY.removeFromClass(c, s); await reloadTeacher(); }
 
