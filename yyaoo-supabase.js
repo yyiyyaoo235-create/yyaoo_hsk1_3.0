@@ -170,6 +170,23 @@ const YY_CONFIG = {
       graded_at: new Date().toISOString()
     }).eq('id', id).select().single());
 
+  /* ---------- Đợt 4: khóa học HSK1–4 (xem migration-dot4.sql) ---------- */
+  // Giáo viên: toàn bộ tài liệu. Học sinh: RLS tự chỉ trả bài LUYỆN TẬP đúng cấp + đúng bài đã dạy của lớp mình
+  YY.listMaterials = async () =>
+    unwrap(await sb.from('course_materials').select('*').order('lesson').order('created_at'));
+  YY.addMaterial = async (m) =>
+    unwrap(await sb.from('course_materials').insert(m).select().single());
+  YY.addMaterials = async (rows) =>
+    unwrap(await sb.from('course_materials').insert(rows).select());
+  YY.deleteMaterial = async (id) =>
+    unwrap(await sb.from('course_materials').delete().eq('id', id));
+  // patch: { course: 'HSK1'|...|null, current_lesson: số }
+  YY.updateClass = async (id, patch) =>
+    unwrap(await sb.from('classes').update(patch).eq('id', id));
+  // Học sinh: các lớp mình đang học (RLS s_read_class) kèm cấp + mốc bài
+  YY.listMyClasses = async () =>
+    unwrap(await sb.from('classes').select('id, name, course, current_lesson'));
+
   /* ---------- Nút "Về portal" tự gắn vào mọi file đề / bài tập (không gắn trên portal.html) ----------
      Muốn tắt ở một file nào đó: thêm  <script>window.YY_NO_BACK_BUTTON = true</script>  trước khi nạp thư viện. */
   const addBackButton = () => {
