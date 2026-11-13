@@ -63,6 +63,26 @@ const YY_CONFIG = {
   YY.removeAward = async (studentId, badgeKey) =>
     unwrap(await sb.from('awards').delete().eq('student_id', studentId).eq('badge_key', badgeKey));
 
+  /* ---------- Đợt 3: tủ đồ của cá (xem migration-dot3.sql) ---------- */
+  YY.getMyStyle = async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    return unwrap(await sb.from('fish_style').select('hat, face, bg').eq('student_id', session.user.id).maybeSingle());
+  };
+  YY.saveMyStyle = async (style) => {
+    const { data: { session } } = await sb.auth.getSession();
+    return unwrap(await sb.from('fish_style').upsert({
+      student_id: session.user.id, hat: style.hat || null, face: style.face || null, bg: style.bg || null, updated_at: new Date().toISOString()
+    }, { onConflict: 'student_id' }));
+  };
+  YY.listMyItems = async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    return unwrap(await sb.from('fish_items').select('item_key, cost').eq('student_id', session.user.id));
+  };
+  YY.buyItem = async (itemKey, cost) => {
+    const { data: { session } } = await sb.auth.getSession();
+    return unwrap(await sb.from('fish_items').insert({ student_id: session.user.id, item_key: itemKey, cost }));
+  };
+
   // Dùng ở đầu mỗi file đề: chưa đăng nhập → chuyển về portal rồi quay lại đúng đề
   YY.requireLogin = async () => {
     const me = await YY.getProfile();
