@@ -170,5 +170,28 @@ const YY_CONFIG = {
       graded_at: new Date().toISOString()
     }).eq('id', id).select().single());
 
+  /* ---------- Nút "Về portal" tự gắn vào mọi file đề / bài tập (không gắn trên portal.html) ----------
+     Muốn tắt ở một file nào đó: thêm  <script>window.YY_NO_BACK_BUTTON = true</script>  trước khi nạp thư viện. */
+  const addBackButton = () => {
+    if (window.YY_NO_BACK_BUTTON || document.getElementById('yy-back-btn')) return;
+    const here = location.pathname.split('/').pop() || 'index.html';
+    const portal = String(YY_CONFIG.PORTAL_URL).split('?')[0].split('/').pop();
+    if (here === portal) return;                                  // đang ở portal rồi
+    const b = document.createElement('a');
+    b.id = 'yy-back-btn';
+    b.href = YY_CONFIG.PORTAL_URL;
+    b.textContent = '← Về portal';
+    b.setAttribute('style', 'position:fixed;left:14px;bottom:14px;z-index:2147483000;display:inline-flex;align-items:center;gap:.35rem;' +
+      'padding:.55rem .95rem;border-radius:999px;background:#0e7490;color:#fff;font:700 14px/1 system-ui,"Nunito",sans-serif;text-decoration:none;' +
+      'box-shadow:0 6px 18px rgba(14,116,144,.35);cursor:pointer');
+    b.onclick = (e) => {
+      // đã nộp bài thì quay về luôn; chưa nộp thì hỏi lại để khỏi mất bài đang làm
+      const submitted = /Đã nộp bài/.test(document.body.innerText || '');
+      if (!submitted && !confirm('Quay về portal? Nếu bạn chưa nộp bài thì bài đang làm sẽ không được lưu.')) e.preventDefault();
+    };
+    document.body.appendChild(b);
+  };
+  if (document.readyState === 'loading') document.addEventListener('DOMContentLoaded', addBackButton); else addBackButton();
+
   window.YY = YY;
 })();
