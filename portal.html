@@ -277,6 +277,21 @@
   .gift-opt:has(input:checked){border-color:var(--pink);background:var(--pink-soft)}
   .gift-opt .emo{font-size:1.4rem;display:block}
 
+  /* ===== đợt 3: tủ đồ của cá + album ===== */
+  .ward{display:grid;grid-template-columns:9.5rem 1fr;gap:1rem;align-items:start;background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:18px;padding:1rem}
+  @media (max-width:560px){.ward{grid-template-columns:1fr}.ward-prev{max-width:9rem;margin:0 auto}}
+  .ward-prev svg,.ward-art svg{width:100%;height:auto;display:block}
+  .ward-tabs{display:flex;gap:.4rem;margin-bottom:.6rem;flex-wrap:wrap}
+  .ward-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(6.2rem,1fr));gap:.5rem}
+  .ward-it{border:1px solid var(--line);border-radius:14px;padding:.35rem;text-align:center;cursor:pointer;font-size:.72rem;font-weight:700;background:#fff}
+  .ward-it.on{border-color:var(--pink);background:var(--pink-soft)}
+  .ward-it.locked{opacity:.8;cursor:default}
+  .ward-it.locked .ward-art{filter:grayscale(.85)}
+  .ward-it .btn{padding:.2rem .5rem;font-size:.7rem;margin-top:.15rem}
+  .ward-it .ward-art{width:4.2rem;margin:0 auto .2rem}
+  .album{margin:.4rem 0 1rem}
+  .album-h{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.4rem}
+
   /* ===== NỀN GỢN NƯỚC (WebGL, có nền dự phòng) ===== */
   body{background:#7fb0dc}
   .water{position:fixed;inset:0;z-index:-1;pointer-events:none;overflow:hidden;
@@ -343,6 +358,10 @@
     <div id="st-homework"></div>
     <div class="sec-title"><h2>🎖️ Sticker của tôi</h2><span class="chip c-pink" id="st-stk-n">0</span></div>
     <div id="st-stickers" class="stk-grid"></div>
+    <div class="sec-title"><h2>🎀 Tủ đồ của cá</h2><span class="chip c-yellow" id="st-pts"></span></div>
+    <div class="ward" id="st-ward"></div>
+    <div class="sec-title"><h2>📚 Album sưu tập</h2></div>
+    <div id="st-album"></div>
     <div class="sec-title"><h2>🏅 Bộ sưu tập huy hiệu</h2><span class="chip c-yellow" id="st-badge-n">0/10</span></div>
     <div id="st-badges" class="stk-grid"></div>
   </div>
@@ -519,7 +538,7 @@ const ACC = {
     face:`<path d="M-27 0 L-33 -3 M-25 -5 L-29 -10 M-20 -8 L-21 -14" stroke="#2F3A56" stroke-width="2" stroke-linecap="round"/>`},
   handsome:{
     hat:`<path d="M-24 -21 Q-22 -34 -10 -33 Q-2 -33 0 -26 Q-8 -30 -14 -26 Q-18 -22 -24 -21 Z" fill="#3D4A6B"/>`,
-    face:`<rect x="-30" y="-4" width="24" height="13" rx="5" fill="#2F3A56"/><path d="M-6 1 L5 -2" stroke="#2F3A56" stroke-width="2.2" stroke-linecap="round"/><path d="M-27 -1 L-21 -1" stroke="#fff" stroke-width="1.6" stroke-linecap="round" opacity=".6"/>`},
+    face:`<ellipse cx="-18" cy="2.5" rx="12.5" ry="10" fill="#2F3A56" stroke="#8FA2C4" stroke-width="1.6"/><path d="M-5.5 1 L5 -2" stroke="#8FA2C4" stroke-width="2.2" stroke-linecap="round"/><path d="M-25 -2.5 Q-21 -5.5 -16 -4.5" fill="none" stroke="#fff" stroke-width="2" stroke-linecap="round" opacity=".7"/>`},
   prince:{
     hat:`<path d="M-22 -22 L-22 -32 L-17 -27 L-12 -35 L-7 -27 L-2 -32 L-2 -22 Q-12 -19 -22 -22 Z" fill="#CFE3FF" stroke="#6F9BE0" stroke-width="1.6" stroke-linejoin="round"/><circle cx="-12" cy="-28" r="2.4" fill="#4F7FD8"/>`},
   king:{
@@ -529,10 +548,24 @@ const ACC = {
   knight:{
     hat:`<path d="M-25 -20 Q-26 -37 -12 -37 Q2 -37 1 -20 Q-12 -17 -25 -20 Z" fill="#C5CDD9" stroke="#8E9BB0" stroke-width="1.8" stroke-linejoin="round"/><path d="M-12 -37 Q-6 -47 4 -44 Q-2 -42 -3 -36 Z" fill="#E8456B"/><path d="M-12 -36 L-12 -20" stroke="#8E9BB0" stroke-width="1.4"/>`},
   sparkle:{
-    hat:`<path d="M-12 -42 L-10.6 -37.4 L-6 -36 L-10.6 -34.6 L-12 -30 L-13.4 -34.6 L-18 -36 L-13.4 -37.4 Z" fill="#FFD66B"/><path d="M-1 -35 L-0.1 -32 L2.9 -31 L-0.1 -30 L-1 -27 L-1.9 -30 L-4.9 -31 L-1.9 -32 Z" fill="#FFE9A8"/><path d="M-24 -34 L-23.1 -31.2 L-20.3 -30.3 L-23.1 -29.4 L-24 -26.6 L-24.9 -29.4 L-27.7 -30.3 L-24.9 -31.2 Z" fill="#FFE9A8"/>`},
+    hat:`<path d="M-12 -50 L-10 -43 L-3 -41 L-10 -39 L-12 -32 L-14 -39 L-21 -41 L-14 -43 Z" fill="#FFD66B" stroke="#E8A93A" stroke-width="1" stroke-linejoin="round"/><path d="M3 -38 L4.3 -34 L8.3 -32.7 L4.3 -31.4 L3 -27.4 L1.7 -31.4 L-2.3 -32.7 L1.7 -34 Z" fill="#FFE9A8" stroke="#E8A93A" stroke-width=".8" stroke-linejoin="round"/><path d="M-26 -38 L-24.8 -34.4 L-21.2 -33.2 L-24.8 -32 L-26 -28.4 L-27.2 -32 L-30.8 -33.2 L-27.2 -34.4 Z" fill="#FFE9A8" stroke="#E8A93A" stroke-width=".8" stroke-linejoin="round"/>`},
   dragon:{
     hat:`<path d="M-22 -22 L-25 -37 L-16 -27 Z" fill="#E8456B" stroke="#B02A4C" stroke-width="1.2" stroke-linejoin="round"/><path d="M-4 -22 L-1 -37 L-10 -27 Z" fill="#E8456B" stroke="#B02A4C" stroke-width="1.2" stroke-linejoin="round"/>`,
     face:`<path d="M-37 11 Q-44 8 -47 13 M-37 14 Q-44 15 -46 20" fill="none" stroke="#E8456B" stroke-width="1.6" stroke-linecap="round"/>`},
+  beanie:{
+    hat:`<path d="M-25 -21 Q-24 -37 -12 -37 Q0 -37 1 -21 Q-12 -17 -25 -21 Z" fill="#8FD3C4" stroke="#5DB5A3" stroke-width="1.6" stroke-linejoin="round"/><rect x="-26" y="-25" width="28" height="6" rx="3" fill="#6CC2B0" stroke="#5DB5A3" stroke-width="1.2"/><circle cx="-12" cy="-39" r="3.4" fill="#fff" stroke="#AEB8C8" stroke-width=".8"/>`},
+  catear:{
+    hat:`<path d="M-25 -21 L-24 -38 L-14 -26 Z" fill="#FFC9A6" stroke="#E89A6B" stroke-width="1.5" stroke-linejoin="round"/><path d="M1 -21 L0 -38 L-10 -26 Z" fill="#FFC9A6" stroke="#E89A6B" stroke-width="1.5" stroke-linejoin="round"/><path d="M-22.5 -26 L-22.5 -33 L-17 -27.5 Z" fill="#FF9DB8"/><path d="M-1.5 -26 L-1.5 -33 L-7 -27.5 Z" fill="#FF9DB8"/>`},
+  flower:{
+    hat:`<circle cx="-12" cy="-36" r="3.6" fill="#FF9DB8"/><circle cx="-6" cy="-32" r="3.6" fill="#FF9DB8"/><circle cx="-8" cy="-25.5" r="3.6" fill="#FF9DB8"/><circle cx="-16" cy="-25.5" r="3.6" fill="#FF9DB8"/><circle cx="-18" cy="-32" r="3.6" fill="#FF9DB8"/><circle cx="-12" cy="-30.5" r="2.8" fill="#FFD66B"/><path d="M-26 -22 Q-20 -26 -17 -22 M2 -22 Q-4 -26 -7 -22" fill="none" stroke="#7BCB8A" stroke-width="2.2" stroke-linecap="round"/>`},
+  grad:{
+    hat:`<path d="M-12 -42 L-31 -33 L-12 -24 L7 -33 Z" fill="#3D4A6B" stroke="#2F3A56" stroke-width="1.2" stroke-linejoin="round"/><path d="M-22 -29 L-22 -22 Q-12 -18 -2 -22 L-2 -29 L-12 -24.5 Z" fill="#2F3A56"/><path d="M6 -33 L6 -24" stroke="#F2C94C" stroke-width="1.8" stroke-linecap="round"/><circle cx="6" cy="-22.5" r="2" fill="#F2C94C"/>`},
+  festive:{
+    hat:`<path d="M-12 -46 L-25 -21 Q-12 -17 1 -21 Z" fill="#FF8FB1" stroke="#E8708F" stroke-width="1.5" stroke-linejoin="round"/><path d="M-19 -33 L-5 -33 M-22 -27 L-2 -27" stroke="#fff" stroke-width="2.2" stroke-linecap="round" opacity=".85"/><circle cx="-12" cy="-47" r="3.4" fill="#FFD66B" stroke="#E8A93A" stroke-width="1"/>`},
+  glasses:{
+    face:`<circle cx="-18" cy="2" r="10.5" fill="#fff" fill-opacity=".25" stroke="#2F3A56" stroke-width="2.2"/><path d="M-8 0.5 L3 -2" stroke="#2F3A56" stroke-width="2" stroke-linecap="round"/>`},
+  blush:{
+    face:`<ellipse cx="-17" cy="12" rx="8" ry="3.4" fill="#FF8FB1" opacity=".7"/><path d="M-31 -10 L-30 -7 L-27 -6 L-30 -5 L-31 -2 L-32 -5 L-35 -6 L-32 -7 Z" fill="#FFD66B"/>`},
   lazy:{
     hat:`<path d="M-24 -21 Q-20 -36 -6 -33 Q4 -30 8 -18 Q0 -26 -4 -22 Q-12 -19 -24 -21 Z" fill="#9DB8F0" stroke="#6F8FD8" stroke-width="1.6" stroke-linejoin="round"/><path d="M-23 -22 Q-12 -18 -1 -22" fill="none" stroke="#fff" stroke-width="2.4" stroke-linecap="round"/><circle cx="8" cy="-17" r="3.2" fill="#fff" stroke="#AEB8C8" stroke-width=".8"/>`}
 };
@@ -540,6 +573,7 @@ const ACC = {
 function fishSVG(mood = 'normal', o = {}){
   const bg = o.bg || '#D9F3F0';
   const A = ACC[o.acc] || null;
+  const Hs = o.hat ? ACC[o.hat] : A, Fs = o.face ? ACC[o.face] : (o.hat ? ACC[o.hat] : A);
   const star = (x, y, s, delay) => `
     <g transform="translate(${x} ${y}) scale(${s})">
       <path class="f-spark" style="animation-delay:${delay}s" d="M0 -6 L1.6 -1.6 L6 0 L1.6 1.6 L0 6 L-1.6 1.6 L-6 0 L-1.6 -1.6 Z" fill="#FFD66B"/>
@@ -607,9 +641,9 @@ function fishSVG(mood = 'normal', o = {}){
       ${eyes[mood]}
       <ellipse cx="-28" cy="18" rx="6.5" ry="4" fill="#FFA6B8" opacity="${blush}"/>
       ${mouths[mood]}
-      ${A && A.face ? A.face : ''}
+      ${Fs && Fs.face ? Fs.face : ''}
       <g transform="rotate(${mood === 'sleep' ? -18 : -10} -12 -24)">
-        ${A ? A.hat : DEFAULT_HAT}
+        ${Hs && Hs.hat ? Hs.hat : DEFAULT_HAT}
       </g>
     </g>
     </g>
@@ -942,8 +976,9 @@ function renderMascot(rows, ev){
   }else{
     mood = 'happy'; msg = M.clear;
   }
+  state.mascotMood = mood;
   $('#st-mascot').innerHTML = `
-    <div class="mascot-fish${party ? ' hop' : ''}">${fishSVG(mood, {acc})}</div>
+    <div class="mascot-fish${party ? ' hop' : ''}">${fishSVG(mood, mascotOpts(rows, mood))}</div>
     <div class="speech">${msg}${rk ? `<div class="muted">${rk.emo} ${esc(rk.name)}</div>` : ''}</div>`;
   if(party) confetti($('#st-mascot .mascot-fish'));
 }
@@ -981,6 +1016,134 @@ async function saveMyProfile(){
     err.textContent = 'Chưa lưu được: ' + e.message;
     $('#pf-skip').classList.remove('hidden');
   }
+}
+
+/* ===== đợt 3: bộ sưu tập + tủ đồ của cá ===== */
+const POINT_RARE = 5;   // 1 sticker thường = 1 điểm, sticker hiếm = 5 điểm
+const COLL = {
+  props:{title:'Bộ Đồ vật trên cá', emo:'🎒', reward:'grad', rewardName:'Mũ cử nhân', items:[
+    {name:'Cá cầm bút',      emo:'✏️', mood:'normal', bg:'#DCEBFF', ring:'#7FA8F0', how:'Hoàn thành một bài kiểm tra'},
+    {name:'Cá đeo kính',     emo:'👓', mood:'normal', bg:'#E6DDF8', ring:'#B9A2E6', how:'Hoàn thành một bài tập về nhà'},
+    {name:'Cá cầm bút lông', emo:'🖌️', mood:'happy',  bg:'#FFE3C7', ring:'#FF9F43', how:'Hoàn thành bài có chữ Hán / bộ thủ'},
+    {name:'Cá cầm trà',      emo:'🍵', mood:'happy',  bg:'#E3F6D8', ring:'#8CCB6B', how:'Hoàn thành bài hội thoại / bài khóa'},
+    {name:'Cá đeo tai nghe',  emo:'🎧', mood:'normal', bg:'#DDF4FF', ring:'#6FC0EA', how:'Hoàn thành bài nghe'}]},
+  occ:{title:'Bộ Theo dịp', emo:'🎊', reward:'festive', rewardName:'Mũ lễ hội', items:[
+    {name:'Cá lì xì',        emo:'🧧', mood:'jump',  bg:'#FFD9D2', ring:'#E8456B', how:'Hoàn thành bài từ 15/1 đến 25/2 (dịp Tết)'},
+    {name:'Cá lồng đèn',     emo:'🏮', mood:'happy', bg:'#FFE9A8', ring:'#F29A3A', how:'Hoàn thành bài trong tháng 9 (Trung thu)'},
+    {name:'Cá Giáng sinh',   emo:'🎄', mood:'happy', bg:'#DDF3E4', ring:'#4DAA6B', how:'Hoàn thành bài trong tháng 12'}]}
+};
+const doneRows = (rows) => rows.filter(r => r.status === 'done');
+function collNames(rows){ const set = new Set(); doneRows(rows).forEach(r => bonusStickers(r).forEach(x => set.add(x.name))); return set; }
+const collDone = (key, rows) => { const n = collNames(rows); return COLL[key].items.every(i => n.has(i.name)); };
+const COLL_BADGES = [
+  {id:'col-props', name:'Cá sưu tầm đồ vật', hint:'Đủ bộ Đồ vật trên cá', emo:'🎒', mood:'jump', bg:'#DCEBFF', ring:'#7FA8F0', test:c => c.colProps},
+  {id:'col-occ',   name:'Cá sưu tầm dịp lễ', hint:'Đủ bộ Theo dịp',       emo:'🎊', mood:'jump', bg:'#FFE9A8', ring:'#F29A3A', test:c => c.colOcc}
+];
+
+// cửa hàng: đổi bằng điểm sticker
+const SHOP = [
+  {key:'beanie',  slot:'hat',  name:'Mũ len',       emo:'🧢', cost:6},
+  {key:'catear',  slot:'hat',  name:'Tai mèo',      emo:'🐱', cost:6},
+  {key:'flower',  slot:'hat',  name:'Vòng hoa',     emo:'🌸', cost:8},
+  {key:'glasses', slot:'face', name:'Kính tròn',    emo:'👓', cost:4},
+  {key:'blush',   slot:'face', name:'Má hồng',      emo:'💖', cost:3},
+  {key:'bg-pink',   slot:'bg', name:'Nền hồng',     color:'#FFE0EC', cost:3},
+  {key:'bg-yellow', slot:'bg', name:'Nền vàng',     color:'#FFF1BF', cost:3},
+  {key:'bg-lav',    slot:'bg', name:'Nền tím',      color:'#E6DDF8', cost:3},
+  {key:'bg-sky',    slot:'bg', name:'Nền trời',     color:'#DCEBFF', cost:3},
+  {key:'bg-peach',  slot:'bg', name:'Nền đào',      color:'#FFE3C7', cost:3}
+];
+const earnedPoints = (rows) => doneRows(rows).reduce((n, r) => n + stickersFor(r).reduce((m, x) => m + (x.rare ? POINT_RARE : 1), 0), 0);
+const spentPoints = () => (state.items || []).reduce((n, i) => n + (+i.cost || 0), 0);
+function wardItems(rows){
+  const done = doneRows(rows).length, names = collNames(rows), rare = new Set();
+  doneRows(rows).forEach(r => { const x = rareSticker(r); if(x) rare.add(x.acc); });
+  const have = new Set((state.items || []).map(i => i.item_key));
+  const list = rankSet().map(([name, acc, emo], i) => ({key:acc, slot:'hat', name, emo, own:done >= RANK_AT[i], hint:`Hoàn thành ${RANK_AT[i]} bài`}));
+  list.push({key:'sparkle', slot:'hat', name:'Mũ sao lấp lánh', emo:'✨', own:rare.has('sparkle'), hint:'Nhận sticker hiếm Cá vàng lấp lánh'});
+  list.push({key:'dragon',  slot:'hat', name:'Sừng rồng',       emo:'🐉', own:rare.has('dragon'),  hint:'Nhận sticker hiếm Cá rồng'});
+  list.push({key:'grad',    slot:'hat', name:'Mũ cử nhân',      emo:'🎓', own:collDone('props', rows), hint:'Đủ bộ Đồ vật trên cá'});
+  list.push({key:'festive', slot:'hat', name:'Mũ lễ hội',       emo:'🎉', own:collDone('occ', rows),   hint:'Đủ bộ Theo dịp'});
+  SHOP.forEach(it => list.push({...it, own:have.has(it.key), shop:true}));
+  return list;
+}
+// phong cách đang mặc (chỉ tính món còn sở hữu)
+function wardLook(rows){
+  const list = wardItems(rows), st = state.style || {}, out = {};
+  ['hat', 'face', 'bg'].forEach(slot => {
+    const it = list.find(x => x.slot === slot && x.key === st[slot]);
+    if(it && it.own) out[slot] = slot === 'bg' ? it.color : it.key;
+  });
+  return out;
+}
+function lookOpts(rows){
+  const l = wardLook(rows), rk = rankOf(doneRows(rows).length), o = {acc: rk ? rk.acc : undefined};
+  if(l.hat) o.hat = l.hat;
+  if(l.face) o.face = l.face;
+  if(l.bg) o.bg = l.bg;
+  return o;
+}
+function mascotOpts(rows, mood){ const lo = lookOpts(rows); return mood === 'sleep' ? {acc:'lazy', bg:lo.bg} : lo; }
+function refreshMascotFish(){
+  const el = $('#st-mascot .mascot-fish'); if(!el || !state.myRows) return;
+  el.innerHTML = fishSVG(state.mascotMood || 'normal', mascotOpts(state.myRows, state.mascotMood));
+}
+function wardCard(it, look, pts){
+  const art = it.slot === 'bg' ? fishSVG('normal', {bg:it.color, still:true})
+            : it.slot === 'face' ? fishSVG('normal', {face:it.key, still:true})
+            : fishSVG('normal', {hat:it.key, still:true});
+  const on = (look[it.slot] === (it.slot === 'bg' ? it.color : it.key));
+  if(it.own) return `<div class="ward-it${on ? ' on' : ''}" onclick="wardEquip('${it.slot}','${it.key}')"><div class="ward-art">${art}</div>${esc(it.name)}${on ? '<div class="muted">Đang mặc ✓</div>' : ''}</div>`;
+  if(it.shop) return `<div class="ward-it locked"><div class="ward-art">${art}</div>${esc(it.name)}<div><button class="btn${pts >= it.cost ? ' pri' : ''}" ${pts >= it.cost ? '' : 'disabled'} onclick="wardBuy('${it.key}')">Mua · ${it.cost} 🐟</button></div></div>`;
+  return `<div class="ward-it locked" title="${esc(it.hint)}"><div class="ward-art">${art}</div>${esc(it.name)}<div class="muted">🔒 ${esc(it.hint)}</div></div>`;
+}
+function renderWardrobe(rows){
+  const list = wardItems(rows), look = wardLook(rows), pts = earnedPoints(rows) - spentPoints(), tab = state.wardTab || 'hat';
+  $('#st-pts').textContent = '🐟 ' + pts + ' điểm';
+  const tabs = [['hat', '🎩 Đầu'], ['face', '👓 Mặt'], ['bg', '🎨 Nền']];
+  const label = {hat:'Mặc định', face:'Không đeo', bg:'Nền gốc'}[tab];
+  $('#st-ward').innerHTML = `
+    <div class="ward-prev">${fishSVG('happy', {...lookOpts(rows), still:true})}</div>
+    <div>
+      <div class="ward-tabs">${tabs.map(([k, l]) => `<button class="btn${k === tab ? ' pri' : ''}" onclick="wardTab('${k}')">${l}</button>`).join('')}</div>
+      <div class="ward-grid">
+        <div class="ward-it${look[tab] ? '' : ' on'}" onclick="wardEquip('${tab}',null)"><div class="ward-art" style="display:grid;place-items:center;aspect-ratio:1;font-size:1.6rem">⭕</div>${label}</div>
+        ${list.filter(i => i.slot === tab).map(i => wardCard(i, look, pts)).join('')}
+      </div>
+      <div class="muted" style="margin-top:.5rem">Mỗi sticker thường = 1 điểm, sticker hiếm = ${POINT_RARE} điểm. Đồ có 🔒 mở khóa theo thành tích, đồ có giá thì đổi bằng điểm.</div>
+    </div>`;
+}
+function wardTab(k){ state.wardTab = k; renderWardrobe(state.myRows); }
+async function wardEquip(slot, key){
+  const cur = state.style?.[slot];
+  state.style = {...(state.style || {}), [slot]: (key === null || cur === key) ? null : key};
+  renderWardrobe(state.myRows); refreshMascotFish();
+  try{ await YY.saveMyStyle(state.style); }catch(e){ alert('Chưa lưu được tủ đồ: ' + e.message); }
+}
+async function wardBuy(key){
+  const it = SHOP.find(x => x.key === key); if(!it) return;
+  const pts = earnedPoints(state.myRows) - spentPoints();
+  if(pts < it.cost){ alert('Chưa đủ điểm để mua món này.'); return; }
+  try{
+    await YY.buyItem(key, it.cost);
+    state.items = [...(state.items || []), {item_key:key, cost:it.cost}];
+    renderWardrobe(state.myRows);
+    wardEquip(it.slot, key);   // mua xong mặc luôn
+  }catch(e){ alert('Chưa mua được: ' + e.message); }
+}
+function renderAlbum(rows){
+  const names = collNames(rows);
+  $('#st-album').innerHTML = Object.values(COLL).map(c => {
+    const got = c.items.filter(i => names.has(i.name)).length, full = got === c.items.length;
+    return `<div class="album">
+      <div class="album-h"><b>${c.emo} ${esc(c.title)}</b><span class="chip ${full ? 'c-green' : 'c-yellow'}">${got}/${c.items.length}</span>
+        <span class="muted">${full ? '🎁 Đã mở: ' : 'Đủ bộ để mở: '}${esc(c.rewardName)}</span></div>
+      <div class="stk-grid">${c.items.map((i, k) => { const ok = names.has(i.name), rot = [-4, 3, -2, 5, -5, 2][k % 6];
+        return `<div class="stk${ok ? '' : ' locked'}" style="--rot:${ok ? rot : 0}deg;--ring:${ok ? i.ring : '#c9d6dc'}" title="${esc(i.how)}">
+          <div class="stk-art">${emblemFish(i, {still:true})}</div>
+          <div class="stk-name">${esc(i.name)}</div>
+          <div class="stk-hint">${ok ? 'Đã sưu tầm ✓' : '🔒 ' + esc(i.how)}</div></div>`; }).join('')}</div>
+    </div>`; }).join('');
 }
 
 function renderStickers(rows){
@@ -1031,7 +1194,8 @@ function badgeStats(rows){
     midnight: sub.some(r => { const d = new Date(r.submitted_at); return d.getHours() === 0 && d.getMinutes() < 10; }),
     lucky88: done.some(r => +r.percent === 88),
     bestA: st.best, bestW: st.bestW,
-    bestD: calcDayStreak(state.practice).best, practices: (state.practice || []).length
+    bestD: calcDayStreak(state.practice).best, practices: (state.practice || []).length,
+    colProps: collDone('props', rows), colOcc: collDone('occ', rows)
   };
 }
 const EXTRA_BADGES = [
@@ -1060,7 +1224,7 @@ function rankBadges(){
     hint: `Hoàn thành ${RANK_AT[i]} bài`, test: c => c.done >= RANK_AT[i]
   }));
 }
-const allBadges = () => [...BASE_BADGES, ...rankBadges(), ...EXTRA_BADGES, ...DAY_BADGES, ...giftBadges()];
+const allBadges = () => [...BASE_BADGES, ...rankBadges(), ...EXTRA_BADGES, ...DAY_BADGES, ...COLL_BADGES, ...giftBadges()];
 const badgeFish = (b, o = {}) => emblemFish(b, o);
 function renderBadges(rows){
   const c = badgeStats(rows), L = allBadges(), got = L.filter(b => b.test(c));
@@ -1148,8 +1312,10 @@ async function doLogout(){ await YY.logout(); location.href = YY.config.PORTAL_U
 async function reloadStudent(){
   $('#st-name').textContent = state.me.full_name;
   // luyện tập + huy hiệu cô tặng: nếu chưa chạy migration-dot2.sql thì bỏ qua, portal vẫn chạy
-  const [rows, practice, awards] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => [])]);
-  state.practice = practice; state.awards = awards;
+  const [rows, practice, awards, style, items] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => []),
+    YY.getMyStyle().catch(() => null), YY.listMyItems().catch(() => [])]);
+  state.practice = practice; state.awards = awards; state.myRows = rows;
+  state.style = style || {}; state.items = items;
   const now = Date.now();
   const ev = detectEvents(rows);
   const render = (list) => list.length ? list.map(r => {
@@ -1175,6 +1341,8 @@ async function reloadStudent(){
   renderStreaks(rows);
   renderPractice();
   renderStickers(rows);
+  renderAlbum(rows);
+  renderWardrobe(rows);
   const gotBadges = renderBadges(rows), freshBadges = newBadges(gotBadges);
   if(ev.done.length) showStickerPop(ev.done);
   if(freshBadges.length) showBadgePop(freshBadges);
