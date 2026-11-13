@@ -144,6 +144,20 @@
   .ico{width:1.9rem;height:1.9rem;border-radius:11px;background:#eaf8fa;display:grid;place-items:center;font-size:.95rem;flex:none}
   .nav-i.course{cursor:default}.nav-i.course:hover{background:none}
   .ico.g{background:var(--green-soft)}
+  .nav-i.course[data-course]{cursor:pointer}.nav-i.course[data-course]:hover{background:#eaf8fa}.nav-i.course.on{background:var(--pink-soft);color:var(--pink)}
+  .nav-i .soon{margin-left:auto;font-size:.6rem;font-weight:800;color:var(--muted)}
+  .cr-les{border:1px solid var(--line);border-radius:16px;background:#fff;margin:.5rem 0;overflow:hidden}
+  .cr-les>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;font-weight:800}
+  .cr-les>summary::-webkit-details-marker{display:none}
+  .cr-les>summary::before{content:'▸';color:var(--muted);transition:transform .15s}
+  .cr-les[open]>summary::before{transform:rotate(90deg)}
+  .cr-les[open]>summary{background:var(--pink-soft)}
+  .cr-zh{font-weight:700;color:var(--muted);font-size:.85rem}
+  .cr-mat{display:flex;align-items:center;gap:.6rem;padding:.45rem .9rem;border-top:1px solid var(--line)}
+  .cr-mat .t{flex:1;min-width:0}.cr-mat .t b{display:block;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cr-mat .t span{font-size:.72rem;color:var(--muted);word-break:break-all}
+  .cr-mat .x{border:0;background:none;color:var(--muted);font-size:.9rem;padding:.2rem .4rem}
+  .cr-empty{padding:.5rem .9rem;border-top:1px solid var(--line)}
   .badge{margin-left:auto;background:var(--pink);color:#fff;border-radius:999px;font-size:.68rem;min-width:1.3rem;height:1.3rem;display:grid;place-items:center;padding:0 .35rem}
   .badge:empty,.badge.zero{display:none}
   .side-foot{margin-top:auto;padding:.8rem 0 0;border-top:1px solid var(--line);font-size:.75rem}
@@ -296,7 +310,9 @@
   .album-h{display:flex;gap:.6rem;align-items:center;flex-wrap:wrap;margin-bottom:.4rem}
 
   /* ===== khung học sinh: thanh bên như cô, điện thoại thì thanh nút ở đáy ===== */
-  .st-in{max-width:64rem}
+  .st-in{max-width:64rem;margin:0 auto;transition:max-width .22s ease}
+  .st-shell.collapsed .st-in{max-width:80rem}
+  .st-shell.collapsed #st-sbname{display:none}
   .only-mobile{display:none}
   .seg{display:flex;gap:.4rem;flex-wrap:wrap;margin:.2rem 0 .8rem}
   .seg .btn{display:inline-flex;align-items:center;gap:.35rem}
@@ -427,6 +443,7 @@
     <!-- luyện tập -->
     <div id="stab-practice" class="hidden">
       <div class="sec-title"><h2>🧩 Luyện tập hằng ngày</h2><span class="chip c-yellow" id="st-prac-n"></span></div>
+      <div id="st-prac-class" style="margin:.2rem 0 .6rem"></div>
       <div id="st-practice" class="prac-grid"></div>
       <div class="sec-title"><h2>🗓️ Những ngày bạn đã luyện</h2><span class="chip c-green" id="st-cal-n"></span></div>
       <div class="card"><div class="cal" id="st-cal"></div><div class="muted" style="margin-top:.5rem">12 tuần gần nhất · ô màu xanh là ngày đã luyện tập, ô có viền đậm là hôm nay.</div></div>
@@ -466,7 +483,10 @@
     <button class="nav-i" data-tab="people" data-tip="Lớp &amp; học sinh"><span class="ico">👩‍🎓</span><span class="lbl">Lớp &amp; học sinh</span></button>
     <button class="nav-i" data-tab="records" data-tip="Kỷ lục học tập"><span class="ico">🏆</span><span class="lbl">Kỷ lục học tập</span></button>
     <div class="side-h">KHOÁ HỌC</div>
-    <div class="nav-i course" data-tip="HSK1"><span class="ico g">📗</span><span class="lbl">HSK1</span></div>
+    <div class="nav-i course" data-course="HSK1" data-tip="HSK1"><span class="ico g">📗</span><span class="lbl">HSK1</span></div>
+    <div class="nav-i course" data-course="HSK2" data-tip="HSK2"><span class="ico g">📘</span><span class="lbl">HSK2</span><span class="soon">chưa dạy</span></div>
+    <div class="nav-i course" data-course="HSK3" data-tip="HSK3"><span class="ico g">📙</span><span class="lbl">HSK3</span><span class="soon">chưa dạy</span></div>
+    <div class="nav-i course" data-course="HSK4" data-tip="HSK4"><span class="ico g">📕</span><span class="lbl">HSK4</span></div>
     <div class="side-foot"><div class="muted" id="sb-name"></div><button class="foot-btn" onclick="doLogout()" data-tip="Đăng xuất"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="lbl">Đăng xuất</span></button></div>
   </aside>
   <div id="side-tip" role="tooltip"></div>
@@ -518,6 +538,39 @@
         <thead><tr><th>Học sinh</th><th>Lớp</th><th>Bài</th><th>Loại</th><th>Hạn nộp</th><th>Điểm</th><th>Trạng thái</th><th></th></tr></thead>
         <tbody id="tb-rows"></tbody>
       </table></div>
+    </div>
+
+    <!-- khóa học -->
+    <div id="tab-course" class="hidden">
+      <div class="card">
+        <h2 id="cr-name" style="margin:0"></h2>
+        <div class="muted" id="cr-sub"></div>
+        <div id="cr-classes" style="margin-top:.5rem"></div>
+      </div>
+      <div class="card hidden" id="cr-import">
+        <b>Kho tài liệu đang trống.</b>
+        <div class="muted" id="cr-import-t" style="margin:.2rem 0 .5rem"></div>
+        <button class="btn pri" id="cr-import-b" type="button">Nhập tài liệu mẫu lên Supabase</button>
+      </div>
+      <details class="card" id="cr-addcard">
+        <summary style="cursor:pointer;font-weight:800;font-size:1rem">＋ Thêm tài liệu vào khóa học</summary>
+        <form id="cr-form" style="margin-top:.6rem">
+          <div class="row">
+            <div><label>Thuộc bài</label><select id="cr-f-lesson"></select></div>
+            <div><label>Loại tài liệu</label><select id="cr-f-type">
+              <option value="lecture">📖 Bài giảng (mở để dạy/chiếu)</option>
+              <option value="practice">🧩 Luyện tập (cho học sinh)</option>
+              <option value="test">📝 Đề kiểm tra (giao nhanh)</option>
+              <option value="homework">📚 Bài tập về nhà (giao nhanh)</option></select></div>
+          </div>
+          <div class="row">
+            <div><label>Tên hiển thị</label><input id="cr-f-title" placeholder="Từ vựng &amp; bài khóa" required></div>
+            <div><label>Đường dẫn (file trên GitHub Pages hoặc link ngoài)</label><input id="cr-f-url" placeholder="hsk1/bai7.html hoặc https://…" required></div>
+          </div>
+          <button class="btn pri" type="submit" style="margin-top:.6rem">Thêm vào bài</button>
+        </form>
+      </details>
+      <div id="cr-body"></div>
     </div>
 
     <!-- giao bài -->
@@ -955,11 +1008,9 @@ function renderStreaks(rows){
 }
 
 /* ===== luyện tập hằng ngày: chuỗi ngày + băng đóng chuỗi (1 băng/tháng, tự động) ===== */
-// Cô thêm file luyện tập vào đây: {level:'HSK1', title:'Tên bài', url:'ten-file.html'}
-// level là chữ tự do (HSK1, HSK2, ... HSK9) để gom nhóm
-const PRACTICE = [
-  {level:'HSK1', title:'Luyện từ vựng (bài mẫu, thử nghiệm)', url:'luyen-tap-mau.html'}
-];
+// Cô thêm bài luyện tập ở phần giáo viên → Khóa học (loại “Luyện tập”)
+// Danh sách này do Supabase trả về theo lớp của học sinh (cấp + bài đã dạy); xem YY.listMaterials
+let PRACTICE = [];
 const VN_TZ = 'Asia/Ho_Chi_Minh';
 const todayVN = () => new Date().toLocaleDateString('en-CA', {timeZone: VN_TZ});   // YYYY-MM-DD theo giờ Việt Nam
 const dnum = (t) => { const [y, m, d] = String(t).slice(0, 10).split('-').map(Number); return Date.UTC(y, m - 1, d) / 864e5; };
@@ -989,7 +1040,10 @@ function renderPractice(){
   chipEl.className = 'chip ' + (sd.todayDone ? 'c-green' : 'c-yellow');
   $('#st-practice').innerHTML = PRACTICE.length
     ? PRACTICE.map(p => `<div class="prac-card"><div style="flex:1"><span class="chip c-pink">${esc(p.level)}</span><div class="a-title">${esc(p.title)}</div></div><a class="btn pri" href="${esc(p.url)}">Luyện</a></div>`).join('')
-    : '<div class="muted">Cô chưa thêm bài luyện tập nào.</div>';
+    : '<div class="muted">Lớp của bạn chưa có bài luyện tập nào được mở. Cô sẽ mở thêm khi dạy tới bài mới nhé!</div>';
+  const cl = (state.myClasses || []).filter(c => c.course);
+  const info = $('#st-prac-class');
+  if(info) info.innerHTML = cl.map(c => `<span class="chip c-pink" style="margin:.1rem .3rem .1rem 0">👥 ${esc(c.name)} · ${esc(c.course)} · tới Bài ${c.current_lesson || 0}</span>`).join('');
 }
 
 /* ===== huy hiệu cô tặng thủ công ===== */
@@ -1398,8 +1452,11 @@ async function doLogout(){ await YY.logout(); location.href = YY.config.PORTAL_U
 async function reloadStudent(){
   $('#st-sbname').textContent = state.me.full_name;
   // luyện tập + huy hiệu cô tặng: nếu chưa chạy migration-dot2.sql thì bỏ qua, portal vẫn chạy
-  const [rows, practice, awards, style, items] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => []),
-    YY.getMyStyle().catch(() => null), YY.listMyItems().catch(() => [])]);
+  const [rows, practice, awards, style, items, mats, myClasses] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => []),
+    YY.getMyStyle().catch(() => null), YY.listMyItems().catch(() => []), YY.listMaterials().catch(() => []), YY.listMyClasses().catch(() => [])]);
+  state.myClasses = myClasses;
+  PRACTICE = (mats || []).filter(m => m.type === 'practice').sort((a, b) => b.lesson - a.lesson)
+    .map(m => ({level: m.course, title: (m.lesson ? 'Bài ' + m.lesson + ' · ' : '') + m.title, url: m.url}));
   state.practice = practice; state.awards = awards; state.myRows = rows;
   state.style = style || {}; state.items = items;
   const ev = detectEvents(rows);
@@ -1507,15 +1564,15 @@ function openQuiz(id, url){ location.href = url + (url.includes('?') ? '&' : '?'
 
 /* ---------------- GIÁO VIÊN ---------------- */
 async function reloadTeacher(){
-  const [rows, students, classes, practiceAll, awardsAll] = await Promise.all([YY.listAllAssignmentRows(), YY.listStudents(), YY.listClasses(),
-    YY.listAllPractice().catch(() => []), YY.listAllAwards().catch(() => [])]);
-  Object.assign(state, { rows, students, classes, practiceAll, awardsAll });
+  const [rows, students, classes, practiceAll, awardsAll, mats] = await Promise.all([YY.listAllAssignmentRows(), YY.listStudents(), YY.listClasses(),
+    YY.listAllPractice().catch(() => []), YY.listAllAwards().catch(() => []), YY.listMaterials().catch(() => state.mats || [])]);
+  Object.assign(state, { rows, students, classes, practiceAll, awardsAll, mats });
   const cnt = (s) => rows.filter(r => r.status === s).length;
   $('#n-pending').textContent = cnt('pending_review');
   $('#n-redo').textContent = cnt('needs_redo');
   $('#n-over').textContent = cnt('overdue');
   $('#n-done').textContent = cnt('done');
-  renderRows(); renderHome(); renderRecords(); renderAssignForm(); renderPeople();
+  renderRows(); renderHome(); renderRecords(); renderAssignForm(); renderPeople(); renderCourse();
 }
 
 const clsOf = (sid) => state.classes.filter(c => (c.class_members || []).some(m => m.student_id === sid)).map(c => c.name).join(', ') || '—';
@@ -1588,15 +1645,137 @@ function renderRecords(){
 }
 $('#flt-status').addEventListener('change', renderRows);
 
-const TITLES = {home:'Tổng quan', monitor:'Giám sát học sinh', assign:'Giao bài', people:'Lớp & học sinh', records:'Kỷ lục học tập'};
+const TITLES = {home:'Tổng quan', monitor:'Giám sát học sinh', assign:'Giao bài', people:'Lớp & học sinh', records:'Kỷ lục học tập', course:'Khóa học'};
 function go(tab, status){
   Object.keys(TITLES).forEach(t => $('#tab-'+t).classList.toggle('hidden', t !== tab));
   document.querySelectorAll('.nav-i[data-tab]').forEach(n => n.classList.toggle('on', n.dataset.tab === tab));
+  document.querySelectorAll('.nav-i[data-course]').forEach(n => n.classList.toggle('on', tab === 'course' && n.dataset.course === state.course));
   $('#pg-title').textContent = TITLES[tab];
   if(status !== undefined){ $('#flt-status').value = status; renderRows(); }
   window.scrollTo(0, 0);
 }
 document.querySelectorAll('.nav-i[data-tab]').forEach(n => n.addEventListener('click', () => go(n.dataset.tab, n.dataset.tab === 'monitor' ? '' : undefined)));
+
+/* --- khóa học: Cấp → Bài → Tài liệu --- */
+// Danh sách bài của từng cấp (đổi giáo trình / thêm bài chỉ cần sửa ở đây)
+const COURSES = {
+  HSK1:{book:'Giáo trình chuẩn HSK 1 · khung mới 3.0', lessons:[
+    [1,'AI小语，你好！'],[2,'我叫李文'],[3,'我是中国人'],[4,'我有两个孩子'],[5,'今天我休息'],
+    [6,'你的手机号是多少？'],[7,'我晚上六点半下班'],[8,'我爸爸也在医院工作'],[9,'我明天上午在学校学习'],
+    [10,'这儿的苹果真便宜！'],[11,'我读大学呢'],[12,'昨天下雪了'],[13,'请给我一杯茶'],[14,'我看了一个电影'],[15,'大兴机场见！']]},
+  HSK2:{book:'Chưa dạy — thêm bài vào COURSES.HSK2.lessons khi bắt đầu', lessons:[]},
+  HSK3:{book:'Chưa dạy — thêm bài vào COURSES.HSK3.lessons khi bắt đầu', lessons:[]},
+  HSK4:{book:'Giáo trình chuẩn HSK 4 · 2.0 (quyển 上)', lessons:[
+    [1,'简单的爱情'],[2,'真正的朋友'],[3,'经理对我印象不错'],[4,'不要太着急赚钱'],[5,'只买对的，不买贵的'],
+    [6,'一分钱一分货'],[7,'最好的医生是自己'],[8,'生活中不缺少美'],[9,'阳光总在风雨后'],[10,'幸福的标准']]}
+};
+const MAT_TYPES = {
+  lecture:  {ico:'📖', label:'Bài giảng',       act:'open'},
+  practice: {ico:'🧩', label:'Luyện tập',       act:'open'},
+  test:     {ico:'📝', label:'Đề kiểm tra',     act:'assign', kind:'test'},
+  homework: {ico:'📚', label:'Bài tập về nhà',  act:'assign', kind:'homework'}
+};
+// Tài liệu có sẵn (tên file lấy theo các bài đã dựng — cô kiểm tra lại đường dẫn khớp với repo, sai thì xóa ✕ rồi thêm lại)
+const MAT_SEED = [
+  {course:'HSK1', lesson:6, type:'lecture', title:'Từ vựng & bài khóa', url:'HSK1_30_Bài_6_Từ_vựng_và_bài_khóa.html'},
+  {course:'HSK1', lesson:7, type:'lecture', title:'Từ vựng & bài khóa', url:'HSK1_30_Bài_7_Từ_vựng_và_bài_khóa.html'},
+  {course:'HSK1', lesson:1, type:'practice', title:'Luyện từ vựng (bài mẫu, thử nghiệm)', url:'luyen-tap-mau.html'},
+  {course:'HSK4', lesson:3, type:'lecture', title:'Bài giảng', url:'Bai3.html'},
+  {course:'HSK4', lesson:4, type:'lecture', title:'Bài giảng', url:'HSK4_Bai4.html'},
+  {course:'HSK4', lesson:5, type:'lecture', title:'Bài giảng', url:'HSK4_Bai5_Bai_day.html'},
+  {course:'HSK4', lesson:7, type:'lecture', title:'Bài giảng', url:'HSK4_Bai7_Bai_day.html'},
+  {course:'HSK4', lesson:8, type:'lecture', title:'Bài giảng', url:'HSK4_Bai8_Bai_day.html'},
+  {course:'HSK4', lesson:9, type:'lecture', title:'Bài giảng', url:'HSK4_Bai9_Bai_day.html'},
+  {course:'HSK4', lesson:10, type:'lecture', title:'Bài giảng', url:'HSK4_Bai10_Bai_day.html'}
+].map((m, i) => ({...m, id:'seed' + i}));
+state.mats = [];
+const matsOf = () => state.mats || [];
+state.course = 'HSK1';
+const crOpen = new Set(), crSeen = new Set();
+
+function openCourse(code){
+  state.course = code;
+  go('course');
+  $('#pg-title').textContent = 'Khóa học ' + code;
+  renderCourse();
+}
+document.querySelectorAll('.nav-i[data-course]').forEach(n => n.addEventListener('click', () => openCourse(n.dataset.course)));
+
+function renderCourse(){
+  const code = state.course, c = COURSES[code];
+  $('#cr-name').textContent = code;
+  $('#cr-sub').textContent = c.book;
+  const myCls = (state.classes || []).filter(x => x.course === code);
+  $('#cr-classes').innerHTML = myCls.length
+    ? myCls.map(x => `<span class="chip c-pink" style="margin:.1rem .3rem .1rem 0">👥 ${esc(x.name)} · đang học tới Bài ${x.current_lesson || 0}</span>`).join('')
+    : '<span class="muted">Chưa có lớp nào gắn với cấp này — chọn ở mục “Lớp &amp; học sinh”.</span>';
+  const seedRows = MAT_SEED.filter(m => m.course === code).length;
+  $('#cr-import').classList.toggle('hidden', matsOf().length > 0 || !seedRows);
+  $('#cr-import-t').textContent = seedRows + ' tài liệu mẫu (các bài giảng đã dựng) sẵn sàng nhập; đường dẫn sai thì xóa ✕ và thêm lại.';
+  const lessonOpts = c.lessons.concat([[0, 'Ôn tập & kiểm tra chung']]).map(([n, zh]) =>
+    `<option value="${n}">${n ? 'Bài ' + n + ' · ' + esc(zh) : esc(zh)}</option>`).join('');
+  const keep = $('#cr-f-lesson').value;
+  $('#cr-f-lesson').innerHTML = c.lessons.length ? lessonOpts : '<option value="0">Ôn tập & kiểm tra chung</option>';
+  if(keep) $('#cr-f-lesson').value = keep;
+  const mine = matsOf().filter(m => m.course === code);
+  const order = ['lecture', 'practice', 'test', 'homework'];
+  const block = (n, zh) => {
+    const list = mine.filter(m => +m.lesson === n).sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
+    const key = code + n;
+    const now = n && myCls.some(x => x.current_lesson === n);
+    if(now && !crSeen.has(key)){ crSeen.add(key); crOpen.add(key); }
+    const head = n ? `Bài ${n} <span class="cr-zh zh">${esc(zh)}</span>` : esc(zh);
+    const rows = list.map(m => {
+      const t = MAT_TYPES[m.type];
+      return `<div class="cr-mat"><span>${t.ico}</span>
+        <div class="t"><b>${esc(m.title)}</b><span>${t.label} · ${esc(m.url)}</span></div>
+        ${t.act === 'open' ? `<button class="btn" onclick="matAct('${m.id}')">Mở</button>` : `<button class="btn pri" onclick="matAct('${m.id}')">Giao</button>`}
+        <button class="x" title="Xóa khỏi danh sách" onclick="matDel('${m.id}')">✕</button></div>`;
+    }).join('') || '<div class="cr-empty muted">Chưa có tài liệu — thêm ở khung phía trên.</div>';
+    return `<details class="cr-les" data-k="${key}"${crOpen.has(key) ? ' open' : ''}>
+      <summary><span>${head}</span>${now ? '<span class="chip c-yellow" style="margin-left:auto">đang học</span>' : ''}<span class="chip ${list.length ? 'c-green' : 'c-gray'}" style="${now ? '' : 'margin-left:auto'}">${list.length} tài liệu</span></summary>${rows}</details>`;
+  };
+  let html = c.lessons.map(([n, zh]) => block(n, zh)).join('');
+  if(!c.lessons.length) html = '<div class="card muted">Cấp này chưa dạy. Khi bắt đầu, thêm danh sách bài vào <code>COURSES.' + code + '.lessons</code> trong file.</div>';
+  html += block(0, 'Ôn tập & kiểm tra chung');
+  $('#cr-body').innerHTML = html;
+  $('#cr-body').querySelectorAll('details').forEach(d => d.addEventListener('toggle', () => d.open ? crOpen.add(d.dataset.k) : crOpen.delete(d.dataset.k)));
+}
+$('#cr-form').addEventListener('submit', async (ev) => {
+  ev.preventDefault();
+  const lesson = +$('#cr-f-lesson').value;
+  try{
+    await YY.addMaterial({course:state.course, lesson, type:$('#cr-f-type').value,
+      title:$('#cr-f-title').value.trim(), url:$('#cr-f-url').value.trim()});
+    state.mats = await YY.listMaterials();
+  }catch(e){ alert('Chưa lưu được: ' + e.message); return; }
+  crOpen.add(state.course + lesson);
+  $('#cr-f-title').value = ''; $('#cr-f-url').value = '';
+  renderCourse();
+});
+async function matDel(id){
+  const m = matsOf().find(x => x.id === id); if(!m || !confirm('Xóa "' + m.title + '" khỏi danh sách?')) return;
+  try{ await YY.deleteMaterial(id); state.mats = await YY.listMaterials(); }catch(e){ alert('Chưa xóa được: ' + e.message); return; }
+  renderCourse();
+}
+$('#cr-import-b').addEventListener('click', async () => {
+  try{
+    await YY.addMaterials(MAT_SEED.map(({course, lesson, type, title, url}) => ({course, lesson, type, title, url})));
+    state.mats = await YY.listMaterials();
+  }catch(e){ alert('Chưa nhập được: ' + e.message); return; }
+  renderCourse();
+});
+function matAct(id){
+  const m = matsOf().find(x => x.id === id); if(!m) return;
+  const t = MAT_TYPES[m.type];
+  if(t.act === 'open'){ window.open(m.url, '_blank'); return; }
+  go('assign');                                   // Giao: điền sẵn form giao bài
+  $('#as-kind').value = t.kind;
+  $('#as-title').value = `${m.course} · ${m.lesson ? 'Bài ' + m.lesson + ' · ' : ''}${m.title}`;
+  $('#as-lesson').value = m.lesson ? 'Bài ' + m.lesson : '';
+  $('#as-url').value = m.url;
+  $('#as-msg').style.color = 'var(--muted)'; $('#as-msg').textContent = 'Đã điền sẵn — chỉ cần chọn lớp/học sinh và hạn nộp.';
+}
 
 /* --- giao bài --- */
 function renderAssignForm(){
@@ -1625,9 +1804,19 @@ $('#assign-form').addEventListener('submit', async (ev) => {
 });
 
 /* --- lớp & học sinh --- */
+async function saveClass(id, patch){
+  try{ await YY.updateClass(id, patch); await reloadTeacher(); }
+  catch(e){ alert('Chưa lưu được lớp: ' + e.message + '\n(Đã chạy migration-dot4.sql chưa?)'); }
+}
 function renderPeople(){
   $('#pp-classes').innerHTML = state.classes.map(c => `<div style="margin:.4rem 0">
     <b>${esc(c.name)}</b> <span class="chip c-gray">${c.kind === 'one_on_one' ? '1-1' : 'Nhóm'}</span>
+    <span style="display:inline-flex;align-items:center;gap:.4rem;margin-left:.5rem;flex-wrap:wrap">
+      <select style="width:auto" onchange="saveClass('${c.id}',{course:this.value||null})"><option value="">Chưa chọn cấp</option>${['HSK1','HSK2','HSK3','HSK4'].map(k => `<option${c.course === k ? ' selected' : ''}>${k}</option>`).join('')}</select>
+      <span class="muted">đang học tới Bài</span>
+      <input type="number" min="0" max="30" style="width:4.2rem" value="${c.current_lesson || 0}" onchange="saveClass('${c.id}',{current_lesson:Math.max(0,+this.value||0)})">
+      <button class="btn" type="button" onclick="saveClass('${c.id}',{current_lesson:${(c.current_lesson || 0) + 1}})">＋1 bài</button>
+    </span>
     <div class="muted">${(c.class_members || []).map(m => `<span class="zh">${esc(m.profiles?.full_name)}</span> <a href="#" onclick="rmMember('${c.id}','${m.student_id}');return false">✕</a>`).join(' · ') || 'Chưa có học sinh'}</div>
   </div>`).join('') || '<div class="muted">Chưa có lớp nào.</div>';
   const opts = '<option value="">Chọn lớp…</option>' + state.classes.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
