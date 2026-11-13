@@ -8,8 +8,8 @@
 
 // ▼▼▼ ĐIỀN 2 DÒNG NÀY (Supabase → Project Settings → API) ▼▼▼
 const YY_CONFIG = {
-  SUPABASE_URL: 'https://lkhoczjgokgxsjarfnym.supabase.co',
-  SUPABASE_ANON_KEY: 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImxraG9jempnb2tneHNqYXJmbnltIiwicm9sZSI6ImFub24iLCJpYXQiOjE3OTQ1MzY3NTQsImV4cCI6MjExMDExMjc1NH0.XypJPd4PexTk0sxXQ01ApK6w4heFxIgO-LEK-aQoUcE',   // khoá "anon public", KHÔNG dùng service_role
+  SUPABASE_URL: 'https://YOUR-PROJECT.supabase.co',
+  SUPABASE_ANON_KEY: 'YOUR-ANON-PUBLIC-KEY',   // khoá "anon public", KHÔNG dùng service_role
   EMAIL_DOMAIN: 'yyaoo.app',                    // mã YSG005 → ysg005@yyaoo.app
   PORTAL_URL: 'portal.html'
 };
@@ -38,6 +38,10 @@ const YY_CONFIG = {
     if (error) throw error;
     return data;
   };
+
+  // Học sinh tự lưu năm sinh + giới tính ('female' | 'male') — chạy qua hàm set_my_profile (xem migration-dot1.sql)
+  YY.setMyProfile = async ({ birth_year, gender }) =>
+    unwrap(await sb.rpc('set_my_profile', { p_birth_year: birth_year, p_gender: gender }));
 
   // Dùng ở đầu mỗi file đề: chưa đăng nhập → chuyển về portal rồi quay lại đúng đề
   YY.requireLogin = async () => {
