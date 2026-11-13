@@ -610,6 +610,11 @@
       <hr style="border:none;border-top:1px solid var(--line,#cde7ec);margin:1.4rem 0 1rem">
       <h2>Bài đã giao</h2>
       <p class="muted">Mỗi dòng là một lần giao. Giao nhầm thì bấm Xóa ở dòng đó (có tải bản sao lưu trước khi xóa).</p>
+      <div style="margin:.6rem 0">
+        <button class="btn ghost" type="button" id="restore-btn">↩ Khôi phục từ file sao lưu</button>
+        <input type="file" id="restore-file" accept=".json,application/json" hidden>
+        <span class="muted"> Chọn file <b>sao-luu-bai-….json</b> đã tải về khi xóa.</span>
+      </div>
       <div id="assigned-list"><div class="muted">Đang tải…</div></div>
     </div>
 
@@ -5181,6 +5186,51 @@ async function deleteAssigned(id){
     await reloadTeacher();
   }catch(e){ alert('Chưa xóa được: ' + (e.message || e)); }
 }
+/* --- khôi phục bài đã xóa từ file sao lưu --- */
+async function restoreAssigned(file){
+  try{
+    let data;
+    try{ data = JSON.parse(await file.text()); }catch(_e){ throw new Error('File không đọc được (không phải file .json sao lưu).'); }
+    const a = data && data.assignment;
+    if(!a || !a.id || !a.title) throw new Error('File này không phải bản sao lưu bài giao.');
+    const subsAll = Array.isArray(data.submissions) ? data.submissions : [];
+    const ex = await YY.sb.from('assignments').select('id').eq('id', a.id);
+    if(ex.error) throw ex.error;
+    if(ex.data && ex.data.length) throw new Error('Bài "' + a.title + '" vẫn còn trong danh sách, không cần khôi phục.');
+    const allT = a.assignment_targets || [];
+    const targets = allT.filter(t => t.class_id ? state.classes.some(c => c.id === t.class_id) : state.students.some(x => x.id === t.student_id));
+    const subs = subsAll.filter(x => state.students.some(st => st.id === x.student_id));
+    const lostT = allT.length - targets.length, lostS = subsAll.length - subs.length;
+    const when = a.created_at ? fmt(a.created_at) : 'không rõ giờ';
+    const msg = 'Khôi phục bài "' + a.title + '" (giao lúc ' + when + ')?\n' +
+      '• Giao lại cho ' + targets.length + ' lớp/học sinh' + (lostT ? ' (' + lostT + ' mục không còn tồn tại, bị bỏ qua)' : '') + '\n' +
+      '• Khôi phục ' + subs.length + ' bài nộp' + (lostS ? ' (' + lostS + ' bài của học sinh không còn tồn tại, bị bỏ qua)' : '');
+    if(!confirm(msg)) return;
+    const row = { ...a }; delete row.assignment_targets;
+    let r = await YY.sb.from('assignments').insert(row);
+    if(r.error) throw r.error;
+    if(targets.length){
+      r = await YY.sb.from('assignment_targets').insert(targets.map(t => {
+        const o = { assignment_id: a.id };
+        if(t.class_id) o.class_id = t.class_id; else o.student_id = t.student_id;
+        return o;
+      }));
+      if(r.error){ await YY.sb.from('assignments').delete().eq('id', a.id); throw r.error; }
+    }
+    let subNote = '';
+    if(subs.length){
+      r = await YY.sb.from('submissions').insert(subs);
+      if(r.error) subNote = '\n\nBài và danh sách giao đã khôi phục, nhưng CHƯA khôi phục được bài nộp: ' + r.error.message;
+    }
+    await reloadTeacher();
+    alert('Đã khôi phục bài "' + a.title + '".' + subNote);
+  }catch(e){ alert('Chưa khôi phục được: ' + (e.message || e)); }
+}
+$('#restore-btn').addEventListener('click', () => $('#restore-file').click());
+$('#restore-file').addEventListener('change', async (ev) => {
+  const f = ev.target.files[0]; ev.target.value = '';
+  if(f) await restoreAssigned(f);
+});
 function renderAssignForm(){
   $('#as-classes').innerHTML = state.classes.map(c =>
     `<label><input type="checkbox" name="cls" value="${c.id}"> ${esc(c.name)}</label>`).join('') || '<span class="muted">Chưa có lớp</span>';
