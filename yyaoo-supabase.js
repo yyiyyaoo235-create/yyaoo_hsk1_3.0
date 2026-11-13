@@ -43,6 +43,26 @@ const YY_CONFIG = {
   YY.setMyProfile = async ({ birth_year, gender }) =>
     unwrap(await sb.rpc('set_my_profile', { p_birth_year: birth_year, p_gender: gender }));
 
+  /* ---------- Đợt 2: luyện tập hằng ngày + huy hiệu cô tặng (xem migration-dot2.sql) ---------- */
+  // Gọi khi học sinh HOÀN THÀNH một lượt luyện tập; mỗi ngày (giờ VN) chỉ tính 1 lần
+  YY.logPractice = async ({ kind, title, score, total } = {}) =>
+    unwrap(await sb.rpc('log_practice', { p_kind: kind || 'practice', p_title: title || null, p_score: score ?? null, p_total: total ?? null }));
+  YY.listMyPractice = async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    return unwrap(await sb.from('practice_log').select('day, kind, title, score, total')
+      .eq('student_id', session.user.id).order('day', { ascending: true }));
+  };
+  YY.listMyAwards = async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    return unwrap(await sb.from('awards').select('badge_key, note, created_at').eq('student_id', session.user.id));
+  };
+  YY.listAllPractice = async () => unwrap(await sb.from('practice_log').select('student_id, day'));
+  YY.listAllAwards = async () => unwrap(await sb.from('awards').select('student_id, badge_key, note'));
+  YY.giveAward = async (studentId, badgeKey, note) =>
+    unwrap(await sb.from('awards').upsert({ student_id: studentId, badge_key: badgeKey, note: note || null }, { onConflict: 'student_id,badge_key' }));
+  YY.removeAward = async (studentId, badgeKey) =>
+    unwrap(await sb.from('awards').delete().eq('student_id', studentId).eq('badge_key', badgeKey));
+
   // Dùng ở đầu mỗi file đề: chưa đăng nhập → chuyển về portal rồi quay lại đúng đề
   YY.requireLogin = async () => {
     const me = await YY.getProfile();
