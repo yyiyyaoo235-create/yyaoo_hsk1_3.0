@@ -107,9 +107,9 @@
   .ans .txt{font-size:1rem;margin-top:.2rem}
 
   /* ===== KHUNG GIÁO VIÊN: sidebar + nội dung ===== */
-  .shell{--sw:14.5rem;display:grid;grid-template-columns:var(--sw) 1fr;min-height:100vh;transition:grid-template-columns .22s ease}
+  .shell{--sw:14.5rem;display:grid;grid-template-columns:var(--sw) 1fr;min-height:100vh}
   .shell.collapsed{--sw:4.6rem}
-  .side{position:sticky;top:0;height:100vh;overflow:auto;background:rgba(255,255,255,.85);backdrop-filter:blur(6px);border-right:1px solid var(--line);padding:1rem .8rem;display:flex;flex-direction:column;gap:.15rem}
+  .side{position:sticky;top:0;height:100vh;overflow:auto;background:rgba(255,255,255,.92);border-right:1px solid var(--line);padding:1rem .8rem;display:flex;flex-direction:column;gap:.15rem}
   .brand{display:flex;align-items:center;gap:.5rem;font-weight:800;font-size:1.1rem;padding:.2rem .5rem 1rem}
   .side-toggle{margin-left:auto;flex:none;width:1.8rem;height:1.8rem;border-radius:10px;border:1px solid var(--line);background:#fff;color:var(--muted);display:grid;place-items:center;padding:0;font-size:.95rem;line-height:1}
   .side-toggle:hover{background:#eaf8fa;color:var(--pink)}
@@ -364,7 +364,7 @@
       radial-gradient(ellipse 65% 55% at 8% 4%,rgba(248,217,237,.55),transparent 70%),
       linear-gradient(168deg,#9fd1f2 0%,#82b6e0 55%,#6ba8dc 100%)}
   .water canvas{position:absolute;inset:0;width:100%;height:100%;display:block}
-  .side{background:rgba(255,255,255,.7)!important}
+  .side{background:rgba(255,255,255,.92)!important}
   .card,.stat{box-shadow:0 2px 14px rgba(20,100,120,.1)}
   @media(prefers-reduced-motion:reduce){
     *,*::before,*::after{animation:none!important}
@@ -5330,6 +5330,7 @@ boot();
   const KEY = 'yy_side_collapsed';
   function apply(c){
     shell.classList.toggle('collapsed', c);
+    try{ if(window.__waterHold) window.__waterHold(450); }catch(e){}
     btn.setAttribute('data-tip', c ? 'Mở rộng' : 'Thu gọn');
     btn.setAttribute('aria-expanded', String(!c));
     hideTip();
@@ -5369,6 +5370,7 @@ boot();
   function hideTip(){ tip.classList.remove('show'); }
   function apply(c){
     shell.classList.toggle('collapsed', c);
+    try{ if(window.__waterHold) window.__waterHold(450); }catch(e){}
     btn.setAttribute('data-tip', c ? 'Mở rộng' : 'Thu gọn');
     btn.setAttribute('aria-expanded', String(!c));
     hideTip();
@@ -5469,7 +5471,8 @@ void main(){
     if(cv.width !== w || cv.height !== h){ cv.width = w; cv.height = h; gl.viewport(0, 0, w, h); }
   }
   const still = matchMedia('(prefers-reduced-motion: reduce)').matches;
-  let last = 0, raf = 0;
+  let last = 0, raf = 0, holdUntil = 0;
+  window.__waterHold = (ms) => { holdUntil = performance.now() + ms; };   // tạm dừng nền khi đang thu gọn/mở thanh bên cho mượt
   function draw(ms){
     resize();
     gl.uniform2f(uRes, cv.width, cv.height); gl.uniform1f(uPx, px);
@@ -5478,7 +5481,7 @@ void main(){
   }
   function loop(ms){
     raf = requestAnimationFrame(loop);
-    if(ms - last < 33) return;               // ~30 khung hình/giây
+    if(ms - last < 33 || ms < holdUntil) return;   // ~30 khung hình/giây, nghỉ khi đang giữ
     last = ms; draw(ms);
   }
   draw(0);
