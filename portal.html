@@ -58,17 +58,18 @@
   .login-box .btn.go{width:100%;margin-top:1rem;padding:.65rem;border:0;border-radius:14px;color:#fff;font-weight:800;background:linear-gradient(135deg,#3d9ad6,#1e6fb0);box-shadow:0 8px 20px rgba(30,111,176,.35)}
   .login-box .btn.go:hover{filter:brightness(1.06)}
   @media(max-width:640px){.login-box{grid-template-columns:1fr}.login-box .lp{padding:1.4rem}}
-  /* ô nhập: con trỏ chữ là cá logo (hiện khi rê chuột hoặc đang gõ) */
+  /* mọi ô nhập chữ: con trỏ là cá logo (hiện khi rê chuột hoặc đang gõ) */
   .in{position:relative}
   .in i{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);font-style:normal;font-size:.95rem;opacity:.75;pointer-events:none}
-  .in input{padding:.65rem .9rem .65rem 2.5rem;border-radius:14px;caret-color:transparent;outline:none}
+  .in input{padding:.65rem .9rem .65rem 2.5rem;border-radius:14px;outline:none}
   .in input:focus{border-color:#5fb0e8;box-shadow:0 0 0 4px rgba(95,176,232,.25)}
-  .in input:placeholder-shown{transition:text-indent .15s}
-  .in:hover input:placeholder-shown,.in:focus-within input:placeholder-shown{text-indent:1.9rem}
-  .caret-fish{position:absolute;top:50%;left:2.5rem;width:1.9rem;height:1.6rem;margin-top:-.8rem;opacity:0;pointer-events:none;transition:opacity .15s,left .08s linear}
-  .in:hover .caret-fish,.in:focus-within .caret-fish{opacity:1}
+  input:is(:not([type]),[type=text],[type=password],[type=email],[type=search],[type=tel],[type=url],[type=number]),textarea{caret-color:transparent}
+  :is(input,textarea):placeholder-shown{transition:text-indent .15s}
+  :is(input,textarea):placeholder-shown:is(:hover,:focus){text-indent:1.5rem}
+  .caret-fish{position:fixed;left:0;top:0;width:1.4rem;height:1.18rem;opacity:0;pointer-events:none;z-index:90;transition:opacity .15s;will-change:transform}
+  .caret-fish.on{opacity:1}
   .caret-fish svg{width:100%;height:100%;display:block}
-  .caret-mir{position:absolute;left:0;top:0;visibility:hidden;white-space:pre;pointer-events:none}
+  .caret-mir{position:fixed;left:-9999px;top:0;visibility:hidden;pointer-events:none;overflow:hidden;border-style:solid}
   .login-box .logo{font-size:2.6rem}
   .err{color:#c0392b;font-weight:700;font-size:.8rem;min-height:1.2rem;margin-top:.5rem}
 
@@ -216,6 +217,9 @@
   .stk-art{width:5.6rem;height:5.6rem;margin:0 auto;border-radius:50%;overflow:hidden;border:5px solid #fff;outline:2px solid var(--ring,#7CC9C0);box-shadow:0 3px 10px rgba(20,128,143,.25)}
   .stk-name{font-weight:800;font-size:.78rem;margin-top:.35rem}
   .stk-empty{grid-column:1/-1}
+  .stk.locked .stk-art{filter:grayscale(1);opacity:.5}
+  .stk.locked:hover{transform:none}
+  .stk .stk-hint{font-size:.72rem;color:var(--muted);line-height:1.25;margin-top:.1rem}
   .stk-big{width:9rem;height:9rem;animation:hop .9s ease-in-out 2}
   .stk-pop{align-items:center}
   .stk-pop .modal{max-width:22rem;text-align:center}
@@ -307,6 +311,8 @@
     <div id="st-homework"></div>
     <div class="sec-title"><h2>🎖️ Sticker của tôi</h2><span class="chip c-pink" id="st-stk-n">0</span></div>
     <div id="st-stickers" class="stk-grid"></div>
+    <div class="sec-title"><h2>🏅 Bộ sưu tập huy hiệu</h2><span class="chip c-yellow" id="st-badge-n">0/10</span></div>
+    <div id="st-badges" class="stk-grid"></div>
   </div>
 </section>
 
@@ -545,29 +551,55 @@ function fishSVG(mood = 'normal', o = {}){
 // cá ở màn hình đăng nhập
 $('.fish-live').innerHTML = fishSVG('normal');
 
-// con trỏ chữ trong ô đăng nhập = cá của logo
+// con trỏ chữ ở MỌI ô nhập = cá của logo
 (function(){
+  const OK = /^(text|password|email|search|tel|url|number)$/;
+  const elig = el => !!el && el.nodeType === 1 && !el.disabled && !el.readOnly &&
+    ((el.tagName === 'INPUT' && OK.test(el.type)) || el.tagName === 'TEXTAREA');
   const svg = fishSVG('normal', {bg:'none'}).replace('viewBox="-70 -70 140 140"', 'viewBox="-46 -42 106 88"');
-  document.querySelectorAll('#view-login .in input').forEach(inp => {
-    const wrap = inp.parentElement;
-    const fish = document.createElement('span'); fish.className = 'caret-fish'; fish.setAttribute('aria-hidden','true'); fish.innerHTML = svg;
-    const mir = document.createElement('span'); mir.className = 'caret-mir'; mir.setAttribute('aria-hidden','true');
-    wrap.append(fish, mir);
-    function place(){
-      const cs = getComputedStyle(inp);
-      mir.style.fontFamily = cs.fontFamily; mir.style.fontSize = cs.fontSize;
-      mir.style.fontWeight = cs.fontWeight; mir.style.letterSpacing = cs.letterSpacing;
-      let pos = inp.value.length;
-      if(document.activeElement === inp){ try{ if(inp.selectionStart != null) pos = inp.selectionStart; }catch(e){} }
-      const txt = inp.value.slice(0, pos);
-      mir.textContent = inp.type === 'password' ? '\u2022'.repeat(txt.length) : txt;
-      const pad = parseFloat(cs.paddingLeft);
-      const x = pad + mir.offsetWidth - inp.scrollLeft;
-      fish.style.left = Math.max(pad, Math.min(x, inp.clientWidth - fish.offsetWidth - 6)) + 'px';
-    }
-    ['input','keyup','click','focus','mouseenter','select','scroll'].forEach(ev =>
-      inp.addEventListener(ev, () => requestAnimationFrame(place)));
-  });
+  const fishes = new WeakMap(), active = new Set();
+  const mir = document.createElement('div'); mir.className = 'caret-mir'; mir.setAttribute('aria-hidden','true');
+  const mark = document.createElement('span'); mark.textContent = '\u200b';
+  document.body.appendChild(mir);
+  const COPY = ['fontFamily','fontSize','fontWeight','fontStyle','letterSpacing','wordSpacing','textTransform','lineHeight',
+    'paddingTop','paddingRight','paddingBottom','paddingLeft','borderTopWidth','borderRightWidth','borderBottomWidth','borderLeftWidth','boxSizing','tabSize'];
+  function fishOf(el){
+    let f = fishes.get(el);
+    if(!f){ f = document.createElement('span'); f.className = 'caret-fish'; f.setAttribute('aria-hidden','true'); f.innerHTML = svg; document.body.appendChild(f); fishes.set(el, f); }
+    return f;
+  }
+  function place(el){
+    const f = fishOf(el), r = el.getBoundingClientRect();
+    if(!el.isConnected || !r.width || r.bottom < 0 || r.top > innerHeight){ f.classList.remove('on'); return; }
+    const cs = getComputedStyle(el), multi = el.tagName === 'TEXTAREA';
+    COPY.forEach(k => mir.style[k] = cs[k]);
+    mir.style.width = r.width + 'px';
+    mir.style.whiteSpace = multi ? 'pre-wrap' : 'pre';
+    mir.style.wordBreak = multi ? 'break-word' : 'normal';
+    mir.style.height = 'auto';
+    let pos = el.value.length;
+    if(document.activeElement === el){ try{ if(el.selectionStart != null) pos = el.selectionStart; }catch(e){} }
+    const txt = el.value.slice(0, pos);
+    mir.textContent = el.type === 'password' ? '\u2022'.repeat(txt.length) : txt;
+    mir.appendChild(mark);
+    const padL = parseFloat(cs.paddingLeft), padR = parseFloat(cs.paddingRight);
+    let x = r.left + el.clientLeft + mark.offsetLeft - el.scrollLeft;
+    let y = r.top + el.clientTop + mark.offsetTop - el.scrollTop;
+    const lh = mark.offsetHeight || parseFloat(cs.fontSize) * 1.3;
+    x = Math.max(r.left + el.clientLeft + padL, Math.min(x, r.right - el.clientLeft - padR - f.offsetWidth - 2));
+    y = y + (lh - f.offsetHeight) / 2;
+    if(multi && (y < r.top - 2 || y > r.bottom - f.offsetHeight + 2)){ f.classList.remove('on'); return; }
+    f.style.transform = 'translate(' + x.toFixed(1) + 'px,' + y.toFixed(1) + 'px)';
+    f.classList.add('on');
+  }
+  let raf = 0;
+  function loop(){ active.forEach(place); raf = active.size ? requestAnimationFrame(loop) : 0; }
+  function on(el){ active.add(el); place(el); if(!raf) raf = requestAnimationFrame(loop); }
+  function off(el){ if(el._hov || el._foc) return; active.delete(el); const f = fishes.get(el); if(f) f.classList.remove('on'); }
+  document.addEventListener('mouseover', e => { const el = e.target; if(elig(el)){ el._hov = true; on(el); } });
+  document.addEventListener('mouseout',  e => { const el = e.target; if(el && el._hov){ el._hov = false; off(el); } });
+  document.addEventListener('focusin',   e => { const el = e.target; if(elig(el)){ el._foc = true; on(el); } });
+  document.addEventListener('focusout',  e => { const el = e.target; if(el && el._foc){ el._foc = false; off(el); } });
 })();
 
 // sticker theo điểm: ≥95 siêu sao · ≥90 nhảy cao · còn lại cá cười
@@ -659,6 +691,75 @@ function renderStickers(rows){
     : '<div class="muted stk-empty">Hoàn thành bài để nhận sticker cá đầu tiên nhé!</div>';
 }
 
+/* ===== 10 huy hiệu sưu tầm (mở khóa theo thành tích) ===== */
+const BADGES = [
+  {id:'first',    name:'Cá khởi đầu',      hint:'Hoàn thành bài đầu tiên',                emo:'🌱', mood:'happy',  bg:'#E3F6D8', ring:'#8CCB6B', test:c => c.done >= 1},
+  {id:'five',     name:'Cá chăm học',      hint:'Hoàn thành 5 bài',                       emo:'⭐', mood:'happy',  bg:'#FFF1BF', ring:'#F2C94C', test:c => c.done >= 5},
+  {id:'ten',      name:'Cá siêu chăm',     hint:'Hoàn thành 10 bài',                      emo:'🏆', mood:'jump',   bg:'#FFE9A8', ring:'#E8A93A', test:c => c.done >= 10},
+  {id:'perfect',  name:'Cá điểm 100',      hint:'Đạt 100% một bài',                       emo:'💯', mood:'jump',   bg:'#FFD6E2', ring:'#FF8FB1', test:c => c.max >= 100},
+  {id:'comeback', name:'Cá không bỏ cuộc', hint:'Làm lại và hoàn thành một bài',          emo:'💪', mood:'happy',  bg:'#FFE0D2', ring:'#FF9A6B', test:c => c.redo >= 1},
+  {id:'tester',   name:'Cá thợ kiểm tra',  hint:'Hoàn thành 3 bài kiểm tra',              emo:'📝', mood:'normal', bg:'#DCEBFF', ring:'#7FA8F0', test:c => c.tests >= 3},
+  {id:'bookworm', name:'Cá mọt sách',      hint:'Hoàn thành 3 bài tập về nhà',            emo:'📚', mood:'normal', bg:'#E6DDF8', ring:'#B9A2E6', test:c => c.hw >= 3},
+  {id:'ontime',   name:'Cá đúng hạn',      hint:'3 bài hoàn thành, không bài nào nộp muộn', emo:'⏰', mood:'happy', bg:'#D9F3F0', ring:'#7CC9C0', test:c => c.done >= 3 && c.late === 0},
+  {id:'streak',   name:'Cá phong độ',      hint:'3 bài liên tiếp từ 90% trở lên',         emo:'🔥', mood:'jump',   bg:'#FFE3C7', ring:'#FF9F43', test:c => c.streak >= 3},
+  {id:'clear',    name:'Cá nhẹ nhõm',      hint:'Làm xong hết bài được giao (từ 3 bài)',  emo:'🎈', mood:'sleep',  bg:'#DDF4FF', ring:'#6FC0EA', test:c => c.done >= 3 && c.open === 0}
+];
+function badgeStats(rows){
+  const done = rows.filter(r => r.status === 'done');
+  let streak = 0, run = 0;
+  [...done].sort((a, b) => new Date(a.due_at) - new Date(b.due_at))
+    .forEach(r => { run = (+r.percent >= 90) ? run + 1 : 0; streak = Math.max(streak, run); });
+  return {
+    done: done.length,
+    max: Math.max(0, ...done.map(r => +r.percent || 0)),
+    redo: done.filter(r => r.attempt >= 2).length,
+    tests: done.filter(r => r.kind === 'test').length,
+    hw: done.filter(r => r.kind === 'homework').length,
+    late: done.filter(r => r.is_late).length,
+    streak,
+    open: rows.filter(r => ['todo', 'overdue', 'needs_redo'].includes(r.status)).length
+  };
+}
+function badgeFish(b, o = {}){
+  const emblem = `<g transform="translate(38 36)"><circle r="16" fill="#fff" stroke="${b.ring}" stroke-width="3"/><text y="6.5" text-anchor="middle" font-size="18">${b.emo}</text></g>`;
+  return fishSVG(b.mood, {bg:b.bg, still:o.still}).replace('</svg>', emblem + '</svg>');
+}
+function renderBadges(rows){
+  const c = badgeStats(rows), got = BADGES.filter(b => b.test(c));
+  $('#st-badge-n').textContent = got.length + '/' + BADGES.length;
+  $('#st-badges').innerHTML = BADGES.map((b, k) => {
+    const ok = b.test(c), rot = [-4, 3, -2, 5, -5, 2][k % 6];
+    return `<div class="stk${ok ? '' : ' locked'}" style="--rot:${ok ? rot : 0}deg;--ring:${ok ? b.ring : '#c9d6dc'}" title="${esc(b.hint)}">
+      <div class="stk-art">${badgeFish(b, {still:true})}</div>
+      <div class="stk-name">${b.name}</div>
+      <div class="stk-hint">${ok ? 'Đã nhận ✓' : '🔒 ' + esc(b.hint)}</div>
+    </div>`;
+  }).join('');
+  return got;
+}
+function newBadges(got){
+  const key = 'yy_badges_' + (state.me?.id || state.me?.code || state.me?.full_name || 'u');
+  let prev = null;
+  try{ prev = JSON.parse(localStorage.getItem(key)); }catch(e){}
+  try{ localStorage.setItem(key, JSON.stringify(got.map(b => b.id))); }catch(e){}
+  return prev ? got.filter(b => !prev.includes(b.id)) : [];   // lần đầu: chỉ ghi nhớ, không hiện popup hàng loạt
+}
+function showBadgePop(list){
+  const row = `<h2>🏅 Huy hiệu mới!</h2><div class="stk-row">${list.map(b => `
+    <div class="stk" style="--ring:${b.ring}">
+      <div class="stk-art stk-big">${badgeFish(b)}</div>
+      <div class="stk-name">${b.name}</div>
+      <div class="stk-hint">${esc(b.hint)}</div>
+    </div>`).join('')}</div>`;
+  const pop = $('#stk-pop'), body = $('#stk-pop-body');
+  if(pop.classList.contains('hidden')){
+    body.innerHTML = row + `<button class="btn pri" onclick="$('#stk-pop').classList.add('hidden')">Cất vào album</button>`;
+    pop.classList.remove('hidden');
+  }else{
+    body.querySelector('button').insertAdjacentHTML('beforebegin', row);
+  }
+}
+
 function miniFish(r){
   if(r.status === 'pending_review') return `<div class="mini-fish">${fishSVG('happy', {still:true})}</div>`;
   if(r.status === 'done')           return `<div class="mini-fish">${fishSVG(+r.percent >= HIGH_SCORE ? 'jump' : 'happy', {still:true})}</div>`;
@@ -732,7 +833,9 @@ async function reloadStudent(){
   $('#st-homework').innerHTML = render(rows.filter(r => r.kind === 'homework'));
   renderMascot(rows, ev);
   renderStickers(rows);
+  const gotBadges = renderBadges(rows), freshBadges = newBadges(gotBadges);
   if(ev.done.length) showStickerPop(ev.done);
+  if(freshBadges.length) showBadgePop(freshBadges);
 }
 function openQuiz(id, url){ location.href = url + (url.includes('?') ? '&' : '?') + 'a=' + id; }
 
