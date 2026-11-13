@@ -3858,6 +3858,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   });
   // ---------- Trung tâm đồng bộ (chỉ xem) ----------
   var portalClasses = [];
+  var NONE_LIST = [];
   function renderSyncCenter(){
     var box = qs('#sy-body'); if(!box || !portalRoster) return;
     var pById = {}; portalRoster.forEach(function(p){ pById[p.id] = p; });
@@ -3875,6 +3876,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       else if(m.length>1) dup.push({r:r, m:m});
       else none.push(r);
     });
+    NONE_LIST = none;
     var onlyPortal = portalRoster.filter(function(p){ return !linked[p.id] && !rows.some(function(r){ return portalMatches(p, r.st); }); });
 
     // Đối chiếu lớp: lớp sổ ↔ lớp portal (ưu tiên trùng tên, sau đó theo số thành viên chung)
@@ -3913,10 +3915,20 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         return '<div class="sy-row">'+tagHtml(x.r.cls)+'<b>'+escapeHtml(x.r.st.name)+'</b> có thể là: '+x.m.map(function(p){ return escapeHtml(p.name)+' ('+escapeHtml(p.code||'')+')'; }).join(' · ')+'</div>';
       }).join('');
     }
+    var usedCodes = {}; portalRoster.forEach(function(p){ usedCodes[String(p.code||'').toUpperCase()] = true; });
+    var sugg = none.map(function(r){
+      var base = keyOf(r.st.name).toUpperCase().replace(/[^A-Z0-9]/g,'') || 'HS', c = base, k = 2;
+      while(usedCodes[c]){ c = base+k; k++; }
+      usedCodes[c] = true;
+      return c;
+    });
     if(none.length){
-      h += '<div class="sy-h">Chưa có tài khoản trên portal (cần tạo)</div>' + none.map(function(r){
-        return '<div class="sy-row">'+tagHtml(r.cls)+'<b>'+escapeHtml(r.st.name)+'</b> <span class="hint">mã gợi ý: '+escapeHtml(keyOf(r.st.name).toUpperCase())+'</span><span class="sy-tag bad">thiếu</span></div>';
-      }).join('') + '<div class="row-actions" style="margin-top:8px"><button type="button" class="btn-outline small" id="sy-copy">Sao chép danh sách cần tạo</button></div>';
+      h += '<div class="sy-h">Chưa có tài khoản trên portal (cần tạo)</div>' + none.map(function(r, i){
+        return '<div class="sy-row"><input type="checkbox" class="sy-mk" data-i="'+i+'" checked>'+tagHtml(r.cls)+'<b>'+escapeHtml(r.st.name)+'</b> mã đăng nhập: <input type="text" class="sy-code" data-i="'+i+'" value="'+escapeHtml(sugg[i])+'" maxlength="20" style="width:11rem;text-transform:uppercase"></div>';
+      }).join('') + '<div class="row-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">'+
+        '<button type="button" class="btn-primary small" id="sy-create">Tạo tài khoản portal cho các em đã tích</button>'+
+        '<button type="button" class="btn-outline small" id="sy-copy">Sao chép danh sách</button></div>'+
+        '<p class="hint">Mật khẩu được tạo ngẫu nhiên và chỉ hiện một lần sau khi tạo. Chỉ gửi mã và tên lên portal, không gửi học phí.</p>';
     }
     h += '<div class="sy-h">Đối chiếu lớp</div>';
     if(!clsRows.length) h += '<p class="hint">Chưa có lớp nào đang học.</p>';
@@ -3928,13 +3940,99 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         (r.inSoOnly.length?'<span class="hint">Chỉ ở sổ: '+r.inSoOnly.map(escapeHtml).join(', ')+'</span>':'')+
         (r.inPortalOnly.length?'<span class="hint">Chỉ ở portal: '+r.inPortalOnly.map(escapeHtml).join(', ')+'</span>':'')+'</div>';
     });
-    box.innerHTML = h;
+    box.innerHTML = createResultHtml() + h;
+    wireCreateResult(box);
     var cp = qs('#sy-copy', box);
     if(cp) cp.addEventListener('click', function(){
-      var txt = 'Mã gợi ý\tHọ tên\tLớp\n' + none.map(function(r){ return keyOf(r.st.name).toUpperCase()+'\t'+r.st.name+'\t'+r.cls.name; }).join('\n');
+      var txt = 'Mã gợi ý\tHọ tên\tLớp\n' + none.map(function(r, i){ var ci = qs('.sy-code[data-i="'+i+'"]', box); return ((ci&&ci.value)||sugg[i]).toUpperCase()+'\t'+r.st.name+'\t'+r.cls.name; }).join('\n');
       var done = function(){ showToast('Đã sao chép '+none.length+' học sinh'); };
       if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function(){ prompt('Sao chép danh sách:', txt); });
       else prompt('Sao chép danh sách:', txt);
+    });
+  }
+  // ---------- Tạo tài khoản portal hàng loạt (qua Edge Function "create-students") ----------
+  var lastCreate = null;   // {at, rows:[{code,name,password,status,message}]}
+  function createResultHtml(){
+    if(!lastCreate) return '';
+    var bad = lastCreate.rows.filter(function(r){ return r.status!=='ok'; }).length;
+    return '<div class="sy-sum"><div class="sy-pill sy-ok" style="flex:1 1 100%"><b>Kết quả tạo tài khoản lúc '+escapeHtml(lastCreate.at)+'</b>'+
+      '<span class="hint">Lưu lại mật khẩu ngay: đóng trang là không xem lại được.</span>'+
+      '<table style="width:100%;font-size:13px;margin-top:6px;border-collapse:collapse"><thead><tr><th align="left">Tên</th><th align="left">Mã đăng nhập</th><th align="left">Mật khẩu</th><th align="left">Kết quả</th></tr></thead><tbody>'+
+      lastCreate.rows.map(function(r){
+        return '<tr><td>'+escapeHtml(r.name)+'</td><td><b>'+escapeHtml(r.code)+'</b></td><td><code>'+escapeHtml(r.password||'—')+'</code></td><td>'+
+          (r.status==='ok' ? '<span class="sy-tag ok">đã tạo</span>' : '<span class="sy-tag bad">'+escapeHtml(r.message||r.status)+'</span>')+'</td></tr>';
+      }).join('')+'</tbody></table>'+
+      '<div class="row-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn-outline small" id="sy-res-csv">Tải file Excel (CSV)</button>'+
+      '<button type="button" class="btn-outline small" id="sy-res-copy">Sao chép</button><button type="button" class="btn-text" id="sy-res-hide">Ẩn kết quả</button></div>'+
+      (bad?'<p class="hint">Có '+bad+' mục chưa tạo được, xem cột Kết quả rồi sửa mã và tạo lại.</p>':'')+'</div></div>';
+  }
+  function resultCsv(){
+    return '\uFEFFHọ tên,Mã đăng nhập,Mật khẩu,Kết quả\n' + lastCreate.rows.map(function(r){
+      return [r.name, r.code, r.password||'', r.status==='ok'?'đã tạo':(r.message||r.status)].map(function(x){ return '"'+String(x).replace(/"/g,'""')+'"'; }).join(',');
+    }).join('\n');
+  }
+  function downloadResultCsv(){
+    var url = URL.createObjectURL(new Blob([resultCsv()], {type:'text/csv;charset=utf-8'}));
+    var a = document.createElement('a'); a.href = url; a.download = 'tai-khoan-hoc-sinh-'+todayStr()+'.csv';
+    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
+  }
+  function wireCreateResult(box){
+    var c = qs('#sy-res-csv', box); if(c) c.addEventListener('click', downloadResultCsv);
+    var p = qs('#sy-res-copy', box); if(p) p.addEventListener('click', function(){
+      var txt = lastCreate.rows.map(function(r){ return r.name+'\t'+r.code+'\t'+(r.password||'')+'\t'+(r.status==='ok'?'đã tạo':(r.message||r.status)); }).join('\n');
+      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function(){ showToast('Đã sao chép'); }, function(){ prompt('Sao chép:', txt); });
+      else prompt('Sao chép:', txt);
+    });
+    var h = qs('#sy-res-hide', box); if(h) h.addEventListener('click', function(){
+      if(!confirm('Ẩn kết quả? Mật khẩu sẽ không xem lại được nữa.')) return;
+      lastCreate = null; renderSyncCenter();
+    });
+    var btn = qs('#sy-create', box);
+    if(btn) btn.addEventListener('click', function(){ createAccounts(box); });
+  }
+  function createAccounts(box){
+    var items = [];
+    qsa('.sy-mk', box).forEach(function(ck){
+      if(!ck.checked) return;
+      var i = Number(ck.dataset.i), ci = qs('.sy-code[data-i="'+i+'"]', box);
+      items.push({i:i, code:String((ci&&ci.value)||'').toUpperCase().replace(/[^A-Z0-9]/g,'')});
+    });
+    if(!items.length){ alert('Chưa tích em nào.'); return; }
+    var bad = items.filter(function(x){ return !/^[A-Z0-9]{3,20}$/.test(x.code); });
+    if(bad.length){ alert('Mã đăng nhập phải gồm 3–20 chữ/số không dấu, không có dấu cách.'); return; }
+    var codes = items.map(function(x){ return x.code; });
+    if(codes.some(function(c,k){ return codes.indexOf(c)!==k; })){ alert('Có hai em đang dùng cùng một mã. Hãy sửa lại cho khác nhau.'); return; }
+    var taken = portalRoster.filter(function(p){ return codes.indexOf(String(p.code||'').toUpperCase())>=0; });
+    if(taken.length){ alert('Mã '+taken[0].code+' đã có trên portal. Hãy đổi mã khác.'); return; }
+    if(!window.YY || !YY.sb || !YY.sb.functions){ alert('Chưa kết nối được Supabase.'); return; }
+    var list = items.map(function(x){ return {code:x.code, full_name:NONE_LIST[x.i].st.name}; });
+    if(!confirm('Tạo '+list.length+' tài khoản học sinh trên portal?\nMật khẩu ngẫu nhiên sẽ hiện một lần ở đầu mục này.')) return;
+    var btn = qs('#sy-create', box); btn.disabled = true; btn.textContent = 'Đang tạo…';
+    YY.sb.functions.invoke('create-students', {body:{students:list}}).then(function(res){
+      if(res.error){
+        var msg = res.error.message || 'Lỗi không rõ';
+        var ctx = res.error.context;
+        if(ctx && typeof ctx.json==='function') return ctx.json().then(function(j){ throw new Error((j&&j.error)||msg); }, function(){ throw new Error(msg); });
+        throw new Error(msg);
+      }
+      return res.data;
+    }).then(function(data){
+      var rows = (data.results||[]).map(function(r, k){
+        var src = NONE_LIST[items[k] ? items[k].i : -1];
+        if(r.status==='ok' && src){ src.st.portalId = r.id; src.st.portalCode = r.code; }
+        return {name:r.full_name, code:r.code, password:r.password, status:r.status, message:r.message};
+      });
+      var d = new Date();
+      lastCreate = {at: pad2(d.getHours())+':'+pad2(d.getMinutes())+' '+formatDate(todayStr()), rows:rows};
+      return saveClasses().then(function(){
+        try{ downloadResultCsv(); }catch(e){}
+        showToast('Đã tạo '+rows.filter(function(r){return r.status==='ok';}).length+'/'+rows.length+' tài khoản', 3500);
+        if(typeof window.reloadTeacher==='function') return window.reloadTeacher();
+        renderPortalLink();
+      });
+    }).catch(function(e){
+      btn.disabled = false; btn.textContent = 'Tạo tài khoản portal cho các em đã tích';
+      alert('Chưa tạo được: '+(e.message||e)+'\n\nNếu báo "Function not found" thì bạn chưa đưa Edge Function lên Supabase.');
     });
   }
   window.__ddSetPortalClasses = function(list){ portalClasses = Array.isArray(list) ? list : []; try{ renderSyncCenter(); }catch(e){} };
