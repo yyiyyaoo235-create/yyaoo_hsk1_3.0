@@ -482,6 +482,7 @@
     <button class="nav-i" data-tab="assign" data-tip="Giao bài"><span class="ico">📝</span><span class="lbl">Giao bài</span></button>
     <button class="nav-i" data-tab="people" data-tip="Lớp &amp; học sinh"><span class="ico">👩‍🎓</span><span class="lbl">Lớp &amp; học sinh</span></button>
     <button class="nav-i" data-tab="records" data-tip="Kỷ lục học tập"><span class="ico">🏆</span><span class="lbl">Kỷ lục học tập</span></button>
+    <button class="nav-i" data-tab="diemdanh" data-tip="Sổ điểm danh &amp; học phí"><span class="ico">📒</span><span class="lbl">Sổ điểm danh</span></button>
     <div class="side-h">KHOÁ HỌC</div>
     <div class="nav-i course" data-course="HSK1" data-tip="HSK1"><span class="ico g">📗</span><span class="lbl">HSK1</span></div>
     <div class="nav-i course" data-course="HSK2" data-tip="HSK2"><span class="ico g">📘</span><span class="lbl">HSK2</span><span class="soon">chưa dạy</span></div>
@@ -538,6 +539,12 @@
         <thead><tr><th>Học sinh</th><th>Lớp</th><th>Bài</th><th>Loại</th><th>Hạn nộp</th><th>Điểm</th><th>Trạng thái</th><th></th></tr></thead>
         <tbody id="tb-rows"></tbody>
       </table></div>
+    </div>
+
+    <!-- sổ điểm danh & học phí (file so-diem-danh.html, tải khi mở lần đầu) -->
+    <div id="tab-diemdanh" class="hidden">
+      <div style="display:flex;justify-content:flex-end;margin-bottom:.4rem"><a class="btn" href="so-diem-danh.html" target="_blank" rel="noopener">Mở toàn màn hình ↗</a></div>
+      <div style="position:relative;height:calc(100vh - 8.5rem);min-height:32rem;border:1px solid var(--line);border-radius:20px;overflow:hidden;background:#fff;isolation:isolate"><iframe id="dd-frame" title="Sổ điểm danh &amp; học phí" allow="clipboard-write; clipboard-read" style="position:absolute;inset:0;width:100%;height:100%;border:0"></iframe></div>
     </div>
 
     <!-- khóa học -->
@@ -1645,12 +1652,13 @@ function renderRecords(){
 }
 $('#flt-status').addEventListener('change', renderRows);
 
-const TITLES = {home:'Tổng quan', monitor:'Giám sát học sinh', assign:'Giao bài', people:'Lớp & học sinh', records:'Kỷ lục học tập', course:'Khóa học'};
+const TITLES = {home:'Tổng quan', monitor:'Giám sát học sinh', assign:'Giao bài', people:'Lớp & học sinh', records:'Kỷ lục học tập', diemdanh:'Sổ điểm danh & học phí', course:'Khóa học'};
 function go(tab, status){
   Object.keys(TITLES).forEach(t => $('#tab-'+t).classList.toggle('hidden', t !== tab));
   document.querySelectorAll('.nav-i[data-tab]').forEach(n => n.classList.toggle('on', n.dataset.tab === tab));
   document.querySelectorAll('.nav-i[data-course]').forEach(n => n.classList.toggle('on', tab === 'course' && n.dataset.course === state.course));
   $('#pg-title').textContent = TITLES[tab];
+  if(tab === 'diemdanh' && !$('#dd-frame').getAttribute('src')) $('#dd-frame').setAttribute('src', 'so-diem-danh.html');
   if(status !== undefined){ $('#flt-status').value = status; renderRows(); }
   window.scrollTo(0, 0);
 }
