@@ -168,6 +168,73 @@
   .cr-mat .t span{font-size:.72rem;color:var(--muted);word-break:break-all}
   .cr-mat .x{border:0;background:none;color:var(--muted);font-size:.9rem;padding:.2rem .4rem}
   .cr-empty{padding:.5rem .9rem;border-top:1px solid var(--line)}
+
+  /* ===== KHO TÀI LIỆU v2: thanh công cụ + 2 cột (danh sách bài | chi tiết bài) ===== */
+  .cr-head{display:flex;align-items:flex-start;justify-content:space-between;gap:.8rem;flex-wrap:wrap}
+  .cr-cl-sel{display:inline-flex;align-items:center;gap:.3rem;font-size:.78rem;font-weight:700;color:var(--muted);margin-right:.2rem}
+  .cr-cl-sel select{width:auto;padding:.15rem .5rem;border-radius:999px;font-size:.78rem;font-weight:700}
+  .cr-tools{display:flex;flex-wrap:wrap;gap:.6rem .9rem;align-items:center;padding:.7rem .9rem}
+  .cr-search{position:relative;flex:1 1 15rem;min-width:12rem;max-width:22rem}
+  .cr-search>span{position:absolute;left:.75rem;top:50%;transform:translateY(-50%);opacity:.7;pointer-events:none}
+  .cr-search input{padding-left:2.1rem;padding-right:2rem}
+  .cr-search .x{position:absolute;right:.4rem;top:50%;transform:translateY(-50%);border:0;background:none;color:var(--muted);padding:.2rem .4rem;cursor:pointer}
+  .cr-pills{display:flex;flex-wrap:wrap;gap:.35rem;flex:1 1 auto}
+  .cr-pill{border:1px solid var(--line);background:#fff;border-radius:999px;padding:.25rem .75rem;font-weight:700;font-size:.8rem;color:var(--ink);cursor:pointer;white-space:nowrap}
+  .cr-pill b{font-weight:800;opacity:.55;margin-left:.25rem}
+  .cr-pill:hover{background:var(--pink-soft)}
+  .cr-pill.on{background:var(--pink);border-color:var(--pink);color:#fff}
+  .cr-pill.on b{opacity:.85}
+  .cr-tact{display:flex;align-items:center;gap:.5rem;margin-left:auto}
+  .cr-split{display:grid;grid-template-columns:16rem minmax(0,1fr);gap:1rem;align-items:start}
+  .cr-list{position:sticky;top:.6rem;max-height:calc(100vh - 1.2rem);overflow:auto;display:flex;flex-direction:column;gap:.2rem;padding:.2rem .2rem .6rem 0}
+  .cr-list-h{font-size:.68rem;font-weight:800;letter-spacing:.07em;color:var(--muted);padding:.2rem .5rem 0}
+  .cr-legend{display:flex;flex-wrap:wrap;gap:.15rem .6rem;padding:.1rem .5rem .4rem;font-size:.68rem;color:var(--muted);font-weight:700}
+  .cr-legend span{display:inline-flex;align-items:center;gap:.25rem}
+  .cr-legend i,.cr-dots i{display:inline-block;width:.55rem;height:.55rem;border-radius:50%;background:var(--dc)}
+  .cr-li2{all:unset;box-sizing:border-box;cursor:pointer;display:flex;align-items:center;gap:.55rem;padding:.45rem .6rem;border-radius:14px;border:1px solid transparent}
+  .cr-li2:hover{background:var(--pink-soft)}
+  .cr-li2.on{background:#fff;border-color:var(--line);box-shadow:inset 4px 0 0 var(--pink),0 4px 14px rgba(14,116,144,.12)}
+  .cr-n{flex:none;min-width:2rem;height:2rem;border-radius:11px;background:#eaf8fa;display:grid;place-items:center;font-weight:800;font-size:.85rem;color:var(--pink)}
+  .cr-li2.on .cr-n{background:var(--pink);color:#fff}
+  .cr-lt{flex:1;min-width:0;display:flex;flex-direction:column;line-height:1.25}
+  .cr-lt b{font-weight:700;font-size:.88rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .cr-lt small{font-size:.68rem;color:var(--yellow);font-weight:800}
+  .cr-dots{display:flex;gap:.2rem;flex:none}
+  .cr-dots i{opacity:.16}.cr-dots i.on{opacity:1}
+  .cr-dh{display:flex;align-items:flex-start;justify-content:space-between;gap:.6rem;flex-wrap:wrap;margin-bottom:.4rem}
+  .cr-dh-t{font-size:1.15rem;font-weight:800}
+  .cr-now{margin-top:.25rem;font-size:.82rem;font-weight:700;color:var(--yellow)}
+  .cr-gt{font-size:.68rem;font-weight:800;letter-spacing:.07em;color:var(--muted);margin:1rem 0 .1rem}
+  .cr-grp{display:grid;grid-template-columns:repeat(auto-fit,minmax(21rem,1fr));gap:.8rem;align-items:start}
+  .cr-sec-h{display:flex;align-items:center;gap:.5rem;font-weight:800;margin:.5rem 0 .3rem}
+  .cr-sec-h small{font-weight:700;color:var(--muted);font-size:.72rem}
+  .cr-sec-h .link{margin-left:auto}
+  .cr-card{--tc:var(--pink);background:#fff;border:1px solid var(--line);border-left:4px solid var(--tc);border-radius:14px;padding:.55rem .75rem;margin-bottom:.45rem;display:flex;flex-direction:column;gap:.4rem}
+  .cr-card .t b{display:block;line-height:1.3}
+  .cr-file{display:inline-block;margin-top:.15rem;font-size:.68rem;font-weight:700;background:var(--gray-soft);color:var(--muted);border-radius:999px;padding:.05rem .55rem;max-width:100%;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;vertical-align:middle}
+  .cr-st{display:inline-block;margin-left:.3rem;font-size:.68rem;font-weight:800;border-radius:999px;padding:.05rem .5rem;background:var(--gray-soft);color:var(--muted)}
+  .cr-st.ok{background:var(--green-soft);color:var(--green)}
+  .cr-st.bad{background:#fde4e1;color:#c0392b}
+  .cr-acts{display:flex;align-items:center;gap:.35rem;flex-wrap:wrap}
+  .cr-acts .btn{padding:.25rem .7rem;font-size:.8rem}
+  .cr-acts .btn.pri{background:var(--tc);border-color:var(--tc)}
+  .cr-acts .mini{border:0;background:none;color:var(--muted);padding:.2rem .35rem;cursor:pointer;font-size:.85rem;border-radius:8px}
+  .cr-acts .mini:hover{background:var(--gray-soft);color:var(--ink)}
+  .cr-acts .sp{flex:1}
+  .cr-hint{border:1px dashed var(--line);border-radius:14px;padding:.55rem .8rem;color:var(--muted);font-size:.8rem;margin-bottom:.45rem}
+  .cr-gh{display:flex;align-items:center;gap:.5rem;margin:1rem 0 .4rem;padding-bottom:.25rem;border-bottom:1px solid var(--line);scroll-margin-top:.6rem}
+  .cr-gh.flash{background:var(--yellow-soft);border-radius:10px}
+  mark{background:#ffe9a8;color:inherit;border-radius:4px;padding:0 .1rem}
+  #cr-toast{position:fixed;left:50%;bottom:1.4rem;transform:translate(-50%,1rem);background:#1b3a46;color:#fff;font-weight:700;font-size:.82rem;padding:.45rem .9rem;border-radius:12px;opacity:0;pointer-events:none;transition:.18s;z-index:300}
+  #cr-toast.show{opacity:1;transform:translate(-50%,0)}
+  @media(max-width:820px){
+    .cr-split{grid-template-columns:1fr}
+    .cr-list{position:static;max-height:none;flex-direction:row;overflow-x:auto;padding-bottom:.4rem}
+    .cr-list-h,.cr-legend{display:none}
+    .cr-li2{flex:0 0 auto;border-color:var(--line);background:#fff}
+    .cr-grp{grid-template-columns:1fr}
+    .cr-tact{margin-left:0}
+  }
   .badge{margin-left:auto;background:var(--pink);color:#fff;border-radius:999px;font-size:.68rem;min-width:1.3rem;height:1.3rem;display:grid;place-items:center;padding:0 .35rem}
   .badge:empty,.badge.zero{display:none}
   .side-foot{margin-top:auto;padding:.8rem 0 0;border-top:1px solid var(--line);font-size:.75rem}
@@ -675,8 +742,10 @@
     <!-- khóa học -->
     <div id="tab-course" class="hidden">
       <div class="card">
-        <h2 id="cr-name" style="margin:0"></h2>
-        <div class="muted" id="cr-sub"></div>
+        <div class="cr-head">
+          <div><h2 id="cr-name" style="margin:0"></h2><div class="muted" id="cr-sub"></div></div>
+          <button class="btn pri" id="cr-add" type="button">＋ Thêm tài liệu</button>
+        </div>
         <div id="cr-classes" style="margin-top:.5rem"></div>
       </div>
       <div class="card hidden" id="cr-import">
@@ -684,25 +753,12 @@
         <div class="muted" id="cr-import-t" style="margin:.2rem 0 .5rem"></div>
         <button class="btn pri" id="cr-import-b" type="button">Nhập tài liệu mẫu lên Supabase</button>
       </div>
-      <details class="card" id="cr-addcard">
-        <summary style="cursor:pointer;font-weight:800;font-size:1rem">＋ Thêm tài liệu vào khóa học</summary>
-        <form id="cr-form" style="margin-top:.6rem">
-          <div class="row">
-            <div><label>Thuộc bài</label><select id="cr-f-lesson"></select></div>
-            <div><label>Loại tài liệu</label><select id="cr-f-type">
-              <option value="lecture">📖 Bài giảng (mở để dạy/chiếu)</option>
-              <option value="practice">🧩 Luyện tập (cho học sinh)</option>
-              <option value="test">📝 Đề kiểm tra (giao nhanh)</option>
-              <option value="homework">📚 Bài tập về nhà (giao nhanh)</option></select></div>
-          </div>
-          <div class="row">
-            <div><label>Tên hiển thị</label><input id="cr-f-title" placeholder="Từ vựng &amp; bài khóa" required></div>
-            <div><label>Đường dẫn (file trên GitHub Pages hoặc link ngoài)</label><input id="cr-f-url" placeholder="hsk1/bai7.html hoặc https://…" required></div>
-          </div>
-          <button class="btn pri" type="submit" style="margin-top:.6rem">Thêm vào bài</button>
-        </form>
-      </details>
-      <div id="cr-body"></div>
+      <div class="card cr-tools">
+        <div class="cr-search"><span>🔍</span><input id="cr-q" placeholder="Tìm tài liệu… (vd: bài 5, từ vựng, nghe)" autocomplete="off"><button type="button" class="x hidden" id="cr-qx" title="Xóa tìm kiếm">✕</button></div>
+        <div class="cr-pills" id="cr-pills"></div>
+        <div class="cr-tact"><span class="muted" id="cr-chk-msg"></span><button class="btn" id="cr-chk" type="button" title="Kiểm tra file có trên GitHub Pages chưa">🩺 Kiểm tra link</button></div>
+      </div>
+      <div class="cr-split"><div class="cr-list" id="cr-list"></div><div id="cr-detail"></div></div>
     </div>
 
     <!-- giao bài -->
@@ -790,6 +846,31 @@
 
 <!-- hộp thoại chấm bài -->
 <div id="modal" class="modal-bg hidden"><div class="modal" id="modal-body"></div></div>
+
+<!-- hộp thoại thêm / sửa tài liệu (Kho tài liệu) -->
+<div id="cr-modal" class="modal-bg hidden"><div class="modal" style="max-width:560px">
+  <h2 id="cr-m-title" style="margin:0 0 .6rem">Thêm tài liệu</h2>
+  <form id="cr-form">
+    <input type="hidden" id="cr-f-id">
+    <div class="row">
+      <div><label>Thuộc bài</label><select id="cr-f-lesson"></select></div>
+      <div><label>Loại tài liệu</label><select id="cr-f-type">
+        <option value="lecture">📖 Bài giảng (mở để dạy/chiếu)</option>
+        <option value="practice">🧩 Luyện tập (cho học sinh)</option>
+        <option value="test">📝 Đề kiểm tra (giao nhanh)</option>
+        <option value="homework">📚 Bài tập về nhà (giao nhanh)</option></select></div>
+    </div>
+    <div class="row" style="margin-top:.6rem">
+      <div><label>Tên hiển thị</label><input id="cr-f-title" placeholder="Từ vựng &amp; bài khóa" required></div>
+      <div><label>Đường dẫn (file trên GitHub Pages hoặc link ngoài)</label><input id="cr-f-url" placeholder="hsk1/bai7.html hoặc https://…" required></div>
+    </div>
+    <label class="checks" id="cr-keep-w" style="margin-top:.7rem"><span style="display:flex;align-items:center;gap:.4rem;font-weight:600"><input type="checkbox" id="cr-f-keep" style="width:auto"> Giữ hộp thoại để thêm tiếp tài liệu khác</span></label>
+    <div style="display:flex;gap:.5rem;justify-content:flex-end;margin-top:.9rem">
+      <button class="btn" type="button" id="cr-m-cancel">Hủy</button>
+      <button class="btn pri" type="submit" id="cr-m-sub">Thêm vào bài</button>
+    </div>
+  </form>
+</div></div>
 
 <script type="text/plain" id="dd-css">
   :host{display:block;--paper:#e9f8fa;--surface:#fff;--ink:#1b3a46;--ink-soft:#5f8591;--jade:#14808f;--jade-dark:#0e5f6b;--jade-tint:#dcf3f6;--gold:#C98A4B;--gold-tint:#F5E7D6;--brick:#D97B72;--brick-tint:#FBE5E2;--line:#cde7ec;--radius:16px;}
@@ -5476,68 +5557,280 @@ const MAT_SEED = [
 state.mats = [];
 const matsOf = () => state.mats || [];
 state.course = 'HSK1';
-const crOpen = new Set(), crSeen = new Set();
+/* ===== Kho tài liệu v2 ===== */
+// crUI: trạng thái giao diện (bài đang xem theo từng cấp, từ khóa tìm, bộ lọc, kết quả kiểm tra link)
+const crUI = {sel:{}, q:'', f:'all', link:{}, scroll:false};
+const CR_ORDER = ['lecture', 'practice', 'test', 'homework'];
+const CR_COL = {lecture:'#1aa6a6', practice:'#e3a82b', test:'#e0643f', homework:'#3aa76d'};
+const CR_GROUPS = [
+  ['HỌC LIỆU GIẢNG DẠY · dùng trên lớp / tự luyện', ['lecture', 'practice']],
+  ['ĐÁNH GIÁ & GIAO BÀI · đẩy cho học sinh', ['test', 'homework']]];
+const CR_SUB = {lecture:'slide, bài khóa, ngữ pháp', practice:'trò chơi, từ vựng, nghe', test:'giao cho lớp', homework:'giao cho lớp'};
+
+const crLessons = (code) => COURSES[code].lessons.concat([[0, 'Ôn tập & kiểm tra chung']]);
+const crNorm = (s) => String(s ?? '').toLowerCase().replace(/đ/g, 'd').normalize('NFD').replace(/[\u0300-\u036f]/g, '');
+const crToks = (q) => crNorm(q).split(/\s+/).filter(Boolean);
+// từ khóa là số → khớp đúng số bài; còn lại → khớp chữ (không phân biệt dấu)
+function crHit(hay, lesson, q){
+  const h = crNorm(hay);
+  return crToks(q).every(t => /^\d+$/.test(t) ? +lesson === +t : h.includes(t));
+}
+const crLessonHit = (n, zh, q) => crHit(`bai ${n || ''} ${zh}`, n, q);
+const crMatHit = (m, zh, q) => crHit(`bai ${m.lesson || ''} ${zh} ${m.title} ${m.url} ${MAT_TYPES[m.type].label}`, m.lesson, q);
+function crHL(s, q){
+  s = String(s ?? '');
+  const toks = crToks(q).filter(t => !/^\d+$/.test(t));
+  if(!toks.length) return esc(s);
+  const ch = [...s], nn = ch.map(c => { const x = crNorm(c); return x.length === 1 ? x : c; }).join('');
+  if(nn.length !== ch.length) return esc(s);
+  const mk = new Array(ch.length).fill(false);
+  toks.forEach(t => { let i = nn.indexOf(t); while(i >= 0){ for(let k = i; k < i + t.length; k++) mk[k] = true; i = nn.indexOf(t, i + 1); } });
+  let out = '', on = false;
+  ch.forEach((c, i) => { if(mk[i] && !on){ out += '<mark>'; on = true; } if(!mk[i] && on){ out += '</mark>'; on = false; } out += esc(c); });
+  return out + (on ? '</mark>' : '');
+}
+const crShort = (u) => {
+  try{ if(/^https?:/i.test(u)) return new URL(u).hostname.replace(/^www\./, ''); }catch(e){}
+  return String(u).split(/[?#]/)[0].split('/').pop() || String(u);
+};
+function crToast(t){
+  let el = $('#cr-toast');
+  if(!el){ el = document.createElement('div'); el.id = 'cr-toast'; document.body.appendChild(el); }
+  el.textContent = t; el.classList.add('show');
+  clearTimeout(crToast._t); crToast._t = setTimeout(() => el.classList.remove('show'), 1900);
+}
+
+/* thứ tự tài liệu trong cùng bài + cùng loại: lưu trong trình duyệt này (localStorage) */
+const crOrdGet = () => { try{ return JSON.parse(localStorage.getItem('cr-order') || '{}'); }catch(e){ return {}; } };
+const crOrdSet = (o) => { try{ localStorage.setItem('cr-order', JSON.stringify(o)); }catch(e){} };
+const crKey = (m) => `${m.course}:${+m.lesson}:${m.type}`;
+function crGroup(course, lesson, type){
+  const list = matsOf().filter(m => m.course === course && +m.lesson === +lesson && m.type === type);
+  const arr = crOrdGet()[`${course}:${+lesson}:${type}`] || [];
+  const ix = (m) => { const i = arr.indexOf(m.id); return i < 0 ? 1e6 : i; };
+  return list.map((m, i) => [m, i]).sort((a, b) => ix(a[0]) - ix(b[0]) || a[1] - b[1]).map(x => x[0]);
+}
+function matMove(id, d){
+  const m = matsOf().find(x => x.id === id); if(!m) return;
+  const g = crGroup(m.course, m.lesson, m.type), i = g.findIndex(x => x.id === id), j = i + d;
+  if(i < 0 || j < 0 || j >= g.length) return;
+  [g[i], g[j]] = [g[j], g[i]];
+  const o = crOrdGet(); o[crKey(m)] = g.map(x => x.id); crOrdSet(o);
+  renderCourse();
+}
+
+function crCard(m, q, pos){
+  const t = MAT_TYPES[m.type], st = crUI.link[m.id], id = esc(m.id);
+  const badge = st === 'bad' ? '<span class="cr-st bad" title="Không thấy file trên host: chưa đẩy lên GitHub hoặc gõ sai tên">⚠ không thấy file</span>'
+    : st === 'ok' ? '<span class="cr-st ok" title="File có trên host">✓ có file</span>'
+    : st === 'ext' ? '<span class="cr-st" title="Link ngoài — không kiểm tra được">↗ link ngoài</span>' : '';
+  const main = t.act === 'open'
+    ? `<button class="btn pri" onclick="matAct('${id}')">${m.type === 'lecture' ? '▶ Chiếu' : 'Mở thử'}</button>`
+    : `<button class="btn pri" onclick="matAct('${id}')">Giao cho lớp</button>`;
+  const sub = t.act === 'open'
+    ? `<button class="btn" onclick="matCopy('${id}')">${m.type === 'lecture' ? '🔗 Sao chép link' : '📤 Gửi link HS'}</button>`
+    : `<button class="btn" onclick="matPreview('${id}')">👁 Xem thử</button>`;
+  const mv = pos && pos.n > 1 ? `<button class="mini" title="Lên" onclick="matMove('${id}',-1)"${pos.i === 0 ? ' disabled style="opacity:.3"' : ''}>↑</button><button class="mini" title="Xuống" onclick="matMove('${id}',1)"${pos.i === pos.n - 1 ? ' disabled style="opacity:.3"' : ''}>↓</button>` : '';
+  return `<div class="cr-card" style="--tc:${CR_COL[m.type]}">
+    <div class="t"><b>${crHL(m.title, q)}</b><span class="cr-file" title="${esc(m.url)}">${crHL(crShort(m.url), q)}</span>${badge}</div>
+    <div class="cr-acts">${main}${sub}<span class="sp"></span>${mv}
+      <button class="mini" title="Sửa" onclick="crOpenForm('${id}')">✏️</button>
+      <button class="mini" title="Xóa khỏi danh sách" onclick="matDel('${id}')">✕</button></div></div>`;
+}
+const crCards = (list, q, code, n, type) => { const g = crGroup(code, n, type).filter(m => list.includes(m)); return g.map((m, i) => crCard(m, q, {i, n: g.length})).join(''); };
+
+function crFlat(){ return crUI.q.trim() !== '' || !['all', 'empty'].includes(crUI.f); }
+
+function renderCourse(){
+  const code = state.course, c = COURSES[code], real = c.lessons, L = crLessons(code);
+  $('#cr-name').textContent = code;
+  $('#cr-sub').textContent = c.book;
+  /* lớp đang học cấp này: chọn "đang học tới bài X" ngay tại đây */
+  const myCls = (state.classes || []).filter(x => x.course === code);
+  const optL = (cur) => `<option value="0"${cur ? '' : ' selected'}>Chưa bắt đầu</option>` + real.map(([n]) => `<option value="${n}"${cur === n ? ' selected' : ''}>Bài ${n}</option>`).join('');
+  $('#cr-classes').innerHTML = myCls.length
+    ? myCls.map(x => `<span class="cr-cls">${clsPill(x)}${real.length ? `<label class="cr-cl-sel">đang học<select onchange="crSetLesson('${x.id}',this.value)">${optL(+x.current_lesson || 0)}</select></label>` : ''}</span>`).join('')
+    : '<span class="muted">Chưa có lớp nào gắn với cấp này — chọn ở mục “Lớp &amp; học sinh”.</span>';
+  const seedRows = MAT_SEED.filter(m => m.course === code).length;
+  $('#cr-import').classList.toggle('hidden', matsOf().length > 0 || !seedRows);
+  $('#cr-import-t').textContent = seedRows + ' tài liệu mẫu (các bài giảng đã dựng) sẵn sàng nhập; đường dẫn sai thì xóa ✕ và thêm lại.';
+  const lessonOpts = L.map(([n, zh]) => `<option value="${n}">${n ? 'Bài ' + n + ' · ' + esc(zh) : esc(zh)}</option>`).join('');
+  const keep = $('#cr-f-lesson').value;
+  $('#cr-f-lesson').innerHTML = real.length ? lessonOpts : '<option value="0">Ôn tập & kiểm tra chung</option>';
+  if(keep) $('#cr-f-lesson').value = keep;
+
+  const mine = matsOf().filter(m => m.course === code);
+  const q = crUI.q.trim(), f = crUI.f, flat = crFlat();
+  const zhOf = (n) => (L.find(x => x[0] === n) || [0, ''])[1];
+  const byL = (n) => mine.filter(m => +m.lesson === n);
+  const mFit = (m) => (f === 'all' || f === 'empty' || m.type === f) && (!q || crMatHit(m, zhOf(+m.lesson), q));
+
+  /* thanh lọc dạng pill */
+  const emptyN = real.filter(([n]) => !byL(n).length).length;
+  const pill = (k, label, cnt) => `<button type="button" class="cr-pill${f === k ? ' on' : ''}" onclick="crSetF('${k}')">${label}<b>${cnt}</b></button>`;
+  $('#cr-pills').innerHTML = pill('all', 'Tất cả', mine.length)
+    + CR_ORDER.map(t => pill(t, MAT_TYPES[t].ico + ' ' + MAT_TYPES[t].label, mine.filter(m => m.type === t).length)).join('')
+    + pill('empty', '⚠️ Bài trống', emptyN);
+  $('#cr-qx').classList.toggle('hidden', !crUI.q);
+
+  /* các bài hiển thị ở cột trái */
+  const vis = L.filter(([n, zh]) => {
+    const ms = byL(n), lh = !q || crLessonHit(n, zh, q);
+    if(f === 'empty') return n && !ms.length && lh;
+    if(f !== 'all') return ms.some(m => m.type === f && (!q || crMatHit(m, zh, q) || lh));
+    return !q || lh || ms.some(m => crMatHit(m, zh, q));
+  });
+  /* bài đang xem: mặc định = bài lớp đang học, nếu không có thì bài đầu */
+  let sel = crUI.sel[code];
+  if(sel === undefined){
+    const cur = myCls.map(x => +x.current_lesson || 0).filter(n => real.some(r => r[0] === n))[0];
+    sel = cur || (real[0] ? real[0][0] : 0);
+  }
+  if(!flat && vis.length && !vis.some(x => x[0] === sel)) sel = vis[0][0];   // chỉ hiển thị tạm, không ghi đè bài đang xem
+  else crUI.sel[code] = sel;
+
+  /* cột trái */
+  const dots = (n) => CR_ORDER.map(t => { const k = byL(n).filter(m => m.type === t).length; return `<i class="${k ? 'on' : ''}" style="--dc:${CR_COL[t]}" title="${MAT_TYPES[t].label}: ${k}"></i>`; }).join('');
+  const nowOf = (n) => myCls.filter(x => (+x.current_lesson || 0) === n && n);
+  $('#cr-list').innerHTML = `<div class="cr-list-h">DANH SÁCH BÀI (${real.length})</div>
+    <div class="cr-legend">${CR_ORDER.map(t => `<span><i style="--dc:${CR_COL[t]}"></i>${MAT_TYPES[t].label}</span>`).join('')}</div>`
+    + (vis.length ? vis.map(([n, zh]) => `<button type="button" class="cr-li2${!flat && n === sel ? ' on' : ''}" data-n="${n}" onclick="crPick(${n})">
+        <span class="cr-n">${n || '⋯'}</span>
+        <span class="cr-lt"><b class="${n ? 'zh' : ''}">${esc(zh)}</b>${nowOf(n).length ? '<small>📍 đang học</small>' : ''}</span>
+        <span class="cr-dots">${dots(n)}</span></button>`).join('')
+      : '<div class="cr-hint">Không có bài nào khớp.</div>');
+
+  /* cột phải */
+  const notice = real.length ? '' : '<div class="card muted">Cấp này chưa dạy. Khi bắt đầu, thêm danh sách bài vào <code>COURSES.' + code + '.lessons</code> trong file.</div>';
+  let html = notice;
+  if(flat){
+    const title = (f !== 'all' && f !== 'empty' ? MAT_TYPES[f].ico + ' ' + MAT_TYPES[f].label : 'Kết quả tìm') + (q ? ` “${esc(q)}”` : '') + ' · ' + code;
+    const total = mine.filter(mFit).length;
+    html += `<div class="cr-dh"><div><div class="cr-dh-t">${title}</div><div class="muted">${total} tài liệu · ${vis.length} bài</div></div></div>`;
+    html += vis.map(([n, zh]) => {
+      const items = byL(n).filter(mFit);
+      const body = CR_ORDER.map(t => crCards(items, q, code, n, t)).join('')
+        || `<div class="cr-hint">Chưa có tài liệu — <button class="link" onclick="crOpenForm(null,{lesson:${n}})">＋ Thêm</button></div>`;
+      return `<div class="cr-gh" id="crg-${n}"><button class="link" style="font-size:.95rem" onclick="crJump(${n})">${n ? 'Bài ' + n : esc(zh)}${n ? ' · <span class="zh">' + esc(zh) + '</span>' : ''} ›</button><span class="muted">${items.length}</span></div><div class="cr-grp">${body}</div>`;
+    }).join('') || '<div class="cr-hint">Không có tài liệu khớp.</div>';
+    if(f !== 'all' && f !== 'empty'){
+      const miss = real.filter(([n]) => !byL(n).some(m => m.type === f));
+      html += `<div class="cr-gt">CHƯA CÓ ${MAT_TYPES[f].label.toUpperCase()} (${miss.length} bài)</div>`
+        + (miss.length ? `<div>${miss.map(([n]) => `<button class="cr-pill" onclick="crOpenForm(null,{lesson:${n},type:'${f}'})" title="Thêm ${MAT_TYPES[f].label} cho Bài ${n}">＋ Bài ${n}</button>`).join(' ')}</div>` : '<div class="muted">Bài nào cũng đã có 🎉</div>');
+    }
+  }else if(!vis.length){
+    html += `<div class="card muted">${f === 'empty' ? 'Không còn bài trống 🎉' : 'Không có bài nào.'}</div>`;
+  }else{
+    const n = sel, zh = zhOf(n), i = vis.findIndex(x => x[0] === n);
+    const prev = vis[i - 1], next = vis[i + 1], now = nowOf(n);
+    html += `<div class="cr-dh"><div>
+        <div class="cr-dh-t">${n ? 'BÀI ' + n + ' <span class="zh" style="font-weight:700;color:var(--muted)">' + esc(zh) + '</span>' : esc(zh)}</div>
+        ${now.length ? `<div class="cr-now">📍 ${now.map(x => 'Lớp ' + esc(x.name)).join(', ')} đang học bài này</div>` : ''}</div>
+      <div><button class="btn" ${prev ? `onclick="crPick(${prev[0]})"` : 'disabled style="opacity:.4"'}>← Bài trước</button>
+        <button class="btn" ${next ? `onclick="crPick(${next[0]})"` : 'disabled style="opacity:.4"'}>Bài sau →</button></div></div>`;
+    html += CR_GROUPS.map(([gt, types]) => `<div class="cr-gt">${gt}</div><div class="cr-grp">` + types.map(t => {
+      const g = crGroup(code, n, t), ty = MAT_TYPES[t];
+      return `<div><div class="cr-sec-h" style="color:${CR_COL[t]}"><span>${ty.ico} ${ty.label.toUpperCase()}</span><small>${CR_SUB[t]} · ${g.length}</small>
+          <button class="link" onclick="crOpenForm(null,{lesson:${n},type:'${t}'})">＋ Thêm</button></div>`
+        + (g.length ? g.map((m, k) => crCard(m, '', {i: k, n: g.length})).join('') : '<div class="cr-hint">Chưa có — bấm ＋ Thêm.</div>') + '</div>';
+    }).join('') + '</div>').join('');
+  }
+  $('#cr-detail').innerHTML = html;
+  if(crUI.scroll){
+    crUI.scroll = false;
+    const li = $('#cr-list .cr-li2.on'), box = $('#cr-list');
+    if(li && box && box.scrollHeight > box.clientHeight) box.scrollTop = li.offsetTop - box.clientHeight / 2 + li.clientHeight / 2;
+  }
+}
+
+/* --- thao tác giao diện --- */
+function crSetF(k){ crUI.f = (crUI.f === k && k !== 'all') ? 'all' : k; renderCourse(); }
+function crPick(n){
+  crUI.sel[state.course] = n;
+  if(crFlat()){
+    const g = document.getElementById('crg-' + n);
+    if(g){ g.scrollIntoView({behavior:'smooth', block:'start'}); g.classList.add('flash'); setTimeout(() => g.classList.remove('flash'), 1200); }
+    return;
+  }
+  crUI.scroll = true; renderCourse();
+}
+function crJump(n){   // từ danh sách phẳng → nhảy vào chi tiết một bài
+  crUI.q = ''; crUI.f = 'all'; $('#cr-q').value = ''; crUI.sel[state.course] = n; crUI.scroll = true;
+  renderCourse(); window.scrollTo(0, 0);
+}
+function crSetLesson(id, v){
+  const x = (state.classes || []).find(c => c.id === id), n = +v || 0;
+  if(x && n) crUI.sel[x.course] = n;
+  crUI.scroll = true;
+  saveClass(id, {current_lesson: n});
+}
+$('#cr-q').addEventListener('input', (e) => { crUI.q = e.target.value; renderCourse(); });
+$('#cr-qx').addEventListener('click', () => { crUI.q = ''; $('#cr-q').value = ''; renderCourse(); $('#cr-q').focus(); });
 
 function openCourse(code){
   state.course = code;
+  crUI.q = ''; crUI.f = 'all'; $('#cr-q').value = '';
+  const cur = (state.classes || []).filter(x => x.course === code).map(x => +x.current_lesson || 0).filter(n => COURSES[code].lessons.some(r => r[0] === n))[0];
+  if(cur) crUI.sel[code] = cur; else delete crUI.sel[code];   // mở sẵn bài lớp đang học
+  crUI.scroll = true;
   go('course');
   $('#pg-title').textContent = 'Khóa học ' + code;
   renderCourse();
 }
 document.querySelectorAll('.nav-i[data-course]').forEach(n => n.addEventListener('click', () => openCourse(n.dataset.course)));
 
-function renderCourse(){
-  const code = state.course, c = COURSES[code];
-  $('#cr-name').textContent = code;
-  $('#cr-sub').textContent = c.book;
-  const myCls = (state.classes || []).filter(x => x.course === code);
-  $('#cr-classes').innerHTML = myCls.length
-    ? myCls.map(x => `<span class="cr-cls">${clsPill(x)}<span class="muted">đang học tới Bài ${x.current_lesson || 0}</span></span>`).join('')
-    : '<span class="muted">Chưa có lớp nào gắn với cấp này — chọn ở mục “Lớp &amp; học sinh”.</span>';
-  const seedRows = MAT_SEED.filter(m => m.course === code).length;
-  $('#cr-import').classList.toggle('hidden', matsOf().length > 0 || !seedRows);
-  $('#cr-import-t').textContent = seedRows + ' tài liệu mẫu (các bài giảng đã dựng) sẵn sàng nhập; đường dẫn sai thì xóa ✕ và thêm lại.';
-  const lessonOpts = c.lessons.concat([[0, 'Ôn tập & kiểm tra chung']]).map(([n, zh]) =>
-    `<option value="${n}">${n ? 'Bài ' + n + ' · ' + esc(zh) : esc(zh)}</option>`).join('');
-  const keep = $('#cr-f-lesson').value;
-  $('#cr-f-lesson').innerHTML = c.lessons.length ? lessonOpts : '<option value="0">Ôn tập & kiểm tra chung</option>';
-  if(keep) $('#cr-f-lesson').value = keep;
-  const mine = matsOf().filter(m => m.course === code);
-  const order = ['lecture', 'practice', 'test', 'homework'];
-  const block = (n, zh) => {
-    const list = mine.filter(m => +m.lesson === n).sort((a, b) => order.indexOf(a.type) - order.indexOf(b.type));
-    const key = code + n;
-    const now = n && myCls.some(x => x.current_lesson === n);
-    if(now && !crSeen.has(key)){ crSeen.add(key); crOpen.add(key); }
-    const head = n ? `Bài ${n} <span class="cr-zh zh">${esc(zh)}</span>` : esc(zh);
-    const rows = list.map(m => {
-      const t = MAT_TYPES[m.type];
-      return `<div class="cr-mat"><span>${t.ico}</span>
-        <div class="t"><b>${esc(m.title)}</b><span>${t.label} · ${esc(m.url)}</span></div>
-        ${t.act === 'open' ? `<button class="btn" onclick="matAct('${m.id}')">Mở</button>` : `<button class="btn pri" onclick="matAct('${m.id}')">Giao</button>`}
-        <button class="x" title="Xóa khỏi danh sách" onclick="matDel('${m.id}')">✕</button></div>`;
-    }).join('') || '<div class="cr-empty muted">Chưa có tài liệu — thêm ở khung phía trên.</div>';
-    return `<details class="cr-les" data-k="${key}"${crOpen.has(key) ? ' open' : ''}>
-      <summary><span>${head}</span>${now ? '<span class="chip c-yellow" style="margin-left:auto">đang học</span>' : ''}<span class="chip ${list.length ? 'c-green' : 'c-gray'}" style="${now ? '' : 'margin-left:auto'}">${list.length} tài liệu</span></summary>${rows}</details>`;
-  };
-  let html = c.lessons.map(([n, zh]) => block(n, zh)).join('');
-  if(!c.lessons.length) html = '<div class="card muted">Cấp này chưa dạy. Khi bắt đầu, thêm danh sách bài vào <code>COURSES.' + code + '.lessons</code> trong file.</div>';
-  html += block(0, 'Ôn tập & kiểm tra chung');
-  $('#cr-body').innerHTML = html;
-  $('#cr-body').querySelectorAll('details').forEach(d => d.addEventListener('toggle', () => d.open ? crOpen.add(d.dataset.k) : crOpen.delete(d.dataset.k)));
+/* --- hộp thoại thêm / sửa --- */
+function crOpenForm(id, pre){
+  const m = id ? matsOf().find(x => x.id === id) : null;
+  const sel = crUI.sel[state.course];
+  $('#cr-m-title').textContent = m ? 'Sửa tài liệu' : 'Thêm tài liệu · ' + state.course;
+  $('#cr-f-id').value = m ? m.id : '';
+  $('#cr-f-lesson').value = String(m ? m.lesson : (pre && pre.lesson != null ? pre.lesson : (sel || 0)));
+  $('#cr-f-type').value = m ? m.type : ((pre && pre.type) || 'lecture');
+  $('#cr-f-title').value = m ? m.title : '';
+  $('#cr-f-url').value = m ? m.url : '';
+  $('#cr-m-sub').textContent = m ? 'Lưu thay đổi' : 'Thêm vào bài';
+  $('#cr-keep-w').classList.toggle('hidden', !!m);
+  $('#cr-modal').classList.remove('hidden');
+  setTimeout(() => $('#cr-f-title').focus(), 30);
 }
+const crClose = () => $('#cr-modal').classList.add('hidden');
+$('#cr-add').addEventListener('click', () => crOpenForm(null));
+$('#cr-m-cancel').addEventListener('click', crClose);
+$('#cr-modal').addEventListener('mousedown', (e) => { if(e.target.id === 'cr-modal') crClose(); });
+document.addEventListener('keydown', (e) => { if(e.key === 'Escape' && !$('#cr-modal').classList.contains('hidden')) crClose(); });
 $('#cr-form').addEventListener('submit', async (ev) => {
   ev.preventDefault();
-  const lesson = +$('#cr-f-lesson').value;
+  const lesson = +$('#cr-f-lesson').value, type = $('#cr-f-type').value;
+  const title = $('#cr-f-title').value.trim(), url = $('#cr-f-url').value.trim(), eid = $('#cr-f-id').value;
+  const btn = $('#cr-m-sub'); btn.disabled = true;
+  const old = eid ? matsOf().find(x => x.id === eid) : null, before = new Set(matsOf().map(x => x.id));
   try{
-    await YY.addMaterial({course:state.course, lesson, type:$('#cr-f-type').value,
-      title:$('#cr-f-title').value.trim(), url:$('#cr-f-url').value.trim()});
-    state.mats = await YY.listMaterials();
-  }catch(e){ alert('Chưa lưu được: ' + e.message); return; }
-  crOpen.add(state.course + lesson);
-  $('#cr-f-title').value = ''; $('#cr-f-url').value = '';
-  renderCourse();
+    await YY.addMaterial({course:state.course, lesson, type, title, url});   // sửa = thêm bản mới rồi xóa bản cũ (không mất dữ liệu nếu lỗi giữa chừng)
+  }catch(e){ btn.disabled = false; alert('Chưa lưu được: ' + e.message); return; }
+  if(eid){
+    try{ await YY.deleteMaterial(eid); }
+    catch(e){ alert('Đã lưu bản mới nhưng chưa xóa được bản cũ: ' + e.message + '\nHãy xóa ✕ bản cũ thủ công.'); }
+  }
+  try{ state.mats = await YY.listMaterials(); }catch(e){ btn.disabled = false; alert('Đã lưu nhưng chưa tải lại danh sách: ' + e.message); return; }
+  btn.disabled = false;
+  const nu = matsOf().find(x => !before.has(x.id));
+  if(old && nu){   // giữ nguyên vị trí sắp xếp khi sửa
+    const o = crOrdGet(), a = o[crKey(old)], i = a ? a.indexOf(old.id) : -1;
+    if(i >= 0){ if(+old.lesson === lesson && old.type === type) a[i] = nu.id; else a.splice(i, 1); crOrdSet(o); }
+  }
+  crUI.sel[state.course] = lesson; crUI.scroll = true;
+  if(!eid && $('#cr-f-keep').checked){
+    $('#cr-f-title').value = ''; $('#cr-f-url').value = ''; $('#cr-f-title').focus();
+    crToast('Đã thêm vào Bài ' + (lesson || '—') + ' — nhập tiếp');
+    renderCourse();
+  }else{
+    crClose(); crUI.q = ''; crUI.f = 'all'; $('#cr-q').value = '';
+    renderCourse();
+  }
 });
+
+/* --- hành động trên tài liệu --- */
 async function matDel(id){
   const m = matsOf().find(x => x.id === id); if(!m || !confirm('Xóa "' + m.title + '" khỏi danh sách?')) return;
   try{ await YY.deleteMaterial(id); state.mats = await YY.listMaterials(); }catch(e){ alert('Chưa xóa được: ' + e.message); return; }
@@ -5550,6 +5843,14 @@ $('#cr-import-b').addEventListener('click', async () => {
   }catch(e){ alert('Chưa nhập được: ' + e.message); return; }
   renderCourse();
 });
+function matPreview(id){ const m = matsOf().find(x => x.id === id); if(m) window.open(m.url, '_blank'); }
+async function matCopy(id){
+  const m = matsOf().find(x => x.id === id); if(!m) return;
+  let href = m.url; try{ href = new URL(m.url, location.href).href; }catch(e){}
+  try{ await navigator.clipboard.writeText(href); }
+  catch(e){ const t = document.createElement('textarea'); t.value = href; document.body.appendChild(t); t.select(); try{ document.execCommand('copy'); }catch(_){} t.remove(); }
+  crToast('Đã sao chép link');
+}
 function matAct(id){
   const m = matsOf().find(x => x.id === id); if(!m) return;
   const t = MAT_TYPES[m.type];
@@ -5561,6 +5862,26 @@ function matAct(id){
   $('#as-url').value = m.url;
   $('#as-msg').style.color = 'var(--muted)'; $('#as-msg').textContent = 'Đã điền sẵn — chỉ cần chọn lớp/học sinh và hạn nộp.';
 }
+
+/* --- kiểm tra link hỏng (HEAD tới file trên cùng host, ví dụ GitHub Pages) --- */
+async function crCheckLinks(){
+  const btn = $('#cr-chk'), msg = $('#cr-chk-msg'), list = matsOf().filter(m => m.course === state.course);
+  if(!list.length){ msg.textContent = 'Chưa có tài liệu để kiểm tra.'; return; }
+  btn.disabled = true; msg.textContent = 'Đang kiểm tra…';
+  await Promise.all(list.map(async (m) => {
+    let u; try{ u = new URL(m.url, location.href); }catch(e){ crUI.link[m.id] = 'bad'; return; }
+    if(u.origin !== location.origin){ crUI.link[m.id] = 'ext'; return; }
+    try{ const r = await fetch(u.href, {method:'HEAD', cache:'no-store'}); crUI.link[m.id] = r.ok ? 'ok' : 'bad'; }
+    catch(e){ delete crUI.link[m.id]; }
+  }));
+  btn.disabled = false;
+  const st = list.map(m => crUI.link[m.id]), bad = st.filter(x => x === 'bad').length, ok = st.filter(x => x === 'ok').length;
+  msg.style.color = bad ? '#c0392b' : 'var(--muted)';
+  msg.textContent = !bad && !ok && st.every(x => !x) ? 'Không kiểm tra được (mở trang qua http/https, không phải file://).'
+    : bad ? `${bad} link lỗi · ${ok} ổn` : `${ok} link đều ổn ✓`;
+  renderCourse();
+}
+$('#cr-chk').addEventListener('click', crCheckLinks);
 
 /* --- giao bài --- */
 /* --- bài đã giao: xem giờ giao, xóa bài giao nhầm --- */
