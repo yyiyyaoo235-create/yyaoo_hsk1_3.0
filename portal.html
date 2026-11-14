@@ -1318,11 +1318,8 @@
   <nav class="tabbar" id="tabbar">
     <button class="tab-btn active" data-tab="diemdanh">Điểm danh</button>
     <button class="tab-btn" data-tab="lichsu">Lịch sử</button>
-    <button class="tab-btn" data-tab="lophocsinh">Lớp &amp; học sinh</button>
-    <button class="tab-btn" data-tab="hocphi">Học phí</button>
-    <button class="tab-btn" data-tab="congno">Công nợ</button>
-    <button class="tab-btn" data-tab="bieudo">Biểu đồ thu nhập</button>
-    <button class="tab-btn" data-tab="caidat">Cài đặt</button>
+    <button class="tab-btn" data-tab="thutien">Thu tiền &amp; công nợ</button>
+    <button class="tab-btn" data-tab="baocao">Báo cáo &amp; cài đặt</button>
   </nav>
   <div class="cls-bar" id="cls-bar" hidden></div>
 
@@ -1809,11 +1806,13 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   }
 
   // ---------- Tabs ----------
+  // Mỗi tab hiển thị một hoặc nhiều khung (khung "lophocsinh" cũ đã chuyển sang mục Lớp & học sinh của portal)
   var panels = {
-    diemdanh: qs('#tab-diemdanh'), lichsu: qs('#tab-lichsu'),
-    lophocsinh: qs('#tab-lophocsinh'), hocphi: qs('#tab-hocphi'), congno: qs('#tab-congno'),
-    bieudo: qs('#tab-bieudo'), caidat: qs('#tab-caidat')
+    diemdanh: [qs('#tab-diemdanh')], lichsu: [qs('#tab-lichsu')],
+    thutien: [qs('#tab-congno'), qs('#tab-hocphi')],
+    baocao: [qs('#tab-bieudo'), qs('#tab-caidat')]
   };
+  var allPanels = ['#tab-diemdanh','#tab-lichsu','#tab-lophocsinh','#tab-hocphi','#tab-congno','#tab-bieudo','#tab-caidat'].map(function(x){ return qs(x); });
   function gotoTab(name){
     var btn = qs('.tab-btn[data-tab="'+name+'"]');
     if(btn) btn.click();
@@ -1822,14 +1821,12 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     btn.addEventListener('click', function(){
       qsa('.tab-btn').forEach(function(b){ b.classList.remove('active'); });
       btn.classList.add('active');
-      Object.keys(panels).forEach(function(k){ panels[k].hidden = (k!==btn.dataset.tab); });
+      var show = panels[btn.dataset.tab] || [];
+      allPanels.forEach(function(p){ p.hidden = show.indexOf(p) < 0; });
       if(btn.dataset.tab==='lichsu') refreshHistory();
-      if(btn.dataset.tab==='lophocsinh') refreshClasses();
-      if(btn.dataset.tab==='hocphi') refreshHocPhiOptions();
-      if(btn.dataset.tab==='congno') refreshCongNo();
-      if(btn.dataset.tab==='bieudo') refreshBieuDo();
+      if(btn.dataset.tab==='thutien'){ refreshCongNo(); refreshHocPhiOptions(); }
+      if(btn.dataset.tab==='baocao'){ refreshBieuDo(); refreshSettingsForm(); }
       if(btn.dataset.tab==='diemdanh') refreshDiemDanh();
-      if(btn.dataset.tab==='caidat') refreshSettingsForm();
     });
   });
 
@@ -2221,7 +2218,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       banner.hidden = true;
     }
   }
-  qs('#dd-unpaid-goto').addEventListener('click', function(){ gotoTab('congno'); });
+  qs('#dd-unpaid-goto').addEventListener('click', function(){ gotoTab('thutien'); });
 
   function refreshDiemDanh(){
     if(!ddDate.value) ddDate.value = todayStr();
@@ -2245,7 +2242,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     renderTodayList();
   }
   ddClass.addEventListener('change', function(){ loadAttendanceForm(); paintClassSelect(); });
-  qs('#dd-goto-class').addEventListener('click', function(){ qs('.tab-btn[data-tab="lophocsinh"]').click(); });
+  qs('#dd-goto-class').addEventListener('click', function(){ try{ window.go('people'); }catch(e){} });
 
   function loadAttendanceForm(){
     var cls = state.classes.find(function(c){return c.id===ddClass.value;});
@@ -5809,15 +5806,77 @@ const FEE = (() => {
       <select id="ad-class" onchange="FEE.classChanged()">${classes.map(c => `<option value="${c.id}"${c.id === classId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}<option value="__new">＋ Lớp mới…</option></select>
       <div id="ad-newcls" class="hidden"><label>Tên lớp mới</label><input id="ad-clsname" placeholder="Lớp HSK1 tối T3-T5"></div>
       <label>Học phí mỗi buổi (đ)</label><input id="ad-price" type="number" min="0" step="1000" placeholder="Ví dụ 200000">
+      <div id="ad-acct-wrap" style="margin-top:.7rem">
+        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer"><input type="checkbox" id="ad-acct" style="width:auto" onchange="FEE.acctChanged()"> Tạo tài khoản portal cho em (để em đăng nhập làm bài)</label>
+        <div id="ad-acct-box" class="hidden">
+          <div class="row">
+            <div><label>Mã đăng nhập (3–20 chữ/số, không dấu)</label><input id="ad-code" placeholder="YSG001" style="text-transform:uppercase"></div>
+            <div><label>Mật khẩu ban đầu (từ 6 ký tự)</label><input id="ad-pw" placeholder="Cô đặt cho em"></div>
+          </div>
+        </div>
+      </div>
       <div class="muted" style="margin-top:.5rem">Em có tài khoản portal thì tự vào lớp và nhận bài theo lớp. Em chưa có tài khoản vẫn điểm danh và tính học phí bình thường.</div>
       <div class="err" id="ad-err" style="margin-top:.4rem"></div>
       <div style="margin-top:.8rem"><button class="btn pri" id="ad-ok" onclick="FEE.submitAdd()">Thêm</button></div>`;
     $('#modal').classList.remove('hidden');
     if(presetProfileId){ $('#ad-who').value = 'P:' + presetProfileId; whoChanged(); }
-    classChanged();
+    classChanged(); acctChanged();
   }
   function addExisting(classId, profileId){ openAdd(classId, profileId); }
-  function whoChanged(){ $('#ad-new').classList.toggle('hidden', !!$('#ad-who').value); }
+  function whoChanged(){ $('#ad-new').classList.toggle('hidden', !!$('#ad-who').value); acctChanged(); }
+  // em nào cần tạo tài khoản? (em mới, hoặc em trong sổ chưa có tài khoản)
+  function acctApplicable(){
+    const who = $('#ad-who').value;
+    if(who.startsWith('P:')) return false;
+    if(who.startsWith('L:')){
+      const cur = (D().classes || []).flatMap(c => c.students).find(x => x.id === who.slice(2));
+      return !!cur && !cur.portalId;
+    }
+    return true;
+  }
+  function suggestCode(){
+    let best = null;
+    (state.students || []).forEach(p => { const m = /^([A-Za-z]+)(\d+)$/.exec(p.code || ''); if(m && (!best || +m[2] > best.n)) best = { pre: m[1].toUpperCase(), n: +m[2], w: m[2].length }; });
+    if(!best) return 'YSG001';
+    return best.pre + String(best.n + 1).padStart(Math.max(3, best.w), '0');
+  }
+  function acctChanged(){
+    const wrap = $('#ad-acct-wrap'); if(!wrap) return;
+    const ok = acctApplicable();
+    wrap.classList.toggle('hidden', !ok);
+    const on = ok && $('#ad-acct').checked;
+    $('#ad-acct-box').classList.toggle('hidden', !on);
+    if(on && !$('#ad-code').value) $('#ad-code').value = suggestCode();
+  }
+  async function createAccount(code, fullName, password){
+    const res = await YY.sb.functions.invoke('create-students', { body: { students: [{ code, full_name: fullName }], password } });
+    if(res.error){
+      let msg = res.error.message || 'Lỗi không rõ';
+      const ctx = res.error.context;
+      if(ctx && typeof ctx.json === 'function'){ try{ const j = await ctx.json(); if(j && j.error) msg = j.error; }catch(_e){} }
+      throw new Error(msg);
+    }
+    const r = res.data && res.data.results && res.data.results[0];
+    if(!r) throw new Error('Không nhận được kết quả từ máy chủ.');
+    if(r.status === 'exists') throw new Error('Mã ' + code + ' đã có tài khoản. Hãy chọn mã khác (hoặc chọn em đó ở ô "Em nào?").');
+    if(r.status !== 'ok') throw new Error(r.message || 'Không tạo được tài khoản.');
+    return r;
+  }
+  function showCreds(name, code, pw){
+    $('#modal-body').innerHTML = `
+      <div class="topbar"><h2 style="margin:0">✅ Đã thêm ${esc(name)}</h2><button class="btn" onclick="closeModal()">Đóng</button></div>
+      <div class="muted">Gửi thông tin đăng nhập này cho em (hoặc phụ huynh). Mật khẩu chỉ hiện lần này; sau đó có thể đặt lại bằng nút 🔑.</div>
+      <div style="margin:.8rem 0;padding:1rem;border-radius:14px;background:#eefaf3;font-size:1.1rem;line-height:1.9">
+        <div>Mã đăng nhập: <b id="cr-code">${esc(code)}</b></div>
+        <div>Mật khẩu: <b id="cr-pw">${esc(pw)}</b></div>
+      </div>
+      <button class="btn pri" id="cr-copy">📋 Sao chép</button>`;
+    $('#cr-copy').onclick = async () => {
+      const t = 'Mã đăng nhập: ' + code + '\nMật khẩu: ' + pw;
+      try{ await navigator.clipboard.writeText(t); $('#cr-copy').textContent = '✓ Đã sao chép'; }
+      catch(_e){ prompt('Sao chép nội dung này:', t); }
+    };
+  }
   function classChanged(){ $('#ad-newcls').classList.toggle('hidden', $('#ad-class').value !== '__new'); }
 
   async function submitAdd(){
@@ -5838,8 +5897,22 @@ const FEE = (() => {
       (state.students || []).forEach(p => { if(noTone(p.full_name) === key && !(D().classes || []).some(c => c.students.some(s => s.portalId === p.id))) dup.push(p.full_name + ' (tài khoản ' + p.code + ')'); });
       if(dup.length && !confirm('Đã có em trùng tên: ' + dup.join('; ') + '.\nVẫn thêm thành một em mới?\n(Bấm Hủy rồi chọn em đó ở ô "Em nào?" nếu là cùng một em.)')) return;
     }
+    const wantAcct = acctApplicable() && $('#ad-acct') && $('#ad-acct').checked;
+    let acctCode = '', acctPw = '';
+    if(wantAcct){
+      acctCode = ($('#ad-code').value || '').toUpperCase().replace(/[^A-Z0-9]/g, '');
+      acctPw = ($('#ad-pw').value || '').trim();
+      if(!/^[A-Z0-9]{3,20}$/.test(acctCode)){ err('Mã đăng nhập phải gồm 3–20 chữ/số không dấu.'); return; }
+      if(acctPw.length < 6){ err('Mật khẩu ban đầu phải từ 6 ký tự.'); return; }
+    }
     $('#ad-ok').disabled = true;
     try{
+      let newAcct = null;
+      if(wantAcct){
+        let fullName = name;
+        if(who.startsWith('L:')){ const cur = (D().classes || []).flatMap(c => c.students).find(x => x.id === who.slice(2)); fullName = cur ? cur.name : name; }
+        newAcct = await createAccount(acctCode, fullName, acctPw);
+      }
       if(classId === '__new'){
         const r = await YY.createClass(clsName, 'one_on_one');
         let id = r && (r.id || (Array.isArray(r) && r[0] && r[0].id));
@@ -5848,8 +5921,12 @@ const FEE = (() => {
         classId = id;
       }
       let stId = null, profileId = null, contact = ($('#ad-contact') ? $('#ad-contact').value : '').trim();
-      if(who.startsWith('L:')){ stId = who.slice(2); }
+      if(who.startsWith('L:')){
+        stId = who.slice(2);
+        if(newAcct){ const lk = await YY.sb.from('ledger_students').update({ profile_id: newAcct.id }).eq('id', stId); if(lk.error) throw lk.error; }
+      }
       else{
+        if(newAcct){ profileId = newAcct.id; }
         if(who.startsWith('P:')){ profileId = who.slice(2); const p = state.students.find(x => x.id === profileId); name = p ? p.full_name : name; }
         stId = genId();
         const ins = await YY.sb.from('ledger_students').insert({ id: stId, name, contact: contact || null, profile_id: profileId, joined_at: todayStr(), active: true });
@@ -5860,13 +5937,14 @@ const FEE = (() => {
       const en = await YY.sb.from('ledger_enrollments').upsert({ class_id: classId, ledger_student_id: stId, price, price_history: [{ from: BASE, price }] }, { onConflict: 'class_id,ledger_student_id' });
       if(en.error) throw en.error;
       await syncKind(classId);
-      closeModal(); await refresh();
+      if(newAcct){ await refresh(); showCreds(name || acctCode, newAcct.code || acctCode, newAcct.password || acctPw); }
+      else{ closeModal(); await refresh(); }
     }catch(e){ err('Chưa thêm được: ' + ((e && e.message) || e)); $('#ad-ok').disabled = false; }
   }
 
   function setMonth(v){ if(/^\d{4}-\d{2}$/.test(v || '')){ month = v; render(); } }
   const getMonth = () => month;
-  return { render, setMonth, getMonth, setPrice, pay, unpay, leave, back, remove, openAdd, addExisting, whoChanged, classChanged, submitAdd, _t: { bill, priceOf, latest, setFrom, hist } };
+  return { render, setMonth, getMonth, setPrice, pay, unpay, leave, back, remove, openAdd, addExisting, whoChanged, classChanged, acctChanged, submitAdd, _t: { bill, priceOf, latest, setFrom, hist } };
 })();
 
 
