@@ -412,6 +412,21 @@
   .mnu-list button.danger{color:#c0392b}
   .mnu-list hr{border:0;border-top:1px solid var(--line);margin:.2rem 0;width:100%}
   @media(max-width:720px){.fs-row{grid-template-columns:1fr auto}.fs-debt{grid-column:1}}
+  /* ---- Bước 3: danh sách lớp (trái) + chi tiết lớp (phải) ---- */
+  .cls-split{display:grid;grid-template-columns:15.5rem minmax(0,1fr);gap:1rem;align-items:start;margin-top:.6rem}
+  .cls-list{position:sticky;top:.6rem;display:flex;flex-direction:column;gap:.25rem;max-height:72vh;overflow:auto;padding-right:.2rem}
+  .cls-grp{font-size:.72rem;font-weight:800;letter-spacing:.06em;text-transform:uppercase;opacity:.6;margin:.8rem .5rem .2rem}
+  .cls-grp:first-child{margin-top:0}
+  .cls-li{all:unset;box-sizing:border-box;cursor:pointer;display:flex;flex-direction:column;gap:.1rem;padding:.55rem .8rem;border-radius:14px;border:1px solid transparent}
+  .cls-li:hover{background:var(--pink-soft)}
+  .cls-li.on{background:#fff;border-color:var(--line);box-shadow:0 4px 14px rgba(14,116,144,.12)}
+  .cls-li-name{font-weight:700;line-height:1.25}
+  .cls-li-sub{font-size:.8rem;opacity:.7}
+  .cls-li .dot{display:inline-block;width:.5rem;height:.5rem;border-radius:50%;background:#e0554a;margin-left:.35rem;vertical-align:middle}
+  .cls-detail .cls-card{margin:0}
+  .sync-bar{display:flex;gap:.6rem;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:.55rem .8rem;border-radius:14px;background:#fff3c4;color:#6b5200;margin:.5rem 0}
+  .sync-bar.soft{background:var(--pink-soft);color:inherit}
+  @media(max-width:820px){.cls-split{grid-template-columns:1fr}.cls-list{flex-direction:row;overflow-x:auto;max-height:none;position:static;padding-bottom:.3rem}.cls-grp{display:none}.cls-li{flex:0 0 auto;border-color:var(--line);background:#fff}}
 </style>
 </head>
 <body>
@@ -5644,6 +5659,7 @@ const FEE = (() => {
     : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
   const noTone = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/\s+/g, ' ').trim();
   let month = todayStr().slice(0, 7);
+  let selId = null;            // lớp đang chọn ở cột trái
 
   /* ---- giá theo tháng áp dụng (giống sổ: priceHistory [{from, price}]) ---- */
   function hist(st){
@@ -5692,7 +5708,7 @@ const FEE = (() => {
     const q = (($('#pp-search') || {}).value || '').trim().toLowerCase();
     const profById = new Map((state.students || []).map(s => [s.id, s]));
     let sumExp = 0, sumGot = 0;
-    const cards = state.classes.map(c => {
+    const items = state.classes.map(c => {
       const dd = ddById.get(c.id) || { id: c.id, name: c.name, students: [] };
       const ledgerPids = new Set(dd.students.map(s => s.portalId).filter(Boolean));
       const orphans = (c.class_members || []).filter(m => !ledgerPids.has(m.student_id));   // có trong lớp portal nhưng chưa có dòng trong sổ
@@ -5704,13 +5720,12 @@ const FEE = (() => {
       dd.students.forEach(s => { const b = bill(dd, s, month); if(b.total <= 0) return; exp += b.total; const p = payOf(s.id, month); if(p) got += paidAmt(p, b); });
       sumExp += exp; sumGot += got;
       const rows = sts.map(s => stRow(dd, s, profById)).join('')
-        + orphans.map(m => `<div class="fs-row"><div class="fs-name"><span class="zh">${esc(m.profiles?.full_name || m.student_id)}</span> <span class="chip c-gray">chưa có trong sổ</span></div>
-            <div class="fs-act"><button class="btn" onclick="FEE.addExisting('${c.id}','${m.student_id}')">Thêm vào sổ + nhập giá</button></div></div>`).join('');
+        + orphans.map(m => `<div class="fs-row"><div class="fs-name"><span class="zh">${esc(m.profiles?.full_name || m.student_id)}</span> <span class="chip c-gray">chưa vào sổ</span></div></div>`).join('');
       const kindTxt = act <= 1 ? '1-1' : 'Nhóm ' + act + ' em';
       const courseTxt = c.course ? c.course + ' · tới Bài ' + (c.current_lesson || 0) : 'Chưa chọn cấp';
       const mm = /HSK\s*([1-4])/i.exec(c.name || ''); const mis = (mm && ('HSK' + mm[1]) !== c.course) ? 'HSK' + mm[1] : '';
       const nextN = (c.current_lesson || 0) + 1;
-      return `<div class="cls-card">
+      const html = `<div class="cls-card">
         <div class="cls-head">
           <div><b class="cls-name">${esc(c.name)}</b>${act > 1 ? ` <span class="chip c-gray">${kindTxt}</span>` : ''}
             <div class="muted" style="margin-top:.15rem">${esc(courseTxt)}${mis ? ` <a href="#" class="chip c-yellow" onclick="saveClass('${c.id}',{course:'${mis}'});return false" title="Tên lớp ghi ${mis} nhưng cấp đang khác — bấm để sửa">⚠ Đặt cấp ${mis}</a>` : ''}</div></div>
@@ -5727,8 +5742,27 @@ const FEE = (() => {
         <div class="fs-list">${rows || '<div class="muted" style="padding:.4rem 0">Chưa có học sinh.</div>'}</div>
         <div style="margin-top:.4rem"><button class="btn ghost" type="button" onclick="FEE.openAdd('${c.id}')">＋ Thêm học sinh vào lớp này</button></div>
       </div>`;
-    }).join('') || '<div class="muted">Chưa có lớp nào. Bấm "Thêm học sinh" để tạo lớp đầu tiên.</div>';
-    box.innerHTML = cards;
+      const np = dd.students.filter(x => !x.leftAt && latest(x) === 0).length;
+      return { c, act, exp, got, orph: orphans.length, np, hit: !q || sts.length > 0 || noTone(c.name).includes(noTone(q)), html };
+    });
+    const vis = items.filter(x => x.hit);
+    if(!items.length){
+      box.innerHTML = '<div class="muted">Chưa có lớp nào. Bấm "Thêm học sinh" để tạo lớp đầu tiên.</div>';
+    }else if(!vis.length){
+      box.innerHTML = '<div class="muted" style="padding:.6rem 0">Không có học sinh nào khớp “' + esc(q) + '”.</div>';
+    }else{
+      const sel = vis.find(x => x.c.id === selId) || vis[0]; selId = sel.c.id;
+      const groups = {};
+      vis.forEach(x => { const k = x.c.course || ''; (groups[k] = groups[k] || []).push(x); });
+      const li = (x) => `<button type="button" class="cls-li${x.c.id === selId ? ' on' : ''}" onclick="FEE.select('${x.c.id}')"><span class="cls-li-name">${esc(x.c.name)}</span><span class="cls-li-sub">${x.c.course ? 'Bài ' + (x.c.current_lesson || 0) + ' · ' : ''}${x.act} em${x.exp - x.got > 0 ? '<i class="dot" title="Còn nợ học phí"></i>' : ''}</span></button>`;
+      const list = ['HSK1', 'HSK2', 'HSK3', 'HSK4', ''].filter(k => groups[k]).map(k => `<div class="cls-grp">${k || 'Chưa chọn cấp'}</div>` + groups[k].map(li).join('')).join('');
+      box.innerHTML = `<div class="cls-split"><nav class="cls-list">${list}</nav><div class="cls-detail">${sel.html}</div></div>`;
+    }
+    const nOrph = items.reduce((t, x) => t + x.orph, 0), nNp = items.reduce((t, x) => t + x.np, 0);
+    let bar = '';
+    if(nOrph) bar += `<div class="sync-bar"><span>⚠ <b>${nOrph}</b> em có trong lớp portal nhưng chưa vào sổ điểm danh.</span><button class="btn pri" type="button" onclick="FEE.syncFix(this)">Sửa tự động</button></div>`;
+    if(nNp){ const f = items.find(x => x.np); bar += `<div class="sync-bar soft"><span>🏷 <b>${nNp}</b> em chưa nhập giá mỗi buổi.</span><button class="btn" type="button" onclick="FEE.select('${f.c.id}')">Xem lớp ${esc(f.c.name)}</button></div>`; }
+    if(bar) box.insertAdjacentHTML('afterbegin', bar);
     const tot = $('#pp-fee-total');
     if(tot) tot.innerHTML = `Tháng ${month.split('-').reverse().join('/')}: ` + (sumExp - sumGot > 0
       ? `<b style="color:#c0392b">còn nợ ${vnd(sumExp - sumGot)}</b> · <a href="#" onclick="go('diemdanh');return false">Mở Sổ điểm danh để thu tiền →</a>`
@@ -5739,7 +5773,7 @@ const FEE = (() => {
     const b = bill(cls, s, month), p = payOf(s.id, month), lp = latest(s);
     const a = att30(cls, s);
     const off = !!s.leftAt;
-    const acct = s.portalId ? `<span class="chip c-green" title="Tài khoản portal">${esc(s.portalCode || 'có TK')}</span>` : '<span class="chip c-gray" title="Chưa có tài khoản portal">chưa có TK</span>';
+    const acct = s.portalId ? `<span class="chip c-green" title="Tài khoản portal">${esc(s.portalCode || 'có TK')}</span>` : '';
     const debt = b.total > 0
       ? (p ? `<span class="chip c-green">Đã thu ${vnd(paidAmt(p, b))}</span>` : `<span class="chip c-pink">Nợ ${vnd(b.total)}</span>`)
       : '<span class="muted">—</span>';
@@ -5751,6 +5785,7 @@ const FEE = (() => {
       <div class="fs-debt">${debt}</div>
       <div class="fs-act"><details class="mnu"><summary class="btn" title="Thao tác với em">⋯</summary><div class="mnu-list">
         <button type="button" onclick="FEE.openProfile('${cls.id}','${s.id}')">👤 Hồ sơ &amp; giá buổi</button>
+        ${!s.portalId ? `<button type="button" onclick="FEE.openAccount('${cls.id}','${s.id}')">➕ Tạo tài khoản portal</button>` : ''}
         ${s.portalId ? `<button type="button" onclick="resetPw('${s.portalId}')">🔑 Đặt lại mật khẩu</button><button type="button" onclick="openGift('${s.portalId}')">🎁 Tặng huy hiệu</button>` : ''}
         <hr>
         ${off ? `<button type="button" onclick="FEE.back('${cls.id}','${s.id}')">↩ Học lại</button>` : `<button type="button" onclick="FEE.leave('${cls.id}','${s.id}')" title="Rời lớp, không nhận bài, giữ tài khoản và lịch sử">⏸ Cho nghỉ (giữ lịch sử)</button>`}
@@ -5836,31 +5871,50 @@ const FEE = (() => {
       + (state.students || []).filter(p => !taken.has(p.id) && p.active !== false).map(p => `<option value="P:${p.id}">${esc(p.full_name)} · ${esc(p.code)} (có tài khoản, chưa vào sổ)</option>`).join('');
     $('#modal-body').innerHTML = `
       <div class="topbar"><h2 style="margin:0">＋ Thêm học sinh</h2><button class="btn" onclick="closeModal()">Đóng</button></div>
-      <label>Em nào?</label>
-      <select id="ad-who" onchange="FEE.whoChanged()"><option value="">Em mới (nhập tên bên dưới)</option>${exist}</select>
-      <div id="ad-new">
-        <label>Họ tên</label><input id="ad-name" placeholder="Nguyễn Văn A">
-        <label>Liên hệ (SĐT / Zalo, không bắt buộc)</label><input id="ad-contact">
+      <div class="muted" id="ad-stepno" style="margin:.2rem 0 .7rem"><b>Bước 1/2</b> · Em nào?</div>
+      <div id="ad-step1">
+        <label>Chọn em đã có, hoặc thêm em mới</label>
+        <select id="ad-who" onchange="FEE.whoChanged()"><option value="">＋ Em mới (nhập tên bên dưới)</option>${exist}</select>
+        <div id="ad-new">
+          <label>Họ tên</label><input id="ad-name" placeholder="Nguyễn Văn A">
+          <label>Liên hệ (SĐT / Zalo, không bắt buộc)</label><input id="ad-contact">
+        </div>
+        <div class="err" id="ad-err1" style="margin-top:.4rem"></div>
+        <div style="margin-top:.8rem"><button class="btn pri" type="button" onclick="FEE.adNext()">Tiếp →</button></div>
       </div>
-      <label>Vào lớp</label>
-      <select id="ad-class" onchange="FEE.classChanged()">${classes.map(c => `<option value="${c.id}"${c.id === classId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}<option value="__new">＋ Lớp mới…</option></select>
-      <div id="ad-newcls" class="hidden"><label>Tên lớp mới</label><input id="ad-clsname" placeholder="Lớp HSK1 tối T3-T5"></div>
-      <label>Học phí mỗi buổi (đ)</label><input id="ad-price" type="number" min="0" step="1000" placeholder="Ví dụ 200000">
-      <div id="ad-acct-wrap" style="margin-top:.7rem">
-        <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer"><input type="checkbox" id="ad-acct" style="width:auto" onchange="FEE.acctChanged()"> Tạo tài khoản portal cho em (để em đăng nhập làm bài)</label>
-        <div id="ad-acct-box" class="hidden">
-          <div class="row">
-            <div><label>Mã đăng nhập (3–20 chữ/số, không dấu)</label><input id="ad-code" placeholder="YSG001" style="text-transform:uppercase"></div>
-            <div><label>Mật khẩu ban đầu (từ 6 ký tự)</label><input id="ad-pw" placeholder="Cô đặt cho em"></div>
+      <div id="ad-step2" class="hidden">
+        <label>Vào lớp</label>
+        <select id="ad-class" onchange="FEE.classChanged()">${classes.map(c => `<option value="${c.id}"${c.id === classId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}<option value="__new">＋ Lớp mới…</option></select>
+        <div id="ad-newcls" class="hidden"><label>Tên lớp mới</label><input id="ad-clsname" placeholder="HSK1 - Tối thứ 3, 5"></div>
+        <label>Học phí mỗi buổi (đ)</label><input id="ad-price" type="number" min="0" step="1000" placeholder="Ví dụ 200000">
+        <div id="ad-acct-wrap" style="margin-top:.7rem">
+          <label style="display:flex;align-items:center;gap:.5rem;cursor:pointer"><input type="checkbox" id="ad-acct" style="width:auto" onchange="FEE.acctChanged()"> Tạo tài khoản portal để em đăng nhập làm bài</label>
+          <div id="ad-acct-box" class="hidden">
+            <div class="row">
+              <div><label>Mã đăng nhập</label><input id="ad-code" placeholder="YSG001" style="text-transform:uppercase"></div>
+              <div><label>Mật khẩu ban đầu (tự tạo, sửa được)</label><input id="ad-pw"></div>
+            </div>
           </div>
         </div>
-      </div>
-      <div class="muted" style="margin-top:.5rem">Em có tài khoản portal thì tự vào lớp và nhận bài theo lớp. Em chưa có tài khoản vẫn điểm danh và tính học phí bình thường.</div>
-      <div class="err" id="ad-err" style="margin-top:.4rem"></div>
-      <div style="margin-top:.8rem"><button class="btn pri" id="ad-ok" onclick="FEE.submitAdd()">Thêm</button></div>`;
+        <div class="err" id="ad-err" style="margin-top:.4rem"></div>
+        <div style="margin-top:.8rem;display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn" type="button" onclick="FEE.adBack()">← Quay lại</button><button class="btn pri" id="ad-ok" type="button" onclick="FEE.submitAdd()">Thêm</button></div>
+      </div>`;
     $('#modal').classList.remove('hidden');
     if(presetProfileId){ $('#ad-who').value = 'P:' + presetProfileId; whoChanged(); }
+    if($('#ad-acct')) $('#ad-acct').checked = true;
     classChanged(); acctChanged();
+  }
+  function adNext(){
+    const who = $('#ad-who').value, name = ($('#ad-name').value || '').trim();
+    if(!who && !name){ $('#ad-err1').textContent = 'Hãy nhập họ tên em.'; return; }
+    const lbl = who ? $('#ad-who').selectedOptions[0].textContent.replace(/\s*\(.*\)\s*$/, '') : name;
+    $('#ad-step1').classList.add('hidden'); $('#ad-step2').classList.remove('hidden');
+    $('#ad-stepno').innerHTML = '<b>Bước 2/2</b> · Vào lớp nào? — <span class="zh">' + esc(lbl) + '</span>';
+    acctChanged();
+  }
+  function adBack(){
+    $('#ad-step2').classList.add('hidden'); $('#ad-step1').classList.remove('hidden');
+    $('#ad-stepno').innerHTML = '<b>Bước 1/2</b> · Em nào?';
   }
   function addExisting(classId, profileId){ openAdd(classId, profileId); }
   function whoChanged(){ $('#ad-new').classList.toggle('hidden', !!$('#ad-who').value); acctChanged(); }
@@ -5874,6 +5928,7 @@ const FEE = (() => {
     }
     return true;
   }
+  function genPw(){ const ch = 'abcdefghjkmnpqrstuvwxyz23456789'; let o = ''; for(let i = 0; i < 6; i++) o += ch[Math.floor(Math.random() * ch.length)]; return o; }
   function suggestCode(){
     let best = null;
     (state.students || []).forEach(p => { const m = /^([A-Za-z]+)(\d+)$/.exec(p.code || ''); if(m && (!best || +m[2] > best.n)) best = { pre: m[1].toUpperCase(), n: +m[2], w: m[2].length }; });
@@ -5887,6 +5942,7 @@ const FEE = (() => {
     const on = ok && $('#ad-acct').checked;
     $('#ad-acct-box').classList.toggle('hidden', !on);
     if(on && !$('#ad-code').value) $('#ad-code').value = suggestCode();
+    if(on && !$('#ad-pw').value) $('#ad-pw').value = genPw();
   }
   async function createAccount(code, fullName, password){
     const res = await YY.sb.functions.invoke('create-students', { body: { students: [{ code, full_name: fullName }], password } });
@@ -5960,6 +6016,7 @@ const FEE = (() => {
         if(!id) throw new Error('Không tạo được lớp mới.');
         classId = id;
       }
+      selId = classId;
       let stId = null, profileId = null, contact = ($('#ad-contact') ? $('#ad-contact').value : '').trim();
       if(who.startsWith('L:')){
         stId = who.slice(2);
@@ -6037,9 +6094,66 @@ const FEE = (() => {
     }catch(e){ err('Chưa lưu được: ' + ((e && e.message) || e)); }
   }
 
+  /* ---- Sửa tự động: đưa em có trong lớp portal nhưng thiếu trong sổ vào sổ (giá 0, nhập sau ở Hồ sơ) ---- */
+  async function syncFix(btn){
+    btn.disabled = true; btn.textContent = 'Đang sửa…';
+    try{
+      const ledgerAll = []; (D().classes || []).forEach(c => c.students.forEach(x => ledgerAll.push(x)));
+      for(const c of state.classes){
+        const dd = (D().classes || []).find(x => x.id === c.id);
+        const have = new Set(((dd && dd.students) || []).map(x => x.portalId).filter(Boolean));
+        for(const m of (c.class_members || [])){
+          if(have.has(m.student_id)) continue;
+          const old = ledgerAll.find(x => x.portalId === m.student_id);
+          if(old && old.leftAt) continue;
+          let stId;
+          if(old){ stId = old.id; }
+          else{
+            stId = genId();
+            const p = (state.students || []).find(x => x.id === m.student_id);
+            const ins = await YY.sb.from('ledger_students').insert({ id: stId, name: (p && p.full_name) || (m.profiles && m.profiles.full_name) || 'Học sinh', profile_id: m.student_id, joined_at: todayStr(), active: true });
+            if(ins.error) throw ins.error;
+            ledgerAll.push({ id: stId, portalId: m.student_id });
+          }
+          const en = await YY.sb.from('ledger_enrollments').upsert({ class_id: c.id, ledger_student_id: stId, price: 0, price_history: [{ from: BASE, price: 0 }] }, { onConflict: 'class_id,ledger_student_id' });
+          if(en.error) throw en.error;
+        }
+      }
+      await refresh();
+    }catch(e){ fail(e); btn.disabled = false; btn.textContent = 'Sửa tự động'; }
+  }
+  /* ---- Tạo tài khoản portal cho em đã có trong sổ ---- */
+  function openAccount(classId, stId){
+    const { s } = find(classId, stId); if(!s) return;
+    $('#modal-body').innerHTML = `
+      <div class="topbar"><h2 style="margin:0">➕ Tài khoản cho <span class="zh">${esc(s.name)}</span></h2><button class="btn" onclick="closeModal()">Đóng</button></div>
+      <div class="row" style="margin-top:.6rem">
+        <div><label>Mã đăng nhập (3–20 chữ/số, không dấu)</label><input id="ac-code" value="${suggestCode()}" style="text-transform:uppercase"></div>
+        <div><label>Mật khẩu ban đầu (sửa được)</label><input id="ac-pw" value="${genPw()}"></div>
+      </div>
+      <div class="err" id="ac-err" style="margin-top:.4rem"></div>
+      <div style="margin-top:.8rem"><button class="btn pri" id="ac-ok" type="button" onclick="FEE.saveAccount('${classId}','${stId}')">Tạo tài khoản</button></div>`;
+    $('#modal').classList.remove('hidden');
+  }
+  async function saveAccount(classId, stId){
+    const { s } = find(classId, stId); if(!s) return;
+    const err = (m) => { $('#ac-err').textContent = m; }; err('');
+    const code = ($('#ac-code').value || '').toUpperCase().replace(/[^A-Z0-9]/g, ''), pw = ($('#ac-pw').value || '').trim();
+    if(!/^[A-Z0-9]{3,20}$/.test(code)){ err('Mã đăng nhập phải gồm 3–20 chữ/số không dấu.'); return; }
+    if(pw.length < 6){ err('Mật khẩu phải từ 6 ký tự.'); return; }
+    $('#ac-ok').disabled = true;
+    try{
+      const r = await createAccount(code, s.name, pw);
+      const lk = await YY.sb.from('ledger_students').update({ profile_id: r.id }).eq('id', stId);
+      if(lk.error) throw lk.error;
+      await refresh(); showCreds(s.name, r.code || code, r.password || pw);
+    }catch(e){ err('Chưa tạo được: ' + ((e && e.message) || e)); $('#ac-ok').disabled = false; }
+  }
+
+  function select(id){ selId = id; render(); }
   function setMonth(v){ if(/^\d{4}-\d{2}$/.test(v || '')){ month = v; render(); } }
   const getMonth = () => month;
-  return { render, setMonth, getMonth, setPrice, openProfile, saveProfile, pay, unpay, leave, back, remove, openAdd, addExisting, whoChanged, classChanged, acctChanged, submitAdd, _t: { bill, priceOf, latest, setFrom, hist } };
+  return { render, select, adNext, adBack, syncFix, openAccount, saveAccount, setMonth, getMonth, setPrice, openProfile, saveProfile, pay, unpay, leave, back, remove, openAdd, addExisting, whoChanged, classChanged, acctChanged, submitAdd, _t: { bill, priceOf, latest, setFrom, hist } };
 })();
 
 
