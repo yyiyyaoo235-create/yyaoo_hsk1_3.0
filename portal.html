@@ -4081,7 +4081,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 
 })();
 </script>
-<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2.117.3"></script>
 <script src="yyaoo-supabase.js"></script>
 <script>
 /* ---------------- KHO DỮ LIỆU SỔ ĐIỂM DANH (Supabase; chỉ giáo viên đọc/ghi) ----------------
@@ -5772,11 +5772,16 @@ function crJump(n){   // từ danh sách phẳng → nhảy vào chi tiết mộ
   crUI.q = ''; crUI.f = 'all'; $('#cr-q').value = ''; crUI.sel[state.course] = n; crUI.scroll = true;
   renderCourse(); window.scrollTo(0, 0);
 }
-function crSetLesson(id, v){
-  const x = (state.classes || []).find(c => c.id === id), n = +v || 0;
-  if(x && n) crUI.sel[x.course] = n;
+async function crSetLesson(id, v){   // đổi "đang học bài X": cập nhật tại chỗ, không tải lại toàn bộ portal
+  const x = (state.classes || []).find(c => c.id === id), n = +v || 0; if(!x) return;
+  try{ await YY.updateClass(id, {current_lesson: n}); }
+  catch(e){ alert('Chưa lưu được lớp: ' + e.message); renderCourse(); return; }
+  x.current_lesson = n;
+  if(n) crUI.sel[x.course] = n;
   crUI.scroll = true;
-  saveClass(id, {current_lesson: n});
+  renderCourse();
+  try{ renderPeople(); }catch(e){}
+  try{ renderHome(); }catch(e){}
 }
 $('#cr-q').addEventListener('input', (e) => { crUI.q = e.target.value; renderCourse(); });
 $('#cr-qx').addEventListener('click', () => { crUI.q = ''; $('#cr-q').value = ''; renderCourse(); $('#cr-q').focus(); });
