@@ -427,6 +427,18 @@
   .sync-bar{display:flex;gap:.6rem;align-items:center;justify-content:space-between;flex-wrap:wrap;padding:.55rem .8rem;border-radius:14px;background:#fff3c4;color:#6b5200;margin:.5rem 0}
   .sync-bar.soft{background:var(--pink-soft);color:inherit}
   @media(max-width:820px){.cls-split{grid-template-columns:1fr}.cls-list{flex-direction:row;overflow-x:auto;max-height:none;position:static;padding-bottom:.3rem}.cls-grp{display:none}.cls-li{flex:0 0 auto;border-color:var(--line);background:#fff}}
+  /* ---- Bước 5: màu theo cấp (nhóm, dải đầu thẻ) + badge màu theo lớp ---- */
+  .cls-grp{display:flex;align-items:center;gap:.4rem;width:fit-content;color:var(--lv);background:var(--lvbg);border-radius:999px;padding:.25rem .75rem;margin:.9rem 0 .3rem;opacity:1}
+  .cls-grp::before{content:"";width:.55rem;height:.55rem;border-radius:50%;background:var(--lv)}
+  .cls-li{flex-direction:row;align-items:center;gap:.6rem}
+  .cls-li-txt{display:flex;flex-direction:column;min-width:0}
+  .cls-li.on{background:var(--c-wash,#fff);border-color:var(--c-bg,var(--line));box-shadow:inset 4px 0 0 var(--c-dot,#14808f),0 4px 14px rgba(14,116,144,.12)}
+  .cls-ab{display:inline-flex;align-items:center;justify-content:center;min-width:2.1rem;height:2.1rem;padding:0 .35rem;border-radius:12px;font-weight:800;font-size:.8rem;letter-spacing:.2px;flex:none}
+  .cls-head .cls-ab{margin-right:.5rem;vertical-align:middle}
+  .owe{color:#c0392b;background:#fde4e1;border-radius:999px;padding:0 .45rem;font-size:.72rem;font-weight:800;margin-left:.4rem}
+  .cls-detail .cls-card{border-top:6px solid var(--lv,#cde7ec)}
+  .cls-detail .cls-sum{background:var(--lvbg,var(--pink-soft))}
+  @media(max-width:820px){.cls-grp{display:none}}
 </style>
 </head>
 <body>
@@ -3899,6 +3911,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     state.settings = d.settings; state.classes = d.classes; state.sessions = d.sessions; state.payments = d.payments;
     try{ migratePriceHistory(); }catch(e){} try{ ensureClassColors(); }catch(e){} try{ renderPortalLink(); }catch(e){} try{ refreshDiemDanh(); }catch(e){}
   }); };
+  window.__ddClassTag = function(id){ var c = findClass(id); return c ? {abbr: classAbbr(c), tone: classTone(id)} : null; };
   window.__ddSetRoster = function(list){ portalRoster = Array.isArray(list) ? list : []; renderPortalLink(); };
 
   // ---------- Init ----------
@@ -5700,6 +5713,20 @@ const FEE = (() => {
   }
   const fail = (e) => alert('Chưa lưu được: ' + ((e && e.message) || e));
 
+  /* ---- Màu: CẤP quyết định màu nhóm/dải đầu thẻ (khớp icon sách ở thanh trái); LỚP có badge chữ tắt + màu riêng lấy từ Sổ điểm danh ---- */
+  const LV = {
+    HSK1: { c: '#2e9e6b', bg: '#e1f5eb' }, HSK2: { c: '#2f86c9', bg: '#e1effb' },
+    HSK3: { c: '#d9822b', bg: '#fdeedb' }, HSK4: { c: '#d9475f', bg: '#fde5ea' }, '': { c: '#7d8d96', bg: '#eef1f3' }
+  };
+  const lvOf = (course) => LV[course] || LV[''];
+  const NEUTRAL = { bg: '#EEF1F3', wash: '#F7F8F9', dot: '#8A98A0', ink: '#44525A' };
+  function tagOf(c, dd){
+    try{ if(typeof window.__ddClassTag === 'function'){ const t = window.__ddClassTag(c.id); if(t && t.tone) return t; } }catch(_e){}
+    const src = String((dd && dd.abbr) || '').trim() || String(c.name || '').replace(/^\s*HSK\s*\d\s*[-–]?\s*/i, '').split(/[\s\-–]+/).filter(Boolean).map(w => w.charAt(0)).join('');
+    return { abbr: (src || '?').toUpperCase().slice(0, 3), tone: NEUTRAL };
+  }
+  const badge = (t) => `<span class="cls-ab" style="background:${t.tone.bg};color:${t.tone.ink};box-shadow:inset 0 0 0 1.5px ${t.tone.dot}">${esc(t.abbr)}</span>`;
+
   /* ---- vẽ các thẻ lớp ---- */
   function render(){
     const box = $('#pp-classes'); if(!box) return;
@@ -5725,9 +5752,10 @@ const FEE = (() => {
       const courseTxt = c.course ? c.course + ' · tới Bài ' + (c.current_lesson || 0) : 'Chưa chọn cấp';
       const mm = /HSK\s*([1-4])/i.exec(c.name || ''); const mis = (mm && ('HSK' + mm[1]) !== c.course) ? 'HSK' + mm[1] : '';
       const nextN = (c.current_lesson || 0) + 1;
-      const html = `<div class="cls-card">
+      const lv = lvOf(c.course), tag = tagOf(c, dd);
+      const html = `<div class="cls-card" style="--lv:${lv.c};--lvbg:${lv.bg}">
         <div class="cls-head">
-          <div><b class="cls-name">${esc(c.name)}</b>${act > 1 ? ` <span class="chip c-gray">${kindTxt}</span>` : ''}
+          <div>${badge(tag)}<b class="cls-name">${esc(c.name)}</b>${act > 1 ? ` <span class="chip c-gray">${kindTxt}</span>` : ''}
             <div class="muted" style="margin-top:.15rem">${esc(courseTxt)}${mis ? ` <a href="#" class="chip c-yellow" onclick="saveClass('${c.id}',{course:'${mis}'});return false" title="Tên lớp ghi ${mis} nhưng cấp đang khác — bấm để sửa">⚠ Đặt cấp ${mis}</a>` : ''}</div></div>
           <div class="cls-meta">
             ${c.course ? `<button class="btn" type="button" onclick="saveClass('${c.id}',{current_lesson:${nextN}})" title="Sang Bài ${nextN}">＋1 bài → ${nextN}</button>` : ''}
@@ -5743,7 +5771,7 @@ const FEE = (() => {
         <div style="margin-top:.4rem"><button class="btn ghost" type="button" onclick="FEE.openAdd('${c.id}')">＋ Thêm học sinh vào lớp này</button></div>
       </div>`;
       const np = dd.students.filter(x => !x.leftAt && latest(x) === 0).length;
-      return { c, act, exp, got, orph: orphans.length, np, hit: !q || sts.length > 0 || noTone(c.name).includes(noTone(q)), html };
+      return { c, act, exp, got, lv, tag, orph: orphans.length, np, hit: !q || sts.length > 0 || noTone(c.name).includes(noTone(q)), html };
     });
     const vis = items.filter(x => x.hit);
     if(!items.length){
@@ -5754,8 +5782,8 @@ const FEE = (() => {
       const sel = vis.find(x => x.c.id === selId) || vis[0]; selId = sel.c.id;
       const groups = {};
       vis.forEach(x => { const k = x.c.course || ''; (groups[k] = groups[k] || []).push(x); });
-      const li = (x) => `<button type="button" class="cls-li${x.c.id === selId ? ' on' : ''}" onclick="FEE.select('${x.c.id}')"><span class="cls-li-name">${esc(x.c.name)}</span><span class="cls-li-sub">${x.c.course ? 'Bài ' + (x.c.current_lesson || 0) + ' · ' : ''}${x.act} em${x.exp - x.got > 0 ? '<i class="dot" title="Còn nợ học phí"></i>' : ''}</span></button>`;
-      const list = ['HSK1', 'HSK2', 'HSK3', 'HSK4', ''].filter(k => groups[k]).map(k => `<div class="cls-grp">${k || 'Chưa chọn cấp'}</div>` + groups[k].map(li).join('')).join('');
+      const li = (x) => { const t = x.tag.tone; return `<button type="button" class="cls-li${x.c.id === selId ? ' on' : ''}" style="--c-bg:${t.bg};--c-dot:${t.dot};--c-wash:${t.wash}" onclick="FEE.select('${x.c.id}')">${badge(x.tag)}<span class="cls-li-txt"><span class="cls-li-name">${esc(x.c.name)}</span><span class="cls-li-sub">${x.c.course ? 'Bài ' + (x.c.current_lesson || 0) + ' · ' : ''}${x.act > 1 ? '👥' : '👤'} ${x.act} em${x.exp - x.got > 0 ? '<b class="owe" title="Còn nợ học phí">Nợ</b>' : ''}</span></span></button>`; };
+      const list = ['HSK1', 'HSK2', 'HSK3', 'HSK4', ''].filter(k => groups[k]).map(k => `<div class="cls-grp" style="--lv:${lvOf(k).c};--lvbg:${lvOf(k).bg}">${k || 'Chưa chọn cấp'}</div>` + groups[k].map(li).join('')).join('');
       box.innerHTML = `<div class="cls-split"><nav class="cls-list">${list}</nav><div class="cls-detail">${sel.html}</div></div>`;
     }
     const nOrph = items.reduce((t, x) => t + x.orph, 0), nNp = items.reduce((t, x) => t + x.np, 0);
