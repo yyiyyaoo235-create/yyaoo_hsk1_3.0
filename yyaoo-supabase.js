@@ -20,6 +20,21 @@ const YY_CONFIG = {
   const toEmail = (code) => String(code).trim().toLowerCase() + '@' + YY_CONFIG.EMAIL_DOMAIN;
   const unwrap = ({ data, error }) => { if (error) throw error; return data; };
 
+  // Supabase chỉ trả tối đa 1000 dòng mỗi lần hỏi. Hàm này hỏi từng đợt 1000 dòng cho tới hết,
+  // để danh sách dài (bài nộp, nhật ký luyện tập...) không bị cắt lặng lẽ.
+  // make: hàm tạo câu hỏi mới mỗi lần; câu hỏi PHẢI có order() đủ để thứ tự cố định giữa các đợt.
+  const fetchAll = async (make) => {
+    const size = 1000;
+    let all = [];
+    for (let from = 0; ; from += size) {
+      const { data, error } = await make().range(from, from + size - 1);
+      if (error) throw error;
+      all = all.concat(data || []);
+      if (!data || data.length < size) break;
+    }
+    return all;
+  };
+
   const YY = { sb, config: YY_CONFIG };
 
   /* ---------- Đăng nhập ---------- */
@@ -49,15 +64,17 @@ const YY_CONFIG = {
     unwrap(await sb.rpc('log_practice', { p_kind: kind || 'practice', p_title: title || null, p_score: score ?? null, p_total: total ?? null }));
   YY.listMyPractice = async () => {
     const { data: { session } } = await sb.auth.getSession();
-    return unwrap(await sb.from('practice_log').select('day, kind, title, score, total')
+    return fetchAll(() => sb.from('practice_log').select('day, kind, title, score, total')
       .eq('student_id', session.user.id).order('day', { ascending: true }));
   };
   YY.listMyAwards = async () => {
     const { data: { session } } = await sb.auth.getSession();
     return unwrap(await sb.from('awards').select('badge_key, note, created_at').eq('student_id', session.user.id));
   };
-  YY.listAllPractice = async () => unwrap(await sb.from('practice_log').select('student_id, day'));
-  YY.listAllAwards = async () => unwrap(await sb.from('awards').select('student_id, badge_key, note'));
+  YY.listAllPractice = async () => fetchAll(() => sb.from('practice_log').select('student_id, day')
+    .order('student_id', { ascending: true }).order('day', { ascending: true }));
+  YY.listAllAwards = async () => fetchAll(() => sb.from('awards').select('student_id, badge_key, note')
+    .order('student_id', { ascending: true }).order('badge_key', { ascending: true }));
   YY.giveAward = async (studentId, badgeKey, note) =>
     unwrap(await sb.from('awards').upsert({ student_id: studentId, badge_key: badgeKey, note: note || null }, { onConflict: 'student_id,badge_key' }));
   YY.removeAward = async (studentId, badgeKey) =>
@@ -96,9 +113,10 @@ const YY_CONFIG = {
   /* ---------- Học sinh ---------- */
   YY.listMyAssignments = async () => {
     const { data: { session } } = await sb.auth.getSession();
-    return unwrap(await sb.from('v_assignment_students').select('*')
+    return fetchAll(() => sb.from('v_assignment_students').select('*')
       .eq('student_id', session.user.id)
-      .order('due_at', { ascending: true, nullsFirst: false }));
+      .order('due_at', { ascending: true, nullsFirst: false })
+      .order('assignment_id', { ascending: true }));
   };
 
   YY.getAssignment = async (id) =>
@@ -126,10 +144,12 @@ const YY_CONFIG = {
 
   /* ---------- Giáo viên ---------- */
   YY.listAllAssignmentRows = async () =>
-    unwrap(await sb.from('v_assignment_students').select('*').order('submitted_at', { ascending: false, nullsFirst: true }));
+    fetchAll(() => sb.from('v_assignment_students').select('*')
+      .order('submitted_at', { ascending: false, nullsFirst: true })
+      .order('assignment_id', { ascending: true }).order('student_id', { ascending: true }));
 
   YY.listStudents = async () =>
-    unwrap(await sb.from('profiles').select('*').eq('role', 'student').order('code'));
+    fetchAll(() => sb.from('profiles').select('*').eq('role', 'student').order('code').order('id'));
 
   YY.listClasses = async () =>
     unwrap(await sb.from('classes').select('*, class_members(student_id, profiles(code, full_name))').order('created_at'));
@@ -180,11 +200,13 @@ const YY_CONFIG = {
     unwrap(await sb.from('classes').select('id, name, course, current_lesson, kind').or('archived.is.null,archived.eq.false'));
 
   YY.listMaterials = async () => {
-    let r = await sb.from('course_materials').select('*')
-      .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
-    if (r.error)   // chưa chạy migration-dot7.sql (chưa có cột sort_order) → sắp theo ngày tạo
-      r = await sb.from('course_materials').select('*').order('created_at', { ascending: true });
-    return unwrap(r);
+    try {
+      return await fetchAll(() => sb.from('course_materials').select('*')
+        .order('sort_order', { ascending: true }).order('created_at', { ascending: true }).order('id'));
+    } catch (e) {   // chưa chạy migration-dot7.sql (chưa có cột sort_order) → sắp theo ngày tạo
+      return await fetchAll(() => sb.from('course_materials').select('*')
+        .order('created_at', { ascending: true }).order('id'));
+    }
   };
 
   const matRow = (m) => ({ course: m.course, lesson: m.lesson, type: m.type, title: m.title, url: m.url });
