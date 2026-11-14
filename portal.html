@@ -399,6 +399,19 @@
   .fs-act{display:flex;gap:.3rem;flex-wrap:wrap;justify-content:flex-end}
   .c-yellow{background:#fff3c4;color:#8a6d00}
   @media(max-width:720px){.fs-row{grid-template-columns:1fr 1fr}.fs-act{justify-content:flex-start;grid-column:1/-1}}
+
+  /* ---- Lớp & học sinh gọn: dòng học sinh 3 cột + menu ⋯ ---- */
+  .fs-row{grid-template-columns:minmax(10rem,3fr) minmax(7rem,1fr) auto}
+  .cls-head .cls-name{font-size:1.1rem}
+  .mnu{position:relative;display:inline-block}
+  .mnu>summary{list-style:none;cursor:pointer;user-select:none;padding:.4rem .85rem;line-height:1;display:inline-block}
+  .mnu>summary::-webkit-details-marker{display:none}
+  .mnu-list{position:absolute;right:0;top:calc(100% + 4px);z-index:30;min-width:13.5rem;background:#fff;border:1px solid var(--line);border-radius:14px;box-shadow:0 10px 28px rgba(0,60,90,.18);padding:.3rem;display:flex;flex-direction:column;text-align:left}
+  .mnu-list button{all:unset;cursor:pointer;padding:.5rem .7rem;border-radius:10px;font-size:.92rem;white-space:nowrap}
+  .mnu-list button:hover{background:var(--pink-soft)}
+  .mnu-list button.danger{color:#c0392b}
+  .mnu-list hr{border:0;border-top:1px solid var(--line);margin:.2rem 0;width:100%}
+  @media(max-width:720px){.fs-row{grid-template-columns:1fr auto}.fs-debt{grid-column:1}}
 </style>
 </head>
 <body>
@@ -650,11 +663,14 @@
     <!-- lớp và học sinh -->
     <div id="tab-people" class="hidden">
       <div class="card">
-        <div class="topbar" style="flex-wrap:wrap;gap:.5rem"><h2 style="margin:0">Lớp học &amp; học phí</h2>
+        <div class="topbar" style="flex-wrap:wrap;gap:.5rem"><h2 style="margin:0">Lớp học</h2>
           <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
-            <label style="margin:0" class="muted">Tháng</label><input id="pp-month" type="month" style="width:auto" onchange="FEE.setMonth(this.value)">
             <button class="btn pri" type="button" onclick="FEE.openAdd()">＋ Thêm học sinh</button>
           </div></div>
+        <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin:.5rem 0 .2rem">
+          <input id="pp-search" type="search" placeholder="🔍 Tìm học sinh theo tên hoặc mã…" oninput="renderPeople()" style="max-width:20rem">
+          <label id="pp-off-box" style="display:none;margin:0"><input type="checkbox" id="pp-off" onchange="renderPeople()"> Hiện cả <span id="pp-off-n">0</span> em đã nghỉ</label>
+        </div>
         <div id="pp-fee-total" class="muted" style="margin:.3rem 0"></div>
         <div id="pp-classes"></div>
         <div id="pp-arch-classes"></div>
@@ -663,15 +679,13 @@
           <div><button class="btn" type="submit">Tạo lớp</button></div>
         </form>
       </div>
-      <div class="card">
-        <h2>Học sinh</h2>
-        <input id="pp-search" type="search" placeholder="🔍 Tìm theo tên hoặc mã…" oninput="renderPeople()" style="max-width:20rem;margin-bottom:.5rem">
-        <label id="pp-off-box" style="display:none;margin:.2rem 0 .5rem"><input type="checkbox" id="pp-off" onchange="renderPeople()"> Hiện cả <span id="pp-off-n">0</span> em đã nghỉ</label>
-        <div class="scroll"><table>
+      <details class="card" id="pp-table-card">
+        <summary style="cursor:pointer"><b>Bảng tất cả học sinh</b> <span class="muted">— thêm vào lớp, năm sinh, giới tính</span></summary>
+        <div class="scroll" style="margin-top:.6rem"><table>
           <thead><tr><th>Mã</th><th>Họ tên</th><th>Lớp</th><th>Năm sinh</th><th>Giới tính</th><th>Thêm vào lớp</th><th>Huy hiệu / Mật khẩu</th></tr></thead>
           <tbody id="pp-students"></tbody>
         </table></div>
-      </div>
+      </details>
     </div>
 
     <!-- kỷ lục -->
@@ -5530,6 +5544,24 @@ async function renameClass(id){
   const n = v.trim(); if(!n || n === c.name) return;
   await saveClass(id, { name: n });
 }
+function openClassEdit(id){
+  const c = state.classes.find(x => x.id === id); if(!c) return;
+  $('#modal-body').innerHTML = `
+    <div class="topbar"><h2 style="margin:0">📚 ${esc(c.name)}</h2><button class="btn" onclick="closeModal()">Đóng</button></div>
+    <div class="row" style="margin-top:.6rem">
+      <div><label>Cấp</label><select id="ce-course"><option value="">Chưa chọn cấp</option>${['HSK1','HSK2','HSK3','HSK4'].map(k => `<option${c.course === k ? ' selected' : ''}>${k}</option>`).join('')}</select></div>
+      <div><label>Đang học tới Bài</label><input id="ce-lesson" type="number" min="0" max="30" value="${c.current_lesson || 0}"></div>
+    </div>
+    <div style="margin-top:.8rem"><button class="btn pri" type="button" onclick="saveClassEdit('${id}')">Lưu</button></div>`;
+  $('#modal').classList.remove('hidden');
+}
+async function saveClassEdit(id){
+  await saveClass(id, { course: $('#ce-course').value || null, current_lesson: Math.max(0, +$('#ce-lesson').value || 0) });
+  closeModal();
+}
+document.addEventListener('click', (e) => {          // menu ⋯: bấm ra ngoài hoặc bấm một mục thì đóng
+  document.querySelectorAll('details.mnu[open]').forEach(d => { if(!d.contains(e.target) || e.target.closest('.mnu-list')) d.removeAttribute('open'); });
+});
 function renderPeople(){
   try{ const pm = $('#pp-month'); if(pm && !pm.value) pm.value = FEE.getMonth(); FEE.render(); }catch(e){ console.warn('Thẻ lớp:', e); }
   const arch = (state.classesAll || []).filter(c => c.archived);
@@ -5675,26 +5707,32 @@ const FEE = (() => {
         + orphans.map(m => `<div class="fs-row"><div class="fs-name"><span class="zh">${esc(m.profiles?.full_name || m.student_id)}</span> <span class="chip c-gray">chưa có trong sổ</span></div>
             <div class="fs-act"><button class="btn" onclick="FEE.addExisting('${c.id}','${m.student_id}')">Thêm vào sổ + nhập giá</button></div></div>`).join('');
       const kindTxt = act <= 1 ? '1-1' : 'Nhóm ' + act + ' em';
+      const courseTxt = c.course ? c.course + ' · tới Bài ' + (c.current_lesson || 0) : 'Chưa chọn cấp';
+      const mm = /HSK\s*([1-4])/i.exec(c.name || ''); const mis = (mm && ('HSK' + mm[1]) !== c.course) ? 'HSK' + mm[1] : '';
+      const nextN = (c.current_lesson || 0) + 1;
       return `<div class="cls-card">
         <div class="cls-head">
-          <div><b class="cls-name">${esc(c.name)}</b> <span class="chip c-gray">${kindTxt}</span>
-            <a href="#" title="Đổi tên lớp" onclick="renameClass('${c.id}');return false">✎</a>
-            <a href="#" title="Lưu trữ lớp (ẩn, không mất dữ liệu)" onclick="archiveClass('${c.id}',true);return false">📦</a></div>
+          <div><b class="cls-name">${esc(c.name)}</b>${act > 1 ? ` <span class="chip c-gray">${kindTxt}</span>` : ''}
+            <div class="muted" style="margin-top:.15rem">${esc(courseTxt)}${mis ? ` <a href="#" class="chip c-yellow" onclick="saveClass('${c.id}',{course:'${mis}'});return false" title="Tên lớp ghi ${mis} nhưng cấp đang khác — bấm để sửa">⚠ Đặt cấp ${mis}</a>` : ''}</div></div>
           <div class="cls-meta">
-            <select style="width:auto" onchange="saveClass('${c.id}',{course:this.value||null})"><option value="">Chưa chọn cấp</option>${['HSK1','HSK2','HSK3','HSK4'].map(k => `<option${c.course === k ? ' selected' : ''}>${k}</option>`).join('')}</select>
-            <span class="muted">tới Bài</span>
-            <input type="number" min="0" max="30" style="width:4.2rem" value="${c.current_lesson || 0}" onchange="saveClass('${c.id}',{current_lesson:Math.max(0,+this.value||0)})">
-            <button class="btn" type="button" onclick="saveClass('${c.id}',{current_lesson:${(c.current_lesson || 0) + 1}})">＋1 bài</button>
+            ${c.course ? `<button class="btn" type="button" onclick="saveClass('${c.id}',{current_lesson:${nextN}})" title="Sang Bài ${nextN}">＋1 bài → ${nextN}</button>` : ''}
+            <details class="mnu"><summary class="btn" title="Thao tác với lớp">⋯</summary><div class="mnu-list">
+              <button type="button" onclick="openClassEdit('${c.id}')">📚 Sửa cấp &amp; bài</button>
+              <button type="button" onclick="renameClass('${c.id}')">✎ Đổi tên lớp</button>
+              <hr><button type="button" class="danger" onclick="archiveClass('${c.id}',true)">📦 Lưu trữ lớp</button>
+            </div></details>
           </div>
         </div>
-        <div class="cls-sum"><span>📅 <b>${nSes}</b> buổi</span><span>Dự kiến <b>${vnd(exp)}</b></span><span class="ok">Đã thu <b>${vnd(got)}</b></span><span class="${exp - got > 0 ? 'bad' : 'ok'}">Còn nợ <b>${vnd(Math.max(0, exp - got))}</b></span></div>
+        <div class="cls-sum"><span>📅 <b>${nSes}</b> buổi tháng này</span>${exp - got > 0 ? `<a href="#" class="chip c-pink" onclick="go('diemdanh');return false" title="Mở Sổ điểm danh để thu tiền">Còn nợ ${vnd(exp - got)} →</a>` : (exp > 0 ? '<span class="chip c-green">Đã thu đủ</span>' : '')}</div>
         <div class="fs-list">${rows || '<div class="muted" style="padding:.4rem 0">Chưa có học sinh.</div>'}</div>
         <div style="margin-top:.4rem"><button class="btn ghost" type="button" onclick="FEE.openAdd('${c.id}')">＋ Thêm học sinh vào lớp này</button></div>
       </div>`;
     }).join('') || '<div class="muted">Chưa có lớp nào. Bấm "Thêm học sinh" để tạo lớp đầu tiên.</div>';
     box.innerHTML = cards;
     const tot = $('#pp-fee-total');
-    if(tot) tot.innerHTML = `Tháng ${month.split('-').reverse().join('/')}: dự kiến <b>${vnd(sumExp)}</b> · đã thu <b>${vnd(sumGot)}</b> · còn nợ <b>${vnd(Math.max(0, sumExp - sumGot))}</b>`;
+    if(tot) tot.innerHTML = `Tháng ${month.split('-').reverse().join('/')}: ` + (sumExp - sumGot > 0
+      ? `<b style="color:#c0392b">còn nợ ${vnd(sumExp - sumGot)}</b> · <a href="#" onclick="go('diemdanh');return false">Mở Sổ điểm danh để thu tiền →</a>`
+      : (sumExp > 0 ? '<b style="color:var(--green)">đã thu đủ</b>' : 'chưa phát sinh học phí'));
   }
 
   function stRow(cls, s, profById){
@@ -5708,14 +5746,16 @@ const FEE = (() => {
     const payBtn = b.total > 0 || p
       ? (p ? `<button class="btn ghost" onclick="FEE.unpay('${s.id}')" title="Bỏ đánh dấu đã thu">↩ Hoàn tác</button>` : `<button class="btn pri" onclick="FEE.pay('${cls.id}','${s.id}')">Đã thu</button>`) : '';
     return `<div class="fs-row${off ? ' off' : ''}">
-      <div class="fs-name"><span class="zh">${esc(s.name)}</span> ${acct}${off ? ' <span class="chip c-gray">đã nghỉ</span>' : ''}${(!off && lp === 0) ? ' <span class="chip c-yellow" title="Hãy nhập giá mỗi buổi">chưa nhập giá</span>' : ''}
-        <div class="muted">30 ngày: ${a.yes} có mặt · ${a.no} vắng · tháng này ${b.rows.length} buổi</div></div>
-      <div class="fs-price"><input type="number" min="0" step="1000" value="${lp || ''}" placeholder="giá/buổi" onchange="FEE.setPrice('${cls.id}','${s.id}',this)"> <span class="muted">đ/buổi</span></div>
+      <div class="fs-name"><span class="zh">${esc(s.name)}</span> ${acct}${off ? ' <span class="chip c-gray">đã nghỉ</span>' : ''}${(!off && lp === 0) ? ' <span class="chip c-yellow" title="Mở Hồ sơ & giá buổi để nhập giá">chưa nhập giá</span>' : ''}
+        <div class="muted">30 ngày: ${a.yes} có mặt · ${a.no} vắng</div></div>
       <div class="fs-debt">${debt}</div>
-      <div class="fs-act">${payBtn}
-        ${off ? `<button class="btn" onclick="FEE.back('${cls.id}','${s.id}')">Học lại</button>` : `<button class="btn ghost" onclick="FEE.leave('${cls.id}','${s.id}')" title="Cho nghỉ: rời lớp, không nhận bài, giữ tài khoản và lịch sử">Nghỉ</button>`}
-        <button class="btn ghost" onclick="FEE.remove('${cls.id}','${s.id}')" title="Bỏ khỏi lớp này">✕</button>
-        ${s.portalId ? `<button class="btn" onclick="resetPw('${s.portalId}')" title="Đặt lại mật khẩu">🔑</button>` : ''}</div>
+      <div class="fs-act"><details class="mnu"><summary class="btn" title="Thao tác với em">⋯</summary><div class="mnu-list">
+        <button type="button" onclick="FEE.openProfile('${cls.id}','${s.id}')">👤 Hồ sơ &amp; giá buổi</button>
+        ${s.portalId ? `<button type="button" onclick="resetPw('${s.portalId}')">🔑 Đặt lại mật khẩu</button><button type="button" onclick="openGift('${s.portalId}')">🎁 Tặng huy hiệu</button>` : ''}
+        <hr>
+        ${off ? `<button type="button" onclick="FEE.back('${cls.id}','${s.id}')">↩ Học lại</button>` : `<button type="button" onclick="FEE.leave('${cls.id}','${s.id}')" title="Rời lớp, không nhận bài, giữ tài khoản và lịch sử">⏸ Cho nghỉ (giữ lịch sử)</button>`}
+        <button type="button" class="danger" onclick="FEE.remove('${cls.id}','${s.id}')">✕ Bỏ khỏi lớp (chỉ khi chưa điểm danh)</button>
+      </div></details></div>
     </div>`;
   }
 
@@ -5942,9 +5982,64 @@ const FEE = (() => {
     }catch(e){ err('Chưa thêm được: ' + ((e && e.message) || e)); $('#ad-ok').disabled = false; }
   }
 
+  /* ---- Hồ sơ & giá buổi của một em (thay cho ô giá ở từng dòng) ---- */
+  function openProfile(classId, stId){
+    const { c, s } = find(classId, stId); if(!s) return;
+    const prof = s.portalId ? (state.students || []).find(p => p.id === s.portalId) : null;
+    const lp = latest(s);
+    const hh = hist(s).slice().reverse().map(x => `<div class="muted">${x.from === BASE ? 'Từ đầu' : 'Từ tháng ' + x.from.split('-').reverse().join('/')}: <b>${vnd(x.price)}</b>/buổi</div>`).join('');
+    $('#modal-body').innerHTML = `
+      <div class="topbar"><h2 style="margin:0">👤 <span class="zh">${esc(s.name)}</span></h2><button class="btn" onclick="closeModal()">Đóng</button></div>
+      <div class="muted">Lớp ${esc(c.name)}${prof ? ' · mã ' + esc(prof.code) : ' · chưa có tài khoản portal'}</div>
+      <h3 style="margin:.9rem 0 .3rem">Học phí</h3>
+      <div class="row">
+        <div><label>Giá mỗi buổi (đ)</label><input id="pf-price" type="number" min="0" step="1000" value="${lp || ''}" placeholder="Ví dụ 200000"></div>
+        <div><label>Áp dụng từ tháng</label><input id="pf-from" type="month" value="${month}"></div>
+      </div>
+      <div class="muted" style="margin:.3rem 0">Các tháng trước đó giữ nguyên giá cũ. Nếu em chưa có giá thì giá mới áp dụng cho mọi tháng.</div>
+      ${hh}
+      ${prof ? `<h3 style="margin:.9rem 0 .3rem">Thông tin</h3>
+      <div class="row">
+        <div><label>Năm sinh</label><input id="pf-by" type="number" min="1950" max="2100" value="${prof.birth_year ?? ''}"></div>
+        <div><label>Giới tính</label><select id="pf-gd"><option value="">—</option><option value="female"${prof.gender === 'female' ? ' selected' : ''}>Nữ</option><option value="male"${prof.gender === 'male' ? ' selected' : ''}>Nam</option></select></div>
+      </div>` : ''}
+      <div class="err" id="pf-err" style="margin-top:.4rem"></div>
+      <div style="margin-top:.8rem;display:flex;gap:.5rem;flex-wrap:wrap"><button class="btn pri" type="button" onclick="FEE.saveProfile('${classId}','${stId}')">Lưu</button>
+        ${prof ? `<button class="btn" type="button" onclick="openGift('${prof.id}')">🎁 Tặng huy hiệu</button><button class="btn" type="button" onclick="resetPw('${prof.id}')">🔑 Đặt lại mật khẩu</button>` : ''}</div>`;
+    $('#modal').classList.remove('hidden');
+  }
+  async function saveProfile(classId, stId){
+    const { s } = find(classId, stId); if(!s) return;
+    const err = (m) => { $('#pf-err').textContent = m; }; err('');
+    const price = Math.max(0, Math.round(Number($('#pf-price').value) || 0));
+    const from = $('#pf-from').value;
+    const old = latest(s);
+    try{
+      if(price !== old){
+        const h = hist(s);
+        if(old === 0 && h.length === 1){ h[0].price = price; }
+        else{
+          if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(from || '')){ err('Hãy chọn tháng áp dụng giá mới.'); return; }
+          s.priceHistory = setFrom(h, from, price);
+        }
+        s.price = latest(s);
+        await DDStore.save('classes', D().classes);
+      }
+      if(s.portalId && $('#pf-by')){
+        const prof = (state.students || []).find(p => p.id === s.portalId) || {};
+        const by = $('#pf-by').value ? +$('#pf-by').value : null, gd = $('#pf-gd').value || null;
+        const patch = {};
+        if((prof.birth_year ?? null) !== by) patch.birth_year = by;
+        if((prof.gender ?? null) !== gd) patch.gender = gd;
+        if(Object.keys(patch).length) await saveProf(s.portalId, patch);
+      }
+      closeModal(); renderPeople();
+    }catch(e){ err('Chưa lưu được: ' + ((e && e.message) || e)); }
+  }
+
   function setMonth(v){ if(/^\d{4}-\d{2}$/.test(v || '')){ month = v; render(); } }
   const getMonth = () => month;
-  return { render, setMonth, getMonth, setPrice, pay, unpay, leave, back, remove, openAdd, addExisting, whoChanged, classChanged, acctChanged, submitAdd, _t: { bill, priceOf, latest, setFrom, hist } };
+  return { render, setMonth, getMonth, setPrice, openProfile, saveProfile, pay, unpay, leave, back, remove, openAdd, addExisting, whoChanged, classChanged, acctChanged, submitAdd, _t: { bill, priceOf, latest, setFrom, hist } };
 })();
 
 
