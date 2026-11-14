@@ -431,7 +431,7 @@
     <button class="nav-i" data-st="practice" data-tip="Luyện tập"><span class="ico">🧩</span><span class="lbl">Luyện tập</span></button>
     <button class="nav-i" data-st="fish" data-tip="Cá của tôi"><span class="ico">🎀</span><span class="lbl">Cá của tôi</span></button>
     <button class="nav-i" data-st="achieve" data-tip="Thành tích"><span class="ico">🏅</span><span class="lbl">Thành tích</span></button>
-    <div class="side-foot"><div class="muted" id="st-sbname"></div><button class="foot-btn" onclick="doLogout()" data-tip="Đăng xuất"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="lbl">Đăng xuất</span></button></div>
+    <div class="side-foot"><div class="muted" id="st-sbname"></div><button class="foot-btn" onclick="changeMyPw()" data-tip="Đổi mật khẩu"><span class="ico">🔑</span><span class="lbl">Đổi mật khẩu</span></button><button class="foot-btn" onclick="doLogout()" data-tip="Đăng xuất"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="lbl">Đăng xuất</span></button></div>
   </aside>
   <div id="st-side-tip" role="tooltip"></div>
 
@@ -4694,6 +4694,17 @@ $('#login-form').addEventListener('submit', async (ev) => {
     await boot();
   }catch(e){ $('#login-err').textContent = 'Sai mã học sinh hoặc mật khẩu'; }
 });
+async function changeMyPw(){
+  const a = prompt('Nhập mật khẩu mới (từ 6 ký tự):'); if(a === null) return;
+  if(a.length < 6){ alert('Mật khẩu phải từ 6 ký tự.'); return; }
+  const b = prompt('Nhập lại mật khẩu mới để xác nhận:'); if(b === null) return;
+  if(a !== b){ alert('Hai lần nhập không giống nhau. Mật khẩu chưa được đổi.'); return; }
+  try{
+    const { error } = await YY.sb.auth.updateUser({ password: a });
+    if(error) throw error;
+    alert('Đã đổi mật khẩu thành công. Lần đăng nhập sau hãy dùng mật khẩu mới nhé!');
+  }catch(e){ alert('Chưa đổi được mật khẩu: ' + (e.message || e)); }
+}
 async function doLogout(){ await YY.logout(); location.href = YY.config.PORTAL_URL; }
 
 /* ---------------- HỌC SINH ---------------- */
