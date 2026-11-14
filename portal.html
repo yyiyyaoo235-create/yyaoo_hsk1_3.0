@@ -63,6 +63,13 @@
   .in i{position:absolute;left:.85rem;top:50%;transform:translateY(-50%);font-style:normal;font-size:.95rem;opacity:.75;pointer-events:none}
   .in input{padding:.65rem .9rem .65rem 2.5rem;border-radius:14px;outline:none}
   .in input:focus{border-color:#5fb0e8;box-shadow:0 0 0 4px rgba(95,176,232,.25)}
+  .welcome-toast{position:fixed;top:14px;left:50%;transform:translate(-50%,-140%);z-index:2147483000;max-width:min(92vw,28rem);width:max-content;background:linear-gradient(135deg,#fff7e6,#e8f6ff);border:1px solid #cfe6f7;border-radius:18px;padding:.8rem 1.1rem;box-shadow:0 10px 30px rgba(60,120,170,.25);text-align:center;line-height:1.5;cursor:pointer;transition:transform .5s cubic-bezier(.2,1.3,.4,1)}
+  .welcome-toast.show{transform:translate(-50%,0)}
+  .welcome-toast b{font-size:1.05rem}
+  .welcome-toast .wt-s{font-size:.9rem;color:#5b6b75}
+  .remember{display:flex;align-items:center;gap:.5rem;margin:.6rem 0 .2rem;font-size:.9rem;cursor:pointer;text-align:left}
+  .remember input{width:auto;margin:0;accent-color:#5fb0e8;cursor:pointer}
+  .linkbtn{background:none;border:0;color:#3a8fd0;cursor:pointer;font-size:.85rem;padding:0;text-decoration:underline}
   input:is(:not([type]),[type=text],[type=password],[type=email],[type=search],[type=tel],[type=url],[type=number]),textarea{caret-color:transparent}
   :is(input,textarea):placeholder-shown{transition:text-indent .15s}
   :is(input,textarea):placeholder-shown:is(:hover,:focus){text-indent:1.5rem}
@@ -504,11 +511,15 @@
       <p class="muted">Đăng nhập bằng mã học sinh do cô cấp</p>
       <form id="login-form">
         <label for="code" style="text-align:left">Mã học sinh</label>
-        <div class="in"><i>👤</i><input id="code" placeholder="Ví dụ: YSG005" autocomplete="username" required></div>
+        <div class="in"><i>👤</i><input id="code" placeholder="Ví dụ: YSG005" autocomplete="username" autocapitalize="characters" autocorrect="off" spellcheck="false" required></div>
         <label for="pw" style="text-align:left">Mật khẩu</label>
         <div class="in"><i>🔒</i><input id="pw" type="password" autocomplete="current-password" required></div>
+        <label class="remember" for="remember"><input type="checkbox" id="remember" checked> Lưu đăng nhập trên thiết bị này</label>
+        <div class="muted" style="font-size:.8rem;text-align:left;margin-bottom:.4rem">Chỉ lưu mã học sinh để lần sau khỏi nhập lại. Máy dùng chung thì bỏ chọn nhé.</div>
         <div class="err" id="login-err"></div>
         <button class="btn pri go" type="submit">Đăng nhập</button>
+        <div style="text-align:center;margin-top:.6rem"><button type="button" class="linkbtn" id="forget-code" hidden>Dùng mã khác</button></div>
+        <div class="muted" style="text-align:center;margin-top:.5rem;font-size:.85rem">Quên mã hoặc mật khẩu? <a href="https://zalo.me/0387657439" target="_blank" rel="noopener" style="color:#3a8fd0;font-weight:700">Nhắn cô qua Zalo 💬</a></div>
       </form>
     </div>
   </div>
@@ -4947,15 +4958,47 @@ async function boot(){
   }catch(e){ show('login'); $('#login-err').textContent = (navigator.onLine === false ? 'Bạn đang mất mạng. ' : 'Lỗi kết nối: ' + (e && e.message ? e.message + '. ' : '')) + 'Kiểm tra mạng rồi tải lại trang (F5).'; }
 }
 
+const SAVED_KEY='yy_saved_code';
+const cleanCode = v => (v||'').replace(/[\s\u00A0\u200B-\u200D\uFEFF]/g,'').toUpperCase();
+function lsGet(k){ try{ return localStorage.getItem(k); }catch(e){ return null; } }
+function lsSet(k,v){ try{ localStorage.setItem(k,v); }catch(e){} }
+function lsDel(k){ try{ localStorage.removeItem(k); }catch(e){} }
+(function initSavedCode(){
+  const saved = lsGet(SAVED_KEY);
+  if(saved){
+    $('#code').value = saved; $('#remember').checked = true;
+    $('#forget-code').hidden = false;
+    setTimeout(()=>{ try{ $('#pw').focus(); }catch(e){} }, 0);
+  }
+  $('#forget-code').addEventListener('click', () => {
+    lsDel(SAVED_KEY); $('#code').value = ''; $('#pw').value = '';
+    $('#forget-code').hidden = true; $('#code').focus();
+  });
+  $('#code').addEventListener('blur', () => { $('#code').value = cleanCode($('#code').value); });
+})();
+
 $('#login-form').addEventListener('submit', async (ev) => {
   ev.preventDefault(); $('#login-err').textContent = '';
+  const code = cleanCode($('#code').value);
+  const rawPw = $('#pw').value, pw = rawPw.trim();
+  $('#code').value = code;
   try{
-    await YY.login($('#code').value, $('#pw').value);
+    try{ await YY.login(code, pw); }
+    catch(e){ if(rawPw !== pw) await YY.login(code, rawPw); else throw e; }
+    if($('#remember').checked) lsSet(SAVED_KEY, code); else lsDel(SAVED_KEY);
+    state.justLoggedIn = true;
     const next = new URLSearchParams(location.search).get('next');
     if(next && next.startsWith(location.origin)){ location.href = next; return; }
     await boot();
   }catch(e){ $('#login-err').textContent = 'Sai mã học sinh hoặc mật khẩu'; }
 });
+async function copyLoginMsg(id){
+  const st = (state.students || []).find(x => x.id === id); if(!st) return;
+  const url = location.origin + location.pathname;
+  const t = 'Chào ' + (st.full_name || 'em') + ' 👋\nLink học: ' + url + '\nMã học sinh: ' + st.code + '\n(Mật khẩu cô đã gửi riêng. Em chọn "Lưu đăng nhập trên thiết bị này" để lần sau vào thẳng nhé!)\nQuên mật khẩu thì nhắn cô, cô đặt lại ngay 💪';
+  try{ await navigator.clipboard.writeText(t); alert('Đã sao chép tin nhắn cho ' + st.code + ' — dán vào Zalo là gửi được.'); }
+  catch(_e){ prompt('Sao chép nội dung này:', t); }
+}
 async function changeMyPw(){
   const a = prompt('Nhập mật khẩu mới (từ 6 ký tự):'); if(a === null) return;
   if(a.length < 6){ alert('Mật khẩu phải từ 6 ký tự.'); return; }
@@ -5021,6 +5064,24 @@ async function _reloadStudentCore(){
   if(ev.done.length) showStickerPop(ev.done);
   if(freshBadges.length) showBadgePop(freshBadges);
   if(needProfile() && !state.skipProfile) showProfilePop();
+  if(state.justLoggedIn){ state.justLoggedIn = false; showWelcome(); }
+}
+function showWelcome(){
+  try{
+    const me = state.me || {}, parts = String(me.full_name || '').trim().split(/\s+/), name = parts[parts.length - 1] || 'bạn';
+    const sd = calcDayStreak(state.practice || []);
+    const line = sd.cur > 0
+      ? '🌞 Chuỗi luyện tập: <b>' + sd.cur + ' ngày</b>' + (sd.todayDone ? ' · hôm nay em đã luyện rồi, giỏi quá! 🎉' : ' · hôm nay luyện một lượt để giữ chuỗi nhé!')
+      : '🌱 Hôm nay luyện một lượt để bắt đầu chuỗi ngày mới nhé!';
+    const el = document.createElement('div');
+    el.className = 'welcome-toast';
+    el.innerHTML = '<div><b>Chào mừng quay lại, ' + esc(name) + '! <span class="zh">今天也要加油!</span></b></div><div class="wt-s">' + line + '</div>';
+    const close = () => { el.classList.remove('show'); setTimeout(() => el.remove(), 600); };
+    el.onclick = close;
+    document.body.appendChild(el);
+    requestAnimationFrame(() => requestAnimationFrame(() => el.classList.add('show')));
+    setTimeout(close, 7000);
+  }catch(e){}
 }
 /* ===== khung học sinh: các trang + bộ lọc bài ===== */
 const ST_TABS = {home:'', tasks:'Bài của tôi', practice:'Luyện tập', fish:'Cá của tôi', achieve:'Thành tích'};
@@ -5740,7 +5801,7 @@ function renderPeople(){
     <td style="width:7.5rem"><input type="number" min="1950" max="2100" placeholder="Năm sinh" value="${s.birth_year ?? ''}" onchange="saveProf('${s.id}',{birth_year:this.value?+this.value:null})"></td>
     <td style="width:8rem"><select onchange="saveProf('${s.id}',{gender:this.value||null})"><option value="">—</option><option value="female"${s.gender === 'female' ? ' selected' : ''}>Nữ</option><option value="male"${s.gender === 'male' ? ' selected' : ''}>Nam</option></select></td>
     <td><select onchange="addMember(this,'${s.id}')">${opts}</select></td>
-    <td><button class="btn" onclick="openGift('${s.id}')">🎁 Tặng</button> <button class="btn" onclick="resetPw('${s.id}')" title="Đặt lại mật khẩu">🔑</button> ${s.active === false ? `<button class="btn" onclick="setActive('${s.id}',true)">Học lại</button>` : `<button class="btn ghost" onclick="setActive('${s.id}',false)" title="Cho nghỉ học (ẩn, không mất dữ liệu)">Nghỉ</button>`}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Không thấy học sinh nào khớp.</td></tr>';
+    <td><button class="btn" onclick="openGift('${s.id}')">🎁 Tặng</button> <button class="btn" onclick="resetPw('${s.id}')" title="Đặt lại mật khẩu">🔑</button> <button class="btn" onclick="copyLoginMsg('${s.id}')" title="Sao chép tin nhắn hướng dẫn đăng nhập gửi Zalo">📨</button> ${s.active === false ? `<button class="btn" onclick="setActive('${s.id}',true)">Học lại</button>` : `<button class="btn ghost" onclick="setActive('${s.id}',false)" title="Cho nghỉ học (ẩn, không mất dữ liệu)">Nghỉ</button>`}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Không thấy học sinh nào khớp.</td></tr>';
 }
 $('#class-form').addEventListener('submit', async (ev) => {
   ev.preventDefault();
