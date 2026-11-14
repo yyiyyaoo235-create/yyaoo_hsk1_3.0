@@ -542,6 +542,12 @@
   /* ---- Rà soát: nút ⋯ luôn ở dòng trên trên điện thoại; viền focus cho bàn phím (do all:unset) ---- */
   @media(max-width:720px){.fs-row .fs-act{grid-column:2;grid-row:1}}
   .cls-li:focus-visible,.mnu-list button:focus-visible{outline:2px solid #14808f;outline-offset:1px}
+  /* độ tương phản: all:unset làm .cls-li mất màu chữ riêng; nút "Tạo lớp" cũng ghi rõ màu */
+  .cls-li{color:var(--ink)}
+  .cls-li-name{color:var(--ink)}
+  .cls-li-sub{opacity:.85;color:var(--muted)}
+  #class-form .btn{background:#fff;color:var(--ink);border:1px solid #8fbfc9;font-weight:800}
+  #class-form .btn:hover{background:var(--pink-soft)}
   /* ---- Trạng thái giao diện: đang tải (skeleton) · trống · lỗi kết nối ---- */
   @keyframes yy-shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
   .skel{display:block;border-radius:10px;background:linear-gradient(90deg,#e1eef2 25%,#f4fafb 50%,#e1eef2 75%);background-size:200% 100%;animation:yy-shimmer 1.3s ease-in-out infinite;color:transparent !important;user-select:none;pointer-events:none}
