@@ -5604,18 +5604,25 @@ function crToast(t){
 const crOrdGet = () => { try{ return JSON.parse(localStorage.getItem('cr-order') || '{}'); }catch(e){ return {}; } };
 const crOrdSet = (o) => { try{ localStorage.setItem('cr-order', JSON.stringify(o)); }catch(e){} };
 const crKey = (m) => `${m.course}:${+m.lesson}:${m.type}`;
+const crHasSort = () => matsOf().some(m => m.sort_order != null);   // đã chạy migration-dot7 → thứ tự lưu trên Supabase
 function crGroup(course, lesson, type){
   const list = matsOf().filter(m => m.course === course && +m.lesson === +lesson && m.type === type);
+  if(crHasSort()) return list.map((m, i) => [m, i]).sort((a, b) => (+a[0].sort_order || 0) - (+b[0].sort_order || 0) || a[1] - b[1]).map(x => x[0]);
   const arr = crOrdGet()[`${course}:${+lesson}:${type}`] || [];
   const ix = (m) => { const i = arr.indexOf(m.id); return i < 0 ? 1e6 : i; };
   return list.map((m, i) => [m, i]).sort((a, b) => ix(a[0]) - ix(b[0]) || a[1] - b[1]).map(x => x[0]);
 }
-function matMove(id, d){
+async function matMove(id, d){
   const m = matsOf().find(x => x.id === id); if(!m) return;
   const g = crGroup(m.course, m.lesson, m.type), i = g.findIndex(x => x.id === id), j = i + d;
   if(i < 0 || j < 0 || j >= g.length) return;
   [g[i], g[j]] = [g[j], g[i]];
-  const o = crOrdGet(); o[crKey(m)] = g.map(x => x.id); crOrdSet(o);
+  if(crHasSort() && typeof YY.reorderMaterials === 'function'){
+    try{ await YY.reorderMaterials(g.map(x => x.id)); state.mats = await YY.listMaterials(); }
+    catch(e){ alert('Chưa lưu được thứ tự: ' + e.message); return; }
+    renderCourse(); return;
+  }
+  const o = crOrdGet(); o[crKey(m)] = g.map(x => x.id); crOrdSet(o);   // chưa có cột sort_order: lưu tạm trong trình duyệt
   renderCourse();
 }
 
@@ -5806,9 +5813,10 @@ $('#cr-form').addEventListener('submit', async (ev) => {
   const btn = $('#cr-m-sub'); btn.disabled = true;
   const old = eid ? matsOf().find(x => x.id === eid) : null, before = new Set(matsOf().map(x => x.id));
   try{
-    await YY.addMaterial({course:state.course, lesson, type, title, url});   // sửa = thêm bản mới rồi xóa bản cũ (không mất dữ liệu nếu lỗi giữa chừng)
+    if(eid && typeof YY.updateMaterial === 'function') await YY.updateMaterial(eid, {course:state.course, lesson, type, title, url});
+    else await YY.addMaterial({course:state.course, lesson, type, title, url});   // thư viện cũ: sửa = thêm bản mới rồi xóa bản cũ
   }catch(e){ btn.disabled = false; alert('Chưa lưu được: ' + e.message); return; }
-  if(eid){
+  if(eid && typeof YY.updateMaterial !== 'function'){
     try{ await YY.deleteMaterial(eid); }
     catch(e){ alert('Đã lưu bản mới nhưng chưa xóa được bản cũ: ' + e.message + '\nHãy xóa ✕ bản cũ thủ công.'); }
   }
