@@ -647,15 +647,16 @@
       </div>
       <div class="card" id="sy-card">
         <details id="sy-d" open>
-          <summary><h2 style="display:inline;margin:0">Đồng bộ với sổ điểm danh</h2> <span class="muted" id="sy-note"></span></summary>
+          <summary><h2 style="display:inline;margin:0">Đồng bộ với sổ điểm danh</h2> <span class="muted" id="sy-note"></span> <span class="chip c-green" id="sy-ok" style="display:none"></span></summary>
           <p class="muted" style="margin:.4rem 0">So học sinh trong sổ điểm danh (lưu trên trình duyệt này) với tài khoản trên portal, tạo tài khoản cho em chưa có, liên kết tên. Chỉ gửi mã và họ tên lên portal, không gửi học phí.</p>
           <div id="sy-body"></div>
         </details>
       </div>
       <div class="card">
         <h2>Học sinh</h2>
+        <input id="pp-search" type="search" placeholder="🔍 Tìm theo tên hoặc mã…" oninput="renderPeople()" style="max-width:20rem;margin-bottom:.5rem">
         <div class="scroll"><table>
-          <thead><tr><th>Mã</th><th>Họ tên</th><th>Năm sinh</th><th>Giới tính</th><th>Thêm vào lớp</th><th>Huy hiệu</th></tr></thead>
+          <thead><tr><th>Mã</th><th>Họ tên</th><th>Lớp</th><th>Năm sinh</th><th>Giới tính</th><th>Thêm vào lớp</th><th>Huy hiệu</th></tr></thead>
           <tbody id="pp-students"></tbody>
         </table></div>
       </div>
@@ -5289,6 +5290,12 @@ async function saveClass(id, patch){
   try{ await YY.updateClass(id, patch); await reloadTeacher(); }
   catch(e){ alert('Chưa lưu được lớp: ' + e.message + '\n(Đã chạy migration-dot4.sql chưa?)'); }
 }
+async function renameClass(id){
+  const c = state.classes.find(x => x.id === id); if(!c) return;
+  const v = prompt('Tên mới cho lớp:', c.name); if(v === null) return;
+  const n = v.trim(); if(!n || n === c.name) return;
+  await saveClass(id, { name: n });
+}
 /* ---------------- ĐỒNG BỘ VỚI SỔ ĐIỂM DANH (liên kết tên, tạo tài khoản hàng loạt, đối chiếu lớp) ---------------- */
 let syLast = null;      // kết quả tạo tài khoản gần nhất (mật khẩu chỉ hiện một lần)
 let syNone = [];        // học sinh trong sổ chưa có tài khoản, cùng thứ tự với ô tích
@@ -5436,6 +5443,13 @@ function renderSync(force){
       r.inPortalOnly.length ? `<span class="muted">Chỉ ở portal: ${r.inPortalOnly.map(esc).join(', ')}</span>` : ''}</div>`;
   });
   box._sure = sureOk; box._sugg = sugg;
+  try{
+    const allOk = okN > 0 && !sureOk.length && !dup.length && !none.length && clsRows.every(r => r.state === 'ok');
+    const okEl = $('#sy-ok'), d = $('#sy-d');
+    if(okEl){ okEl.style.display = allOk ? '' : 'none'; okEl.textContent = '✓ Đã đồng bộ ' + okN + '/' + okN; }
+    if(d && box._wasOk !== allOk){ d.open = !allOk; }   // chỉ tự gập/mở khi trạng thái đổi, không đè lựa chọn của bạn
+    box._wasOk = allOk;
+  }catch(e){ console.warn(e); }
   box.innerHTML = syResultHtml() + h;
 }
 function syChange(e){
@@ -5511,7 +5525,7 @@ async function syCreate(btn){
 
 function renderPeople(){
   $('#pp-classes').innerHTML = state.classes.map(c => `<div style="margin:.4rem 0">
-    <b>${esc(c.name)}</b> <span class="chip c-gray">${c.kind === 'one_on_one' ? '1-1' : 'Nhóm'}</span>
+    <b>${esc(c.name)}</b> <a href="#" title="Đổi tên lớp" onclick="renameClass('${c.id}');return false">✎</a> <span class="chip c-gray">${c.kind === 'one_on_one' ? '1-1' : 'Nhóm'}</span>
     <span style="display:inline-flex;align-items:center;gap:.4rem;margin-left:.5rem;flex-wrap:wrap">
       <select style="width:auto" onchange="saveClass('${c.id}',{course:this.value||null})"><option value="">Chưa chọn cấp</option>${['HSK1','HSK2','HSK3','HSK4'].map(k => `<option${c.course === k ? ' selected' : ''}>${k}</option>`).join('')}</select>
       <span class="muted">đang học tới Bài</span>
@@ -5521,12 +5535,15 @@ function renderPeople(){
     <div class="muted">${(c.class_members || []).map(m => `<span class="zh">${esc(m.profiles?.full_name)}</span> <a href="#" onclick="rmMember('${c.id}','${m.student_id}');return false">✕</a>`).join(' · ') || 'Chưa có học sinh'}</div>
   </div>`).join('') || '<div class="muted">Chưa có lớp nào.</div>';
   const opts = '<option value="">Chọn lớp…</option>' + state.classes.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  $('#pp-students').innerHTML = state.students.map(s => `<tr>
+  const q = (($('#pp-search') || {}).value || '').trim().toLowerCase();
+  const list = q ? state.students.filter(s => ((s.full_name || '') + ' ' + (s.code || '')).toLowerCase().includes(q)) : state.students;
+  $('#pp-students').innerHTML = list.map(s => `<tr>
     <td>${esc(s.code)}</td><td><span class="zh">${esc(s.full_name)}</span>${attLine(s.id)}</td>
+    <td>${esc(clsOf(s.id))}</td>
     <td style="width:7.5rem"><input type="number" min="1950" max="2100" placeholder="Năm sinh" value="${s.birth_year ?? ''}" onchange="saveProf('${s.id}',{birth_year:this.value?+this.value:null})"></td>
     <td style="width:8rem"><select onchange="saveProf('${s.id}',{gender:this.value||null})"><option value="">—</option><option value="female"${s.gender === 'female' ? ' selected' : ''}>Nữ</option><option value="male"${s.gender === 'male' ? ' selected' : ''}>Nam</option></select></td>
     <td><select onchange="addMember(this,'${s.id}')">${opts}</select></td>
-    <td><button class="btn" onclick="openGift('${s.id}')">🎁 Tặng</button></td></tr>`).join('');
+    <td><button class="btn" onclick="openGift('${s.id}')">🎁 Tặng</button></td></tr>`).join('') || '<tr><td colspan="7" class="muted">Không thấy học sinh nào khớp.</td></tr>';
   try{ renderSync(); }catch(e){ console.warn(e); }
 }
 $('#class-form').addEventListener('submit', async (ev) => {
