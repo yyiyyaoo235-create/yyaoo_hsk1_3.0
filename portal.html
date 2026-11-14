@@ -444,6 +444,7 @@
   .cls-pill i{width:.55rem;height:.55rem;border-radius:50%;flex:none}
   .cls-pill b{font-weight:800;letter-spacing:.2px}
   tr[style*="--rc"] td:first-child{box-shadow:inset 4px 0 0 var(--rc)}
+  .cr-cls{display:inline-flex;align-items:center;gap:.2rem;margin:.15rem .9rem .15rem 0;flex-wrap:wrap}
   /* ---- Lịch điểm danh: luôn đủ 7 cột, điện thoại chỉ hiện chữ tắt lớp ---- */
   .cal-weekdays,.cal-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
   .cal-cell{min-width:0}
@@ -464,6 +465,9 @@
     nav.tabbar{position:static;flex-wrap:wrap;overflow-x:visible;border-radius:22px;gap:4px;padding:6px}
     nav.tabbar .tab-btn{flex:1 1 auto;text-align:center;padding:8px 10px;font-size:13.5px}
   }
+  /* ---- Rà soát: nút ⋯ luôn ở dòng trên trên điện thoại; viền focus cho bàn phím (do all:unset) ---- */
+  @media(max-width:720px){.fs-row .fs-act{grid-column:2;grid-row:1}}
+  .cls-li:focus-visible,.mnu-list button:focus-visible{outline:2px solid #14808f;outline-offset:1px}
 </style>
 </head>
 <body>
@@ -5341,7 +5345,7 @@ function renderCourse(){
   $('#cr-sub').textContent = c.book;
   const myCls = (state.classes || []).filter(x => x.course === code);
   $('#cr-classes').innerHTML = myCls.length
-    ? myCls.map(x => `<span class="chip c-pink" style="margin:.1rem .3rem .1rem 0">👥 ${esc(x.name)} · đang học tới Bài ${x.current_lesson || 0}</span>`).join('')
+    ? myCls.map(x => `<span class="cr-cls">${clsPill(x)}<span class="muted">đang học tới Bài ${x.current_lesson || 0}</span></span>`).join('')
     : '<span class="muted">Chưa có lớp nào gắn với cấp này — chọn ở mục “Lớp &amp; học sinh”.</span>';
   const seedRows = MAT_SEED.filter(m => m.course === code).length;
   $('#cr-import').classList.toggle('hidden', matsOf().length > 0 || !seedRows);
@@ -5768,6 +5772,29 @@ const FEE = (() => {
   }
   const badge = (t) => `<span class="cls-ab" style="background:${t.tone.bg};color:${t.tone.ink};box-shadow:inset 0 0 0 1.5px ${t.tone.dot}">${esc(t.abbr)}</span>`;
 
+  /* ---- Tên lớp tự động theo cấp + thành viên ----
+     1 em: "HSK4 - Phương Thảo" · 2 em: "HSK1 - A & B" · từ 3 em: "HSK1 - Nhóm 3 em".
+     Chỉ áp cho lớp có tên ĐANG đúng theo quy tắc này (có dấu ✨). Lớp đặt tên tay (vd "HSK1 Tối thứ 3, 6") không bao giờ bị đổi. */
+  const autoWas = {};
+  function autoNameFor(c, dd){
+    const ns = (dd.students || []).filter(x => !x.leftAt).map(x => String(x.name || '').trim()).filter(Boolean);
+    if(!ns.length) return null;
+    const pm = /^\s*(HSK|YCT)\s*(\d)/i.exec(c.name || '');
+    const prefix = (pm && pm[1].toUpperCase() === 'YCT') ? 'YCT' + pm[2] : (c.course || (pm ? 'HSK' + pm[2] : ''));
+    const body = ns.length === 1 ? ns[0] : ns.length === 2 ? ns[0] + ' & ' + ns[1] : 'Nhóm ' + ns.length + ' em';
+    let name = (prefix ? prefix + ' - ' : '') + body, n = 2;
+    const taken = new Set(state.classes.filter(x => x.id !== c.id).map(x => x.name));
+    const base = name; while(taken.has(name)) name = base + ' (' + (n++) + ')';
+    return name;
+  }
+  async function applyAutoName(id){
+    const c = state.classes.find(x => x.id === id), dd = (D().classes || []).find(x => x.id === id);
+    if(!c || !dd) return;
+    const an = autoNameFor(c, dd); if(!an) return;
+    if(!confirm('Đặt tên lớp thành “' + an + '”?\nTên sẽ tự cập nhật khi đổi cấp hoặc thành viên. Muốn tự đặt tên thì chọn “Đổi tên lớp”.')) return;
+    await saveClass(id, { name: an });
+  }
+
   /* ---- vẽ các thẻ lớp ---- */
   function render(){
     const box = $('#pp-classes'); if(!box) return;
@@ -5776,6 +5803,7 @@ const FEE = (() => {
     const q = (($('#pp-search') || {}).value || '').trim().toLowerCase();
     const profById = new Map((state.students || []).map(s => [s.id, s]));
     let sumExp = 0, sumGot = 0;
+    const renameList = [];
     const items = state.classes.map(c => {
       const dd = ddById.get(c.id) || { id: c.id, name: c.name, students: [] };
       const ledgerPids = new Set(dd.students.map(s => s.portalId).filter(Boolean));
@@ -5794,15 +5822,22 @@ const FEE = (() => {
       const mm = /HSK\s*([1-4])/i.exec(c.name || ''); const mis = (mm && ('HSK' + mm[1]) !== c.course) ? 'HSK' + mm[1] : '';
       const nextN = (c.current_lesson || 0) + 1;
       const lv = lvOf(c.course), tag = tagOf(c, dd);
+      let an = null, isAuto = false;
+      if(ddById.has(c.id) && !orphans.length){      // chỉ khi sổ đã nạp xong và không có em lệch dữ liệu
+        an = autoNameFor(c, dd); isAuto = !!an && c.name === an;
+        if(autoWas[c.id] === true && an && !isAuto) renameList.push([c.id, an]);   // lớp từng là tên tự động mà cấp/thành viên vừa đổi → cập nhật tên
+        autoWas[c.id] = isAuto;
+      }
       const html = `<div class="cls-card" style="--lv:${lv.c};--lvbg:${lv.bg}">
         <div class="cls-head">
-          <div>${badge(tag)}<b class="cls-name">${esc(c.name)}</b>${act > 1 ? ` <span class="chip c-gray">${kindTxt}</span>` : ''}
+          <div>${badge(tag)}<b class="cls-name">${esc(c.name)}</b>${isAuto ? ' <span class="muted" title="Tên tự cập nhật theo cấp và thành viên">✨</span>' : ''}${act > 1 ? ` <span class="chip c-gray">${kindTxt}</span>` : ''}
             <div class="muted" style="margin-top:.15rem">${esc(courseTxt)}${mis ? ` <a href="#" class="chip c-yellow" onclick="saveClass('${c.id}',{course:'${mis}'});return false" title="Tên lớp ghi ${mis} nhưng cấp đang khác — bấm để sửa">⚠ Đặt cấp ${mis}</a>` : ''}</div></div>
           <div class="cls-meta">
             ${c.course ? `<button class="btn" type="button" onclick="saveClass('${c.id}',{current_lesson:${nextN}})" title="Sang Bài ${nextN}">＋1 bài → ${nextN}</button>` : ''}
             <details class="mnu"><summary class="btn" title="Thao tác với lớp">⋯</summary><div class="mnu-list">
               <button type="button" onclick="openClassEdit('${c.id}')">📚 Sửa cấp &amp; bài</button>
               <button type="button" onclick="renameClass('${c.id}')">✎ Đổi tên lớp</button>
+              ${an && !isAuto ? `<button type="button" onclick="FEE.applyAutoName('${c.id}')" title="${esc(an)}">✨ Đặt tên tự động</button>` : ''}
               <hr><button type="button" class="danger" onclick="archiveClass('${c.id}',true)">📦 Lưu trữ lớp</button>
             </div></details>
           </div>
@@ -5814,6 +5849,9 @@ const FEE = (() => {
       const np = dd.students.filter(x => !x.leftAt && latest(x) === 0).length;
       return { c, act, exp, got, lv, tag, orph: orphans.length, np, hit: !q || sts.length > 0 || noTone(c.name).includes(noTone(q)), html };
     });
+    if(renameList.length){
+      (async () => { try{ for(const [id, n] of renameList) await YY.updateClass(id, { name: n }); await reloadTeacher(); }catch(e){ console.warn('Tự đổi tên lớp:', e); } })();
+    }
     const vis = items.filter(x => x.hit);
     if(!items.length){
       box.innerHTML = '<div class="muted">Chưa có lớp nào. Bấm "Thêm học sinh" để tạo lớp đầu tiên.</div>';
@@ -6222,7 +6260,7 @@ const FEE = (() => {
   function select(id){ selId = id; render(); }
   function setMonth(v){ if(/^\d{4}-\d{2}$/.test(v || '')){ month = v; render(); } }
   const getMonth = () => month;
-  return { render, select, adNext, adBack, syncFix, openAccount, saveAccount, setMonth, getMonth, setPrice, openProfile, saveProfile, pay, unpay, leave, back, remove, openAdd, addExisting, whoChanged, classChanged, acctChanged, submitAdd, _t: { bill, priceOf, latest, setFrom, hist } };
+  return { render, select, applyAutoName, adNext, adBack, syncFix, openAccount, saveAccount, setMonth, getMonth, setPrice, openProfile, saveProfile, pay, unpay, leave, back, remove, openAdd, addExisting, whoChanged, classChanged, acctChanged, submitAdd, _t: { bill, priceOf, latest, setFrom, hist } };
 })();
 
 
