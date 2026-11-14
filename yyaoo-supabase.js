@@ -83,13 +83,16 @@ const YY_CONFIG = {
   /* ---------- Đợt 3: tủ đồ của cá (xem migration-dot3.sql) ---------- */
   YY.getMyStyle = async () => {
     const { data: { session } } = await sb.auth.getSession();
+    // avatar = ảnh đại diện (migration-dot8.sql); chưa chạy migration thì hỏi lại không có cột đó
+    const r = await sb.from('fish_style').select('hat, face, bg, avatar').eq('student_id', session.user.id).maybeSingle();
+    if (!r.error) return r.data;
     return unwrap(await sb.from('fish_style').select('hat, face, bg').eq('student_id', session.user.id).maybeSingle());
   };
   YY.saveMyStyle = async (style) => {
     const { data: { session } } = await sb.auth.getSession();
-    return unwrap(await sb.from('fish_style').upsert({
-      student_id: session.user.id, hat: style.hat || null, face: style.face || null, bg: style.bg || null, updated_at: new Date().toISOString()
-    }, { onConflict: 'student_id' }));
+    const row = { student_id: session.user.id, hat: style.hat || null, face: style.face || null, bg: style.bg || null, updated_at: new Date().toISOString() };
+    if (style.avatar !== undefined) row.avatar = style.avatar || null;     // chỉ gửi khi có cột avatar
+    return unwrap(await sb.from('fish_style').upsert(row, { onConflict: 'student_id' }));
   };
   YY.listMyItems = async () => {
     const { data: { session } } = await sb.auth.getSession();
@@ -192,8 +195,38 @@ const YY_CONFIG = {
 
   /* ---------- Đợt 4/7: lớp (cấp + bài đang học) & kho tài liệu khóa học ----------
      Bảng course_materials(id, course, lesson, type, title, url, created_at, sort_order — sort_order: xem migration-dot7.sql) */
-  YY.updateClass = async (id, patch) =>
-    unwrap(await sb.from('classes').update(patch).eq('id', id));
+  YY.updateClass = async (id, patch) => {
+    const r = unwrap(await sb.from('classes').update(patch).eq('id', id));
+    // ghi lại NGÀY bắt đầu mỗi bài (migration-dot8.sql); lỗi ở bước này không làm hỏng việc đổi bài
+    const n = Number(patch && patch.current_lesson);
+    if (n > 0) {
+      try { await sb.from('lesson_log').upsert({ class_id: id, lesson: n }, { onConflict: 'class_id,lesson', ignoreDuplicates: true }); }
+      catch (e) { console.warn('lesson_log:', e); }
+    }
+    return r;
+  };
+
+  /* ---------- Đợt 9: mục tiêu & ngày thi của học sinh (xem migration-dot9.sql) ---------- */
+  YY.listMyGoals = async () => {
+    const { data: { session } } = await sb.auth.getSession();
+    return unwrap(await sb.from('student_goals').select('*').eq('student_id', session.user.id).order('created_at'));
+  };
+  // g.id có → sửa; không có → thêm mới. shared=true thì cô xem được, mặc định chỉ mình em.
+  YY.saveMyGoal = async (g) => {
+    const { data: { session } } = await sb.auth.getSession();
+    const row = { student_id: session.user.id, title: g.title, target_date: g.target_date || null, course: g.course || null,
+      shared: !!g.shared, result: g.result || null, done_at: g.done_at || null };
+    if (g.id) return unwrap(await sb.from('student_goals').update(row).eq('id', g.id).select().single());
+    return unwrap(await sb.from('student_goals').insert(row).select().single());
+  };
+  YY.deleteMyGoal = async (id) => unwrap(await sb.from('student_goals').delete().eq('id', id));
+  // Giáo viên: chỉ nhận các mục tiêu em đã chọn "chia sẻ với cô" (RLS tự lọc)
+  YY.listSharedGoals = async () =>
+    fetchAll(() => sb.from('student_goals').select('*').eq('shared', true).order('target_date', { ascending: true, nullsFirst: false }).order('id'));
+
+  // Học sinh: ngày bắt đầu từng bài của các lớp mình (RLS tự lọc)
+  YY.listMyLessonDates = async () =>
+    unwrap(await sb.from('lesson_log').select('class_id, lesson, started_on'));
 
   // Học sinh: các lớp của mình (RLS tự lọc theo class_members); bỏ lớp đã lưu trữ
   YY.listMyClasses = async () =>
