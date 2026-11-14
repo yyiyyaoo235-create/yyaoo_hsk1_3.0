@@ -444,6 +444,26 @@
   .cls-pill i{width:.55rem;height:.55rem;border-radius:50%;flex:none}
   .cls-pill b{font-weight:800;letter-spacing:.2px}
   tr[style*="--rc"] td:first-child{box-shadow:inset 4px 0 0 var(--rc)}
+  /* ---- Lịch điểm danh: luôn đủ 7 cột, điện thoại chỉ hiện chữ tắt lớp ---- */
+  .cal-weekdays,.cal-grid{grid-template-columns:repeat(7,minmax(0,1fr))}
+  .cal-cell{min-width:0}
+  .cal-pill-ab{display:none}
+  @media (max-width:640px){
+    .cal-cell{min-height:78px;padding:4px 2px;align-items:stretch}
+    .cal-daynum{font-size:12px;text-align:center}
+    .cal-cell.today .cal-daynum{margin:0 auto}
+    .cal-lunar{font-size:9px;text-align:center}
+    .cal-pill{font-size:10px;font-weight:800;text-align:center;padding:2px 1px 2px 4px !important;letter-spacing:.2px}
+    .cal-pill-ab{display:inline}
+    .cal-pill-nm{display:none}
+    .cal-more{font-size:8.5px;text-align:center}
+    .cal-weekdays{font-size:10.5px}
+  }
+  /* ---- Thanh tab của Sổ điểm danh trên điện thoại: xuống dòng, thấy đủ tất cả tab ---- */
+  @media (max-width:640px){
+    nav.tabbar{position:static;flex-wrap:wrap;overflow-x:visible;border-radius:22px;gap:4px;padding:6px}
+    nav.tabbar .tab-btn{flex:1 1 auto;text-align:center;padding:8px 10px;font-size:13.5px}
+  }
 </style>
 </head>
 <body>
@@ -2229,7 +2249,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       dayItems.slice(0,4).forEach(function(s){
         var c = findClass(s.classId);
         var t = classTone(s.classId);
-        html += '<span class="cal-pill" style="background:'+t.bg+';color:'+t.ink+';box-shadow:inset 3px 0 0 '+t.dot+';padding-left:7px" title="'+escapeHtml(c?(classAbbr(c)+' · '+c.name):'(lớp đã xóa)')+'">'+escapeHtml(c?c.name:'(lớp đã xóa)')+'</span>';
+        html += '<span class="cal-pill" style="background:'+t.bg+';color:'+t.ink+';box-shadow:inset 3px 0 0 '+t.dot+';padding-left:7px" title="'+escapeHtml(c?(classAbbr(c)+' · '+c.name):'(lớp đã xóa)')+'"><span class="cal-pill-ab">'+escapeHtml(c?classAbbr(c):'?')+'</span><span class="cal-pill-nm">'+escapeHtml(c?c.name:'(lớp đã xóa)')+'</span></span>';
       });
       if(dayItems.length>4) html += '<span class="cal-more">+'+(dayItems.length-4)+' buổi</span>';
       cell.innerHTML = html;
