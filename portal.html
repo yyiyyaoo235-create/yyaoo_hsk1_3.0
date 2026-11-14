@@ -451,11 +451,34 @@
   .pg-tip b{display:block;font-size:.84rem}
   .pg-tip .zh{font-family:KaiTi,'楷体','STKaiti',serif;font-size:.95rem}
   .pg-tip .st-ok{color:#9be7bd} .pg-tip .st-now{color:#ffe08a} .pg-tip .st-no{color:#b8c9d0}
+  .gl-card{margin:.6rem 0}
+  .gl-head{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:space-between}
+  .gl-head b{font-size:1.05rem}
+  .gl-empty{margin-top:.4rem}
+  .gl-row{display:flex;align-items:center;gap:.7rem;flex-wrap:wrap;padding:.6rem 0;border-top:1px dashed var(--line);margin-top:.6rem}
+  .gl-main{flex:1 1 11rem;min-width:0}
+  .gl-main b{display:block;font-size:.98rem}
+  .gl-fc{font-size:.8rem;font-weight:700;margin-top:.25rem;color:var(--pink)}
+  .gl-cd{flex:none;text-align:center;background:var(--pink-soft);color:var(--pink);border-radius:14px;padding:.3rem .8rem;line-height:1.1;font-size:.72rem;font-weight:800}
+  .gl-cd b{display:block;font-size:1.5rem;font-weight:900}
+  .gl-cd.soon{background:#fff0c9;color:#9a6d12} .gl-cd.past{background:var(--gray-soft);color:var(--muted)}
+  .gl-act{display:flex;gap:.35rem;flex-wrap:wrap;align-items:center}
+  .gl-act .btn{padding:.25rem .6rem;font-size:.74rem}
+  .gl-share{border-radius:99px;border:1px solid var(--line);background:#fff;padding:.25rem .65rem;font-size:.74rem;font-weight:800;cursor:pointer;color:var(--muted);font-family:inherit}
+  .gl-share.on{background:var(--green-soft);color:var(--green);border-color:#bfe6d1}
+  .gl-form{margin-top:.7rem;padding:.8rem;border-radius:14px;background:rgba(220,243,246,.45);display:grid;gap:.6rem}
+  .gl-form label{display:block;font-size:.78rem;font-weight:800;color:var(--muted)}
+  .gl-form input[type=text],.gl-form input[type=date],.gl-form select{width:100%;margin-top:.2rem;padding:.45rem .6rem;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;box-sizing:border-box}
+  .gl-radio{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.25rem}
+  .gl-radio label{flex:1 1 9rem;display:flex;align-items:flex-start;gap:.4rem;padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);cursor:pointer;font-size:.8rem}
+  .gl-radio label small{display:block;font-weight:600;color:var(--muted)}
+  .gl-radio input:checked + span b{color:var(--pink)}
   .av-card{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
   .av-prev{width:5rem;height:5rem;flex:none;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 14px rgba(20,128,143,.28);background:#D9F3F0}
   .av-prev svg,.av-prev img{display:block;width:100%;height:100%;object-fit:cover}
   .av-main{flex:1;min-width:12rem}
   .av-btns{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
+  .av-btns .btn{font-size:.9rem;font-weight:800;line-height:1.2}
   @media(prefers-reduced-motion:no-preference){
     .pg-fb{animation:pgBob 3.2s ease-in-out infinite}
     .pg-fish.hop .pg-fb{animation:pgHop .9s ease-in-out 2}
@@ -691,6 +714,7 @@
     <div id="stab-home">
       <div class="mascot" id="st-mascot"></div>
       <div id="st-progress"></div>
+      <div id="st-goal"></div>
       <div class="streak-row" id="st-streak"></div>
       <div class="todo-h"><h2>✅ Việc cần làm hôm nay</h2></div>
       <div id="st-todo"></div>
@@ -5204,6 +5228,7 @@ async function _reloadStudentCore(){
   // luyện tập + huy hiệu cô tặng: nếu chưa chạy migration-dot2.sql thì bỏ qua, portal vẫn chạy
   const [rows1, practice, awards, style, items, mats, myClasses, arch] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => []),
     YY.getMyStyle().catch(() => null), YY.listMyItems().catch(() => []), YY.listMaterials().catch(() => []), YY.listMyClasses().catch(() => []), archivedAssignIds()]);
+  state.goals = await (YY.listMyGoals ? YY.listMyGoals().catch(() => []) : Promise.resolve([]));
   state.lessonDates = await (YY.listMyLessonDates ? YY.listMyLessonDates().catch(() => []) : Promise.resolve([]));
   const rows = rows1.filter(r => !arch.has(r.assignment_id));
   state.myClasses = myClasses;
@@ -5222,6 +5247,7 @@ async function _reloadStudentCore(){
   renderWardrobe(rows);
   renderRank(rows);
   renderProgress();
+  renderGoals();
   renderCal();
   const gotBadges = renderBadges(rows), freshBadges = newBadges(gotBadges);
   let tab = state.stTab; try{ tab = tab || sessionStorage.getItem('yy_st_tab'); }catch(e){}
@@ -5448,6 +5474,78 @@ async function avatarPick(inp){
 }
 function avatarClear(){ avatarSave(null); }
 
+/* ===== mục tiêu & ngày thi của em: mỗi mục tự chọn "chia sẻ với cô" hoặc "chỉ mình biết" ===== */
+const GL_MAX = 3;
+const glOver = g => (g.done_at || (g.target_date && dnum(g.target_date) < dnum(todayVN()))) ? 1 : 0;   // đã qua: xếp cuối
+const glDays = g => dnum(g.target_date) - dnum(todayVN());
+const glDate = iso => { const p = String(iso || '').split('-'); return p.length < 3 ? '' : p[2] + '/' + p[1] + '/' + p[0]; };
+function glNext(course){   // mục tiêu sắp tới gắn với cấp này
+  return (state.goals || []).filter(g => g.course === course && g.target_date && !g.done_at && glDays(g) >= 0).sort((a, b) => glDays(a) - glDays(b))[0];
+}
+function glForecast(g){
+  const o = myCourseLevels().find(x => x.course === g.course), cfg = o && COURSE_PATH[o.course], days = glDays(g);
+  if(!cfg || !o.n || days < 0) return '';
+  if(o.n > cfg.total) return `Bạn đã học xong ${esc(o.course)}, giờ là lúc ôn tập thật chắc nhé! 🌟`;
+  const left = cfg.total - o.n + 1, ks = Object.keys(o.dates).map(Number).sort((a, b) => a - b), diffs = [];
+  for(let i = 1; i < ks.length; i++) if(ks[i] === ks[i - 1] + 1) diffs.push(dnum(o.dates[ks[i]]) - dnum(o.dates[ks[i - 1]]));
+  if(!diffs.length) return `Còn ${left} bài của ${esc(o.course)} và ${days} ngày.`;
+  const pace = diffs.reduce((a, b) => a + b, 0) / diffs.length, need = Math.round(left * pace);
+  return need <= days
+    ? `Còn ${left} bài, nhịp học hiện tại khoảng ${Math.max(1, Math.round(pace))} ngày/bài, bạn kịp rồi, cố lên! 💪`
+    : `Còn ${left} bài mà chỉ ${days} ngày. Bạn thử luyện thêm mỗi tuần hoặc hỏi cô để cùng lên kế hoạch nhé.`;
+}
+function renderGoals(){
+  const el = $('#st-goal'); if(!el) return;
+  const list = (state.goals || []).slice().sort((a, b) => glOver(a) - glOver(b) || String(a.target_date || '9').localeCompare(String(b.target_date || '9')));
+  const f = state.goalForm, courses = myCourseLevels().map(o => o.course);
+  const rows = list.map(g => {
+    const d = g.target_date ? glDays(g) : null, past = d !== null && d < 0;
+    const cd = d === null ? '' : g.done_at || past ? '<div class="gl-cd past">Đã qua<b>✓</b></div>' : `<div class="gl-cd${d <= 14 ? ' soon' : ''}">còn<b>${d}</b>ngày</div>`;
+    const fc = !g.done_at && !past ? glForecast(g) : '';
+    const res = g.result ? `<div class="gl-fc">Kết quả: ${esc(g.result)} 🎉</div>` : (past && !g.done_at ? `<div class="gl-fc">Ngày thi đã qua, bạn thi thế nào rồi? <button class="link" onclick="glResult('${g.id}')">Nhập kết quả</button></div>` : '');
+    return `<div class="gl-row"><div class="gl-main"><b>${g.course ? '🎓' : '🎯'} ${esc(g.title)}</b><span class="muted">${g.target_date ? 'Ngày thi: ' + glDate(g.target_date) : ''}</span>${fc ? `<div class="gl-fc">${fc}</div>` : ''}${res}</div>${cd}
+      <div class="gl-act"><button class="gl-share${g.shared ? ' on' : ''}" onclick="glToggleShare('${g.id}')" title="Bấm để đổi">${g.shared ? '👩‍🏫 Cô xem được' : '🔒 Chỉ mình bạn'}</button>
+        <button class="btn" onclick="glOpen('${g.id}')">✏️</button><button class="btn" onclick="glDel('${g.id}')">🗑</button></div></div>`;
+  }).join('');
+  const form = !f ? '' : `<div class="gl-form">
+      <label>Tên mục tiêu<input type="text" id="gl-title" maxlength="60" placeholder="Ví dụ: Thi HSK1" value="${esc(f.title || '')}"></label>
+      <label>Ngày thi<input type="date" id="gl-date" value="${esc(f.target_date || '')}"></label>
+      ${courses.length ? `<label>Ôn cho cấp (để cá tính nhịp học giúp bạn)<select id="gl-course" onchange="glCourseHint(this.value)"><option value="">Không gắn với cấp nào</option>${courses.map(c => `<option value="${esc(c)}"${f.course === c ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select></label>` : ''}
+      <div><label style="margin:0">Ai được xem mục tiêu này?</label><div class="gl-radio">
+        <label><input type="radio" name="gl-sh" value="0"${f.shared ? '' : ' checked'}><span><b>🔒 Chỉ mình biết</b><small>Cô không nhìn thấy</small></span></label>
+        <label><input type="radio" name="gl-sh" value="1"${f.shared ? ' checked' : ''}><span><b>👩‍🏫 Chia sẻ với cô</b><small>Cô thấy để giúp bạn đúng lúc</small></span></label></div></div>
+      <div class="av-btns" style="margin:0"><button class="btn pri" onclick="glSave()">Lưu mục tiêu</button><button class="btn" onclick="glClose()">Hủy</button></div></div>`;
+  el.innerHTML = `<div class="card gl-card"><div class="gl-head"><b>🎯 Mục tiêu của mình</b>${!f && list.length < GL_MAX ? '<button class="btn pri" onclick="glOpen()">＋ Đặt ngày thi</button>' : ''}</div>
+    ${list.length || f ? '' : '<div class="muted gl-empty">Bạn sắp thi chưa? Đặt ngày thi để cá cùng bạn đếm ngược nhé!</div>'}${rows}${form}</div>`;
+}
+function glOpen(id){ state.goalForm = id ? {...(state.goals || []).find(g => g.id === id)} : {}; renderGoals(); }
+function glClose(){ state.goalForm = null; renderGoals(); }
+function glCourseHint(c){ const t = $('#gl-title'); if(c && t && (!t.value.trim() || /^Thi HSK\d$/.test(t.value.trim()))) t.value = 'Thi ' + c; }
+async function glReload(){ try{ state.goals = await YY.listMyGoals(); }catch(e){} renderGoals(); try{ renderProgress(); }catch(e){} }
+async function glSave(){
+  const title = $('#gl-title').value.trim(), date = $('#gl-date').value;
+  if(!title){ alert('Bạn đặt tên cho mục tiêu nhé.'); return; }
+  if(!date){ alert('Bạn chọn ngày thi nhé.'); return; }
+  const g = {id: state.goalForm.id, title, target_date: date, course: ($('#gl-course') || {}).value || null, shared: document.querySelector('input[name=gl-sh]:checked').value === '1'};
+  try{ await YY.saveMyGoal(g); state.goalForm = null; await glReload(); }
+  catch(e){ alert('Chưa lưu được mục tiêu: ' + (e.message || e) + '\n(Đã chạy migration-dot9.sql trong Supabase chưa?)'); }
+}
+async function glToggleShare(id){
+  const g = (state.goals || []).find(x => x.id === id); if(!g) return;
+  const to = !g.shared;
+  if(to && !confirm('Cô sẽ nhìn thấy mục tiêu này. Bạn đồng ý chia sẻ với cô chứ?')) return;
+  try{ await YY.saveMyGoal({...g, shared: to}); await glReload(); }catch(e){ alert('Chưa lưu được: ' + (e.message || e)); }
+}
+async function glDel(id){
+  if(!confirm('Xóa mục tiêu này?')) return;
+  try{ await YY.deleteMyGoal(id); await glReload(); }catch(e){ alert('Chưa xóa được: ' + (e.message || e)); }
+}
+async function glResult(id){
+  const g = (state.goals || []).find(x => x.id === id); if(!g) return;
+  const r = prompt('Kết quả thi của bạn là gì? (ví dụ: 210/300 điểm, hoặc "đã đỗ")', ''); if(r === null) return;
+  try{ await YY.saveMyGoal({...g, result: r.trim() || null, done_at: new Date().toISOString()}); await glReload(); }catch(e){ alert('Chưa lưu được: ' + (e.message || e)); }
+}
+
 function renderProgress(){
   const el = $('#st-progress'); if(!el) return;
   const rows = state.myRows || [];
@@ -5487,6 +5585,7 @@ function renderProgress(){
       hint = N < e ? `Còn ${e - N} bài nữa là ${last ? 'về đích ' + esc(o.course) : 'xong chặng ' + (k + 1) + ', rồi ôn tập chặng nhé'}!`
                    : (last ? `Bài cuối cùng của ${esc(o.course)} rồi, cố lên!` : `Đây là bài cuối của chặng ${k + 1}! Sau đó là ôn tập chặng.`);
     }
+    const gn = glNext(o.course); if(gn) hint += ` · 🎓 ${esc(gn.title)}: còn ${glDays(gn)} ngày`;
     return `<div class="pg-card${fin ? ' pg-done' : ''}" data-course="${esc(o.course)}" data-stg="${stg}"><div class="pg-head"><div class="pg-titles"><span class="pg-lv">${esc(o.course)}</span>${cls}</div><span class="pg-where">${where}</span></div><div class="pg-bar">${segs}</div><div class="pg-hint">${hint}</div></div>`;
   }).join('');
   // vừa qua chặng mới: cá nhảy lên một cái
