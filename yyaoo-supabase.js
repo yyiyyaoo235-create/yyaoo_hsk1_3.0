@@ -170,22 +170,46 @@ const YY_CONFIG = {
       graded_at: new Date().toISOString()
     }).eq('id', id).select().single());
 
-  /* ---------- Đợt 4: khóa học HSK1–4 (xem migration-dot4.sql) ---------- */
-  // Giáo viên: toàn bộ tài liệu. Học sinh: RLS tự chỉ trả bài LUYỆN TẬP đúng cấp + đúng bài đã dạy của lớp mình
-  YY.listMaterials = async () =>
-    unwrap(await sb.from('course_materials').select('*').order('lesson').order('created_at'));
-  YY.addMaterial = async (m) =>
-    unwrap(await sb.from('course_materials').insert(m).select().single());
-  YY.addMaterials = async (rows) =>
-    unwrap(await sb.from('course_materials').insert(rows).select());
-  YY.deleteMaterial = async (id) =>
-    unwrap(await sb.from('course_materials').delete().eq('id', id));
-  // patch: { course: 'HSK1'|...|null, current_lesson: số }
+  /* ---------- Đợt 4/7: lớp (cấp + bài đang học) & kho tài liệu khóa học ----------
+     Bảng course_materials(id, course, lesson, type, title, url, created_at, sort_order — sort_order: xem migration-dot7.sql) */
   YY.updateClass = async (id, patch) =>
     unwrap(await sb.from('classes').update(patch).eq('id', id));
-  // Học sinh: các lớp mình đang học (RLS s_read_class) kèm cấp + mốc bài
+
+  // Học sinh: các lớp của mình (RLS tự lọc theo class_members); bỏ lớp đã lưu trữ
   YY.listMyClasses = async () =>
-    unwrap(await sb.from('classes').select('id, name, course, current_lesson'));
+    unwrap(await sb.from('classes').select('id, name, course, current_lesson, kind').or('archived.is.null,archived.eq.false'));
+
+  YY.listMaterials = async () => {
+    let r = await sb.from('course_materials').select('*')
+      .order('sort_order', { ascending: true }).order('created_at', { ascending: true });
+    if (r.error)   // chưa chạy migration-dot7.sql (chưa có cột sort_order) → sắp theo ngày tạo
+      r = await sb.from('course_materials').select('*').order('created_at', { ascending: true });
+    return unwrap(r);
+  };
+
+  const matRow = (m) => ({ course: m.course, lesson: m.lesson, type: m.type, title: m.title, url: m.url });
+
+  YY.addMaterial = async (m) =>
+    unwrap(await sb.from('course_materials').insert(matRow(m)).select().single());
+
+  YY.addMaterials = async (list) =>
+    unwrap(await sb.from('course_materials').insert(list.map(matRow)).select());
+
+  // Sửa tại chỗ: chỉ cho đổi các trường dưới đây
+  YY.updateMaterial = async (id, patch) => {
+    const row = {};
+    ['course', 'lesson', 'type', 'title', 'url'].forEach(k => { if (patch[k] !== undefined) row[k] = patch[k]; });
+    return unwrap(await sb.from('course_materials').update(row).eq('id', id).select().single());
+  };
+
+  YY.deleteMaterial = async (id) =>
+    unwrap(await sb.from('course_materials').delete().eq('id', id));
+
+  // ids: thứ tự mới của các tài liệu trong cùng một bài + cùng một loại → đánh số lại 1..n
+  YY.reorderMaterials = async (ids) => {
+    await Promise.all(ids.map((id, i) =>
+      sb.from('course_materials').update({ sort_order: i + 1 }).eq('id', id).then(unwrap)));
+  };
 
   /* ---------- Nút "Về portal" tự gắn vào mọi file đề / bài tập (không gắn trên portal.html) ----------
      Muốn tắt ở một file nào đó: thêm  <script>window.YY_NO_BACK_BUTTON = true</script>  trước khi nạp thư viện. */
