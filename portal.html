@@ -468,6 +468,19 @@
   /* ---- Rà soát: nút ⋯ luôn ở dòng trên trên điện thoại; viền focus cho bàn phím (do all:unset) ---- */
   @media(max-width:720px){.fs-row .fs-act{grid-column:2;grid-row:1}}
   .cls-li:focus-visible,.mnu-list button:focus-visible{outline:2px solid #14808f;outline-offset:1px}
+  /* ---- Trạng thái giao diện: đang tải (skeleton) · trống · lỗi kết nối ---- */
+  @keyframes yy-shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+  .skel{display:block;border-radius:10px;background:linear-gradient(90deg,#e1eef2 25%,#f4fafb 50%,#e1eef2 75%);background-size:200% 100%;animation:yy-shimmer 1.3s ease-in-out infinite;color:transparent !important;user-select:none;pointer-events:none}
+  .skel-line{height:.95rem;margin:.6rem 0}
+  .skel-line.w90{width:90%}.skel-line.w75{width:75%}.skel-line.w60{width:60%}
+  .skel-card{height:4.2rem;margin:.6rem 0;border-radius:16px}
+  b.skel-num{display:inline-block;min-width:2.6rem;height:1.7rem;vertical-align:middle}
+  @media (prefers-reduced-motion:reduce){.skel{animation:none}}
+  .state-err{display:flex;gap:.7rem;align-items:center;flex-wrap:wrap;padding:.75rem 1rem;border-radius:14px;background:#fdeceb;color:#8a2b22;border:1px solid #f3c5c0;font-weight:600}
+  .state-err span{flex:1 1 14rem}
+  .state-empty{padding:1rem .4rem;color:var(--ink-soft,#5f8591);text-align:center}
+  .stat.err b{color:#c0392b}
+  .btn.busy{opacity:.65;pointer-events:none}
 </style>
 </head>
 <body>
@@ -521,8 +534,9 @@
    <div class="st-in">
     <div class="topbar">
       <div><h1 id="st-pg-title"></h1><div class="muted" id="st-pg-sub"></div></div>
-      <div><button class="btn" onclick="reloadStudent()">Làm mới</button> <button class="btn only-mobile" onclick="doLogout()">Đăng xuất</button></div>
+      <div><button class="btn" id="btn-refresh-s" onclick="reloadStudent()">Làm mới</button> <button class="btn only-mobile" onclick="doLogout()">Đăng xuất</button></div>
     </div>
+    <div id="st-load-err" class="state-err hidden" role="alert" style="margin-bottom:1rem"></div>
 
     <!-- trang chủ -->
     <div id="stab-home">
@@ -594,15 +608,16 @@
   <div id="side-tip" role="tooltip"></div>
 
   <main class="main">
-    <div class="topbar"><h1 id="pg-title">Tổng quan</h1><button class="btn" onclick="reloadTeacher()">Làm mới</button></div>
+    <div class="topbar"><h1 id="pg-title">Tổng quan</h1><button class="btn" id="btn-refresh-t" onclick="reloadTeacher()">Làm mới</button></div>
+    <div id="load-err" class="state-err hidden" role="alert" style="margin-bottom:1rem"></div>
 
     <!-- trang chủ -->
     <div id="tab-home">
       <div class="stats">
-        <div class="stat s1" onclick="go('monitor','pending_review')"><span>Chờ chấm</span><b id="n-pending">0</b></div>
-        <div class="stat s2" onclick="go('monitor','needs_redo')"><span>Cần làm lại</span><b id="n-redo">0</b></div>
-        <div class="stat s3" onclick="go('monitor','overdue')"><span>Quá hạn</span><b id="n-over">0</b></div>
-        <div class="stat s4" onclick="go('monitor','done')"><span>Hoàn thành</span><b id="n-done">0</b></div>
+        <div class="stat s1" onclick="go('monitor','pending_review')"><span>Chờ chấm</span><b id="n-pending" class="skel skel-num">0</b></div>
+        <div class="stat s2" onclick="go('monitor','needs_redo')"><span>Cần làm lại</span><b id="n-redo" class="skel skel-num">0</b></div>
+        <div class="stat s3" onclick="go('monitor','overdue')"><span>Quá hạn</span><b id="n-over" class="skel skel-num">0</b></div>
+        <div class="stat s4" onclick="go('monitor','done')"><span>Hoàn thành</span><b id="n-done" class="skel skel-num">0</b></div>
       </div>
       <div class="quick">
         <button class="btn pri" onclick="go('assign')">Giao bài</button>
@@ -713,7 +728,7 @@
         <input type="file" id="restore-file" accept=".json,application/json" hidden>
         <span class="muted"> Chọn file <b>sao-luu-bai-….json</b> đã tải về khi xóa.</span>
       </div>
-      <div id="assigned-list"><div class="muted">Đang tải…</div></div>
+      <div id="assigned-list"><div class="skel skel-line w90"></div><div class="skel skel-line w60"></div><div class="skel skel-line w75"></div></div>
     </div>
 
     <!-- lớp và học sinh -->
@@ -783,6 +798,9 @@
     min-height:60vh; color:var(--ink-soft); font-size:15px;
   }
   #app[hidden], #loading[hidden]{display:none;}
+  @keyframes dd-shimmer{0%{background-position:100% 0}100%{background-position:-100% 0}}
+  .dd-skel{border-radius:10px;background:linear-gradient(90deg,#e1eef2 25%,#f4fafb 50%,#e1eef2 75%);background-size:200% 100%;animation:dd-shimmer 1.3s ease-in-out infinite}
+  @media (prefers-reduced-motion:reduce){.dd-skel{animation:none}}
 
   .login-card{max-width:380px; width:100%; background:var(--surface); border:1px solid var(--line); border-radius:14px; padding:30px 24px; text-align:center; box-shadow:0 8px 28px rgba(36,52,71,0.10);}
   .login-seal{width:52px; height:52px; border-radius:50%; background:var(--jade-tint); color:var(--jade-dark); display:flex; align-items:center; justify-content:center; font-size:24px; margin:0 auto 14px;}
@@ -1368,7 +1386,7 @@
   [hidden]{display:none !important;}
   .brand h1{display:none;}
 </script>
-<script type="text/plain" id="dd-html"><div class="dd-root"><div id="loading">Đang tải dữ liệu...</div>
+<script type="text/plain" id="dd-html"><div class="dd-root"><div id="loading"><div style="width:min(560px,90%)"><div class="dd-skel" style="height:1.1rem;width:45%;margin:.7rem 0"></div><div class="dd-skel" style="height:.95rem;width:90%;margin:.7rem 0"></div><div class="dd-skel" style="height:.95rem;width:70%;margin:.7rem 0"></div><div class="dd-skel" style="height:5rem;margin:1rem 0"></div></div></div>
 
 <div id="app" hidden>
   <header class="topbar">
@@ -3948,7 +3966,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     return DDStore.load().then(function(d){
       state.settings = d.settings; state.classes = d.classes; state.sessions = d.sessions; state.payments = d.payments;
     }).catch(function(e){
-      qs('#loading').textContent = 'Không tải được sổ từ Supabase: '+((e&&e.message)||e)+'. Tải lại trang để thử lại.';
+      qs('#loading').innerHTML = '<div style="text-align:center;max-width:30rem;padding:1rem"><div style="color:#8a2b22;font-weight:700;margin-bottom:.7rem">⚠ Không tải được sổ điểm danh'+(navigator.onLine===false?' (bạn đang mất mạng)':'')+': '+escapeHtml(String((e&&e.message)||e))+'</div><button type="button" onclick="location.reload()" style="padding:.5rem 1rem;border-radius:999px;border:1px solid #14808f;background:#fff;color:#0e5f6b;font-weight:700;cursor:pointer">↻ Thử lại</button></div>';
       throw e;
     });
   }
@@ -4926,7 +4944,7 @@ async function boot(){
     }
     if(me.role === 'teacher'){ show('teacher'); await reloadTeacher(); }
     else { show('student'); await reloadStudent(); }
-  }catch(e){ show('login'); $('#login-err').textContent = 'Lỗi kết nối: ' + e.message; }
+  }catch(e){ show('login'); $('#login-err').textContent = (navigator.onLine === false ? 'Bạn đang mất mạng. ' : 'Lỗi kết nối: ' + (e && e.message ? e.message + '. ' : '')) + 'Kiểm tra mạng rồi tải lại trang (F5).'; }
 }
 
 $('#login-form').addEventListener('submit', async (ev) => {
@@ -4952,7 +4970,30 @@ async function changeMyPw(){
 async function doLogout(){ await YY.logout(); location.href = YY.config.PORTAL_URL; }
 
 /* ---------------- HỌC SINH ---------------- */
+function stLoading(){
+  const b = $('#btn-refresh-s'); if(b){ b.classList.add('busy'); b.textContent = 'Đang tải…'; }
+  if(state.loadedS) return;
+  const set = (id, h) => { const el = $(id); if(el) el.innerHTML = h; };
+  set('#st-todo', skelCards(2)); set('#st-tests', skelCards(2)); set('#st-homework', skelCards(2));
+}
+function stError(e){
+  console.warn('Tải dữ liệu học sinh:', e);
+  const msg = netMsg(e), first = !state.loadedS;
+  if(first){
+    const set = (id, h) => { const el = $(id); if(el) el.innerHTML = h; };
+    set('#st-todo', errBox(msg, 'reloadStudent()')); set('#st-tests', errBox(msg, 'reloadStudent()')); set('#st-homework', errBox(msg, 'reloadStudent()'));
+    try{ stGo(state.stTab || 'home', true); }catch(_e){}
+  }
+  const bar = $('#st-load-err');
+  if(bar){ bar.innerHTML = '<span>⚠ ' + esc(msg) + (first ? '' : ' Đang hiển thị dữ liệu đã tải trước đó.') + '</span><button class="btn" type="button" onclick="reloadStudent()">↻ Thử lại</button>'; bar.classList.remove('hidden'); }
+}
 async function reloadStudent(){
+  stLoading();
+  try{ await _reloadStudentCore(); state.loadedS = true; $('#st-load-err')?.classList.add('hidden'); return true; }
+  catch(e){ stError(e); return false; }
+  finally{ const b = $('#btn-refresh-s'); if(b){ b.classList.remove('busy'); b.textContent = 'Làm mới'; } }
+}
+async function _reloadStudentCore(){
   $('#st-sbname').textContent = state.me.full_name;
   // luyện tập + huy hiệu cô tặng: nếu chưa chạy migration-dot2.sql thì bỏ qua, portal vẫn chạy
   const [rows1, practice, awards, style, items, mats, myClasses, arch] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => []),
@@ -5097,7 +5138,7 @@ function loadDD(){
   const host = document.getElementById('dd-host');
   if(host.dataset.loaded) return;
   host.dataset.loaded = '1';
-  host.innerHTML = '<div class="muted" style="padding:2rem;text-align:center">Đang tải sổ điểm danh…</div>';
+  host.innerHTML = '<div style="padding:1.2rem">' + skelLines(4) + skelCards(2) + '</div>';
   const root = host.attachShadow({ mode: 'open' });
   host.innerHTML = '';
   root.innerHTML = '<style>' + ddText('dd-css') + '</style>' + ddText('dd-html');
@@ -5177,7 +5218,52 @@ async function archivedAssignIds(){   // chưa chạy migration-dot5.sql thì tr
     return r.error ? new Set() : new Set((r.data || []).map(x => x.id));
   }catch(_e){ return new Set(); }
 }
+/* ===== Trạng thái giao diện: ĐANG TẢI (khung xương) · TRỐNG (tải xong, 0 mục) · LỖI KẾT NỐI (có nút Thử lại) ===== */
+function skelLines(n){ n = n || 3; const w = ['w90', 'w60', 'w75']; let h = ''; for(let i = 0; i < n; i++) h += '<div class="skel skel-line ' + w[i % 3] + '"></div>'; return h; }
+function skelCards(n){ n = n || 2; let h = ''; for(let i = 0; i < n; i++) h += '<div class="skel skel-card"></div>'; return h; }
+function skelRows(cols, n){ n = n || 3; let h = ''; for(let i = 0; i < n; i++) h += '<tr><td colspan="' + cols + '"><div class="skel skel-line w90"></div></td></tr>'; return h; }
+function netMsg(e){
+  if(typeof navigator !== 'undefined' && navigator.onLine === false) return 'Bạn đang mất mạng. Kiểm tra kết nối rồi bấm Thử lại.';
+  return 'Không tải được dữ liệu' + (e && e.message ? ' (' + e.message + ')' : '') + '. Chưa thể kết luận là “không có gì”.';
+}
+function errBox(msg, retry){ return '<div class="state-err" role="alert"><span>⚠ ' + esc(msg) + '</span><button class="btn" type="button" onclick="' + retry + '">↻ Thử lại</button></div>'; }
+function errRow(cols, msg, retry){ return '<tr><td colspan="' + cols + '">' + errBox(msg, retry) + '</td></tr>'; }
+const T_STATS = ['#n-pending', '#n-redo', '#n-over', '#n-done'];
+function teacherLoading(){
+  const b = $('#btn-refresh-t'); if(b){ b.classList.add('busy'); b.textContent = 'Đang tải…'; }
+  if(state.loadedT) return;                       // đã có dữ liệu: giữ nguyên, chỉ báo trên nút
+  T_STATS.forEach(id => { const el = $(id); if(!el) return; el.textContent = '0'; el.classList.add('skel', 'skel-num'); el.closest('.stat')?.classList.remove('err'); });
+  const set = (id, h) => { const el = $(id); if(el) el.innerHTML = h; };
+  set('#tb-pending', skelRows(6, 3)); set('#tb-rows', skelRows(8, 4)); set('#tb-records', skelRows(9, 3));
+  set('#hm-attn', skelLines(3)); set('#hm-classes', skelLines(3)); set('#hm-att', skelLines(2));
+  set('#assigned-list', skelLines(3)); set('#pp-classes', skelCards(2));
+}
+function teacherOk(){
+  state.loadedT = true;
+  T_STATS.forEach(id => { const el = $(id); if(el){ el.classList.remove('skel', 'skel-num'); el.closest('.stat')?.classList.remove('err'); } });
+  $('#load-err')?.classList.add('hidden');
+}
+function teacherError(e){
+  console.warn('Tải dữ liệu giáo viên:', e);
+  const msg = netMsg(e), first = !state.loadedT;
+  T_STATS.forEach(id => { const el = $(id); if(!el) return; el.classList.remove('skel', 'skel-num'); if(first){ el.textContent = '—'; el.closest('.stat')?.classList.add('err'); } });
+  if(first){
+    const set = (id, h) => { const el = $(id); if(el) el.innerHTML = h; };
+    set('#tb-pending', errRow(6, msg, 'reloadTeacher()')); set('#tb-rows', errRow(8, msg, 'reloadTeacher()')); set('#tb-records', errRow(9, msg, 'reloadTeacher()'));
+    set('#hm-attn', errBox(msg, 'reloadTeacher()')); set('#hm-classes', errBox(msg, 'reloadTeacher()')); set('#hm-att', errBox(msg, 'reloadTeacher()'));
+    set('#assigned-list', errBox(msg, 'reloadTeacher()')); set('#pp-classes', errBox(msg, 'reloadTeacher()'));
+  }
+  const bar = $('#load-err');
+  if(bar){ bar.innerHTML = '<span>⚠ ' + esc(msg) + (first ? '' : ' Đang hiển thị dữ liệu đã tải trước đó, có thể chưa mới nhất.') + '</span><button class="btn" type="button" onclick="reloadTeacher()">↻ Thử lại</button>'; bar.classList.remove('hidden'); }
+}
 async function reloadTeacher(opts){
+  teacherLoading();
+  try{ await _reloadTeacherCore(opts); teacherOk(); return true; }
+  catch(e){ teacherError(e); return false; }
+  finally{ const b = $('#btn-refresh-t'); if(b){ b.classList.remove('busy'); b.textContent = 'Làm mới'; } }
+}
+window.addEventListener('online', () => { if(state.me && state.me.role === 'teacher' && !$('#load-err')?.classList.contains('hidden')) reloadTeacher(); });
+async function _reloadTeacherCore(opts){
   if(!(opts && opts.skipDD) && typeof window.__ddReload === 'function'){ try{ await window.__ddReload(); }catch(e){ console.warn('Làm mới sổ:', e); } }
   DDStore.load().then(() => { try{ window.dispatchEvent(new Event('dd-changed')); }catch(e){} }).catch(e => console.warn('Sổ điểm danh:', e));
   const [rows0, students, classes0, practiceAll, awardsAll, mats] = await Promise.all([YY.listAllAssignmentRows(), YY.listStudents(), YY.listClasses(),
@@ -5227,7 +5313,7 @@ function renderRows(){
     <td>${fmt(r.due_at)}</td>
     <td>${r.percent != null ? r.percent + '%' : '—'}</td>
     <td>${chip(r.status)}</td><td>${actBtn(r)}</td>
-  </tr>`).join('') : '<tr><td colspan="8" class="muted">Chưa có dữ liệu.</td></tr>';
+  </tr>`).join('') : ('<tr><td colspan="8"><div class="state-empty">' + (state.rows.length ? 'Không có bài nào ở trạng thái này.' : 'Chưa có bài nào được giao. <button class="link" onclick="go(\'assign\')">Giao bài đầu tiên →</button>') + '</div></td></tr>');
 }
 
 function renderHome(){
@@ -5430,7 +5516,7 @@ async function loadAssigned(){
     (sub.data || []).forEach(x => { (state.subsBy[x.assignment_id] = state.subsBy[x.assignment_id] || new Set()).add(x.student_id); });
     renderAssigned();
   }catch(e){
-    box.innerHTML = '<div class="muted" style="color:#c0392b">Chưa tải được danh sách bài đã giao: ' + esc(e.message || e) + '</div>';
+    box.innerHTML = errBox('Chưa tải được danh sách bài đã giao' + (e && e.message ? ' (' + e.message + ')' : '') + '.', 'loadAssigned()');
   }
 }
 function assignedAudience(a){
