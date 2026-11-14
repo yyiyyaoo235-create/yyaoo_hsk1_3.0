@@ -386,6 +386,19 @@
 .sy-tag.warn{background:#FCE7B2; color:#7A5200;}
 .sy-tag.bad{background:#F8CFC9; color:#8A2A1D;}
 #sy-d > summary{cursor:pointer; margin-bottom:.2rem;}
+  /* thẻ lớp + học phí (Lớp & học sinh) */
+  .cls-card{border:1px solid var(--line);border-radius:18px;background:#fff;padding:.8rem .9rem;margin:.7rem 0}
+  .cls-head{display:flex;justify-content:space-between;align-items:center;gap:.6rem;flex-wrap:wrap}
+  .cls-name{font-size:1.05rem}
+  .cls-meta{display:inline-flex;align-items:center;gap:.4rem;flex-wrap:wrap}
+  .cls-sum{display:flex;gap:.5rem 1.1rem;flex-wrap:wrap;margin:.5rem 0;padding:.45rem .7rem;background:var(--pink-soft);border-radius:12px;font-size:.85rem}
+  .cls-sum .ok b{color:var(--green)} .cls-sum .bad b{color:#c0392b}
+  .fs-row{display:grid;grid-template-columns:minmax(10rem,2fr) minmax(8.5rem,1fr) minmax(7rem,1fr) auto;gap:.4rem .8rem;align-items:center;padding:.5rem 0;border-top:1px solid var(--line)}
+  .fs-row.off{opacity:.55}
+  .fs-price{display:flex;align-items:center;gap:.3rem}.fs-price input{width:6.5rem}
+  .fs-act{display:flex;gap:.3rem;flex-wrap:wrap;justify-content:flex-end}
+  .c-yellow{background:#fff3c4;color:#8a6d00}
+  @media(max-width:720px){.fs-row{grid-template-columns:1fr 1fr}.fs-act{justify-content:flex-start;grid-column:1/-1}}
 </style>
 </head>
 <body>
@@ -637,13 +650,17 @@
     <!-- lớp và học sinh -->
     <div id="tab-people" class="hidden">
       <div class="card">
-        <h2>Lớp học</h2>
+        <div class="topbar" style="flex-wrap:wrap;gap:.5rem"><h2 style="margin:0">Lớp học &amp; học phí</h2>
+          <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <label style="margin:0" class="muted">Tháng</label><input id="pp-month" type="month" style="width:auto" onchange="FEE.setMonth(this.value)">
+            <button class="btn pri" type="button" onclick="FEE.openAdd()">＋ Thêm học sinh</button>
+          </div></div>
+        <div id="pp-fee-total" class="muted" style="margin:.3rem 0"></div>
         <div id="pp-classes"></div>
         <div id="pp-arch-classes"></div>
         <form id="class-form" class="row" style="margin-top:.6rem;align-items:end">
-          <div><label>Tên lớp mới</label><input id="cl-name" placeholder="Lớp HSK1 tối T3-T5" required></div>
-          <div><label>Hình thức</label><select id="cl-kind"><option value="group">Nhóm 2–3 người</option><option value="one_on_one">Lớp 1-1</option></select></div>
-          <div><button class="btn pri" type="submit">Tạo lớp</button></div>
+          <div><label>Tạo lớp trống</label><input id="cl-name" placeholder="Lớp HSK1 tối T3-T5" required></div>
+          <div><button class="btn" type="submit">Tạo lớp</button></div>
         </form>
       </div>
       <div class="card">
@@ -3852,6 +3869,10 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   });
   // Portal (tab Lớp & học sinh) vừa ghi liên kết học sinh vào localStorage: nạp lại để sổ không ghi đè bằng bản cũ trong bộ nhớ
   window.__ddReloadClasses = function(){ state.classes = DDStore.data.classes; try{ renderPortalLink(); }catch(e){} try{ refreshDiemDanh(); }catch(e){} };
+  window.__ddReload = function(){ return DDStore.load(true).then(function(d){
+    state.settings = d.settings; state.classes = d.classes; state.sessions = d.sessions; state.payments = d.payments;
+    try{ migratePriceHistory(); }catch(e){} try{ ensureClassColors(); }catch(e){} try{ renderPortalLink(); }catch(e){} try{ refreshDiemDanh(); }catch(e){}
+  }); };
   window.__ddSetRoster = function(list){ portalRoster = Array.isArray(list) ? list : []; renderPortalLink(); };
 
   // ---------- Init ----------
@@ -3924,6 +3945,7 @@ const DDStore = (() => {
   async function load(force){
     if(loading && !force) return loading;
     loading = (async () => {
+      if(force) await queue;   // chờ các lần lưu đang chạy xong rồi mới nạp lại, khỏi mất thay đổi
       const [cls, stu, enr, ses, att, pay, setRow, profs] = await Promise.all([
         fetchAll('classes', 'id,name,kind,created_at', ['created_at', 'id']),
         fetchAll('ledger_students', '*', ['created_at', 'id']),
@@ -4033,7 +4055,7 @@ const DDStore = (() => {
   // Mọi lần lưu xếp hàng nối đuôi nhau (lớp trước, buổi/thanh toán sau) để khỏi lệch thứ tự.
   function save(kind, value){
     data[kind] = value;
-    const run = queue.then(() => sync[kind](value)).then(() => { try{ window.dispatchEvent(new Event('dd-changed')); }catch(e){} });
+    const run = queue.then(() => sync[kind](value)).then(() => { try{ window.dispatchEvent(new Event('dd-changed')); if(kind === 'classes') window.dispatchEvent(new Event('dd-classes-changed')); }catch(e){} });
     queue = run.catch(() => {});
     return run.catch((e) => {
       console.error('DDStore.save', kind, e);
@@ -5076,6 +5098,9 @@ window.addEventListener('storage', (e) => {
   if(e.key && e.key.startsWith('diemdanh_')){ try{ renderAttendanceHome(); renderPeople(); }catch(err){} }
 });
 window.addEventListener('dd-changed', () => { try{ renderAttendanceHome(); renderPeople(); }catch(err){} });
+// sổ vừa đổi lớp/học sinh => Supabase đã tự cập nhật lớp portal; nạp lại phía portal (không nạp lại sổ để khỏi ghi đè lúc đang nhập)
+let ddReloadT = null;
+window.addEventListener('dd-classes-changed', () => { clearTimeout(ddReloadT); ddReloadT = setTimeout(() => { try{ reloadTeacher({ skipDD: true }); }catch(err){ console.warn(err); } }, 900); });
 
 /* ---------------- GIÁO VIÊN ---------------- */
 async function archivedAssignIds(){   // chưa chạy migration-dot5.sql thì trả về rỗng, portal vẫn chạy
@@ -5084,7 +5109,8 @@ async function archivedAssignIds(){   // chưa chạy migration-dot5.sql thì tr
     return r.error ? new Set() : new Set((r.data || []).map(x => x.id));
   }catch(_e){ return new Set(); }
 }
-async function reloadTeacher(){
+async function reloadTeacher(opts){
+  if(!(opts && opts.skipDD) && typeof window.__ddReload === 'function'){ try{ await window.__ddReload(); }catch(e){ console.warn('Làm mới sổ:', e); } }
   DDStore.load().then(() => { try{ window.dispatchEvent(new Event('dd-changed')); }catch(e){} }).catch(e => console.warn('Sổ điểm danh:', e));
   const [rows0, students, classes0, practiceAll, awardsAll, mats] = await Promise.all([YY.listAllAssignmentRows(), YY.listStudents(), YY.listClasses(),
     YY.listAllPractice().catch(() => []), YY.listAllAwards().catch(() => []), YY.listMaterials().catch(() => state.mats || [])]);
@@ -5508,16 +5534,7 @@ async function renameClass(id){
   await saveClass(id, { name: n });
 }
 function renderPeople(){
-  $('#pp-classes').innerHTML = state.classes.map(c => `<div style="margin:.4rem 0">
-    <b>${esc(c.name)}</b> <a href="#" title="Đổi tên lớp" onclick="renameClass('${c.id}');return false">✎</a> <a href="#" title="Lưu trữ lớp (ẩn, không mất dữ liệu)" onclick="archiveClass('${c.id}',true);return false">📦</a> <span class="chip c-gray">${c.kind === 'one_on_one' ? '1-1' : 'Nhóm'}</span>
-    <span style="display:inline-flex;align-items:center;gap:.4rem;margin-left:.5rem;flex-wrap:wrap">
-      <select style="width:auto" onchange="saveClass('${c.id}',{course:this.value||null})"><option value="">Chưa chọn cấp</option>${['HSK1','HSK2','HSK3','HSK4'].map(k => `<option${c.course === k ? ' selected' : ''}>${k}</option>`).join('')}</select>
-      <span class="muted">đang học tới Bài</span>
-      <input type="number" min="0" max="30" style="width:4.2rem" value="${c.current_lesson || 0}" onchange="saveClass('${c.id}',{current_lesson:Math.max(0,+this.value||0)})">
-      <button class="btn" type="button" onclick="saveClass('${c.id}',{current_lesson:${(c.current_lesson || 0) + 1}})">＋1 bài</button>
-    </span>
-    <div class="muted">${(c.class_members || []).map(m => `<span class="zh">${esc(m.profiles?.full_name)}</span> <a href="#" onclick="rmMember('${c.id}','${m.student_id}');return false">✕</a>`).join(' · ') || 'Chưa có học sinh'}</div>
-  </div>`).join('') || '<div class="muted">Chưa có lớp nào.</div>';
+  try{ const pm = $('#pp-month'); if(pm && !pm.value) pm.value = FEE.getMonth(); FEE.render(); }catch(e){ console.warn('Thẻ lớp:', e); }
   const arch = (state.classesAll || []).filter(c => c.archived);
   const ah = $('#pp-arch-classes');
   if(ah) ah.innerHTML = arch.length ? `<details style="margin-top:.6rem"><summary class="muted">Lớp đã lưu trữ (${arch.length})</summary>${arch.map(c => `<div style="margin:.3rem 0">${esc(c.name)} <span class="muted">· ${(c.class_members || []).length} học sinh</span> <a href="#" onclick="archiveClass('${c.id}',false);return false">Khôi phục</a></div>`).join('')}</details>` : '';
@@ -5539,7 +5556,7 @@ function renderPeople(){
 }
 $('#class-form').addEventListener('submit', async (ev) => {
   ev.preventDefault();
-  await YY.createClass($('#cl-name').value.trim(), $('#cl-kind').value);
+  await YY.createClass($('#cl-name').value.trim(), 'one_on_one');
   ev.target.reset(); await reloadTeacher();
 });
 async function addMember(sel, studentId){
@@ -5583,6 +5600,275 @@ async function removeGift(sid, key){
   catch(e){ alert('Không thu hồi được: ' + e.message); }
 }
 async function rmMember(c, s){ await YY.removeFromClass(c, s); await reloadTeacher(); }
+
+/* ---------------- LỚP & HỌC SINH + HỌC PHÍ (chỉ cô thấy) ----------------
+   Mỗi lớp là một thẻ: đầu thẻ có số buổi/tiền của tháng đang chọn; mỗi em có giá/buổi, điểm danh 30 ngày,
+   học phí tháng và nút "Đã thu". Dữ liệu lấy từ DDStore (cùng nguồn với sổ điểm danh). Việc vào/ra lớp
+   giữa sổ và portal do trigger Supabase (migration-dot6) tự đồng bộ. */
+const FEE = (() => {
+  const BASE = '0000-00';
+  const D = () => DDStore.data;
+  const vnd = (n) => (Number(n) || 0).toLocaleString('vi-VN') + 'đ';
+  const pad = (n) => String(n).padStart(2, '0');
+  const todayStr = () => { const d = new Date(); return d.getFullYear() + '-' + pad(d.getMonth() + 1) + '-' + pad(d.getDate()); };
+  const genId = () => (window.crypto && crypto.randomUUID) ? crypto.randomUUID()
+    : 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => { const r = Math.random() * 16 | 0; return (c === 'x' ? r : (r & 3 | 8)).toString(16); });
+  const noTone = (s) => String(s || '').normalize('NFD').replace(/[̀-ͯ]/g, '').replace(/đ/g, 'd').replace(/Đ/g, 'D').toLowerCase().replace(/\s+/g, ' ').trim();
+  let month = todayStr().slice(0, 7);
+
+  /* ---- giá theo tháng áp dụng (giống sổ: priceHistory [{from, price}]) ---- */
+  function hist(st){
+    if(!Array.isArray(st.priceHistory) || !st.priceHistory.length) st.priceHistory = [{ from: BASE, price: Number(st.price) || 0 }];
+    st.priceHistory.sort((a, b) => a.from < b.from ? -1 : a.from > b.from ? 1 : 0);
+    if(st.priceHistory[0].from !== BASE) st.priceHistory[0].from = BASE;
+    return st.priceHistory;
+  }
+  function priceOf(st, m){ const h = hist(st); let p = h[0].price; h.forEach(x => { if(x.from <= m) p = x.price; }); return Number(p) || 0; }
+  const latest = (st) => { const h = hist(st); return Number(h[h.length - 1].price) || 0; };
+  const setFrom = (h, m, price) => h.filter(x => x.from < m).concat([{ from: m, price }]);
+
+  /* ---- học phí tháng của một em trong một lớp ---- */
+  function bill(cls, st, m){
+    const base = priceOf(st, m);
+    const rows = (D().sessions || []).filter(s => s.classId === cls.id && String(s.date).slice(0, 7) === m).map(s => {
+      const a = (s.attendance || []).find(x => x.studentId === st.id);
+      if(!a || !a.billable) return null;
+      const has = a.priceOverride !== null && a.priceOverride !== undefined && a.priceOverride !== '';
+      return { date: s.date, price: has ? Number(a.priceOverride) : base, present: !!a.present };
+    }).filter(Boolean);
+    return { rows, total: rows.reduce((t, r) => t + r.price, 0), base };
+  }
+  const payOf = (sid, m) => (D().payments || []).find(p => p.studentId === sid && p.month === m) || null;
+  const paidAmt = (p, b) => (p && typeof p.amount === 'number') ? p.amount : b.total;
+  function att30(cls, st){
+    const since = new Date(Date.now() - 30 * 864e5).toISOString().slice(0, 10);
+    let yes = 0, no = 0;
+    (D().sessions || []).forEach(s => { if(s.classId !== cls.id || s.date < since) return;
+      const a = (s.attendance || []).find(x => x.studentId === st.id); if(!a) return; a.present ? yes++ : no++; });
+    return { yes, no };
+  }
+  const hasAtt = (stId, classId) => (D().sessions || []).some(s => (classId ? s.classId === classId : true) && (s.attendance || []).some(a => a.studentId === stId));
+
+  async function refresh(){
+    if(typeof window.__ddReload === 'function') await window.__ddReload(); else await DDStore.load(true);
+    await reloadTeacher({ skipDD: true });
+  }
+  const fail = (e) => alert('Chưa lưu được: ' + ((e && e.message) || e));
+
+  /* ---- vẽ các thẻ lớp ---- */
+  function render(){
+    const box = $('#pp-classes'); if(!box) return;
+    const showOff = !!($('#pp-off') && $('#pp-off').checked);
+    const ddById = new Map((D().classes || []).map(c => [c.id, c]));
+    const q = (($('#pp-search') || {}).value || '').trim().toLowerCase();
+    const profById = new Map((state.students || []).map(s => [s.id, s]));
+    let sumExp = 0, sumGot = 0;
+    const cards = state.classes.map(c => {
+      const dd = ddById.get(c.id) || { id: c.id, name: c.name, students: [] };
+      const ledgerPids = new Set(dd.students.map(s => s.portalId).filter(Boolean));
+      const orphans = (c.class_members || []).filter(m => !ledgerPids.has(m.student_id));   // có trong lớp portal nhưng chưa có dòng trong sổ
+      const sts = dd.students.filter(s => showOff || !s.leftAt)
+        .filter(s => !q || noTone(s.name + ' ' + (s.portalCode || '')).includes(noTone(q)));
+      const act = dd.students.filter(s => !s.leftAt).length + orphans.length;
+      const nSes = (D().sessions || []).filter(s => s.classId === c.id && String(s.date).slice(0, 7) === month).length;
+      let exp = 0, got = 0;
+      dd.students.forEach(s => { const b = bill(dd, s, month); if(b.total <= 0) return; exp += b.total; const p = payOf(s.id, month); if(p) got += paidAmt(p, b); });
+      sumExp += exp; sumGot += got;
+      const rows = sts.map(s => stRow(dd, s, profById)).join('')
+        + orphans.map(m => `<div class="fs-row"><div class="fs-name"><span class="zh">${esc(m.profiles?.full_name || m.student_id)}</span> <span class="chip c-gray">chưa có trong sổ</span></div>
+            <div class="fs-act"><button class="btn" onclick="FEE.addExisting('${c.id}','${m.student_id}')">Thêm vào sổ + nhập giá</button></div></div>`).join('');
+      const kindTxt = act <= 1 ? '1-1' : 'Nhóm ' + act + ' em';
+      return `<div class="cls-card">
+        <div class="cls-head">
+          <div><b class="cls-name">${esc(c.name)}</b> <span class="chip c-gray">${kindTxt}</span>
+            <a href="#" title="Đổi tên lớp" onclick="renameClass('${c.id}');return false">✎</a>
+            <a href="#" title="Lưu trữ lớp (ẩn, không mất dữ liệu)" onclick="archiveClass('${c.id}',true);return false">📦</a></div>
+          <div class="cls-meta">
+            <select style="width:auto" onchange="saveClass('${c.id}',{course:this.value||null})"><option value="">Chưa chọn cấp</option>${['HSK1','HSK2','HSK3','HSK4'].map(k => `<option${c.course === k ? ' selected' : ''}>${k}</option>`).join('')}</select>
+            <span class="muted">tới Bài</span>
+            <input type="number" min="0" max="30" style="width:4.2rem" value="${c.current_lesson || 0}" onchange="saveClass('${c.id}',{current_lesson:Math.max(0,+this.value||0)})">
+            <button class="btn" type="button" onclick="saveClass('${c.id}',{current_lesson:${(c.current_lesson || 0) + 1}})">＋1 bài</button>
+          </div>
+        </div>
+        <div class="cls-sum"><span>📅 <b>${nSes}</b> buổi</span><span>Dự kiến <b>${vnd(exp)}</b></span><span class="ok">Đã thu <b>${vnd(got)}</b></span><span class="${exp - got > 0 ? 'bad' : 'ok'}">Còn nợ <b>${vnd(Math.max(0, exp - got))}</b></span></div>
+        <div class="fs-list">${rows || '<div class="muted" style="padding:.4rem 0">Chưa có học sinh.</div>'}</div>
+        <div style="margin-top:.4rem"><button class="btn ghost" type="button" onclick="FEE.openAdd('${c.id}')">＋ Thêm học sinh vào lớp này</button></div>
+      </div>`;
+    }).join('') || '<div class="muted">Chưa có lớp nào. Bấm "Thêm học sinh" để tạo lớp đầu tiên.</div>';
+    box.innerHTML = cards;
+    const tot = $('#pp-fee-total');
+    if(tot) tot.innerHTML = `Tháng ${month.split('-').reverse().join('/')}: dự kiến <b>${vnd(sumExp)}</b> · đã thu <b>${vnd(sumGot)}</b> · còn nợ <b>${vnd(Math.max(0, sumExp - sumGot))}</b>`;
+  }
+
+  function stRow(cls, s, profById){
+    const b = bill(cls, s, month), p = payOf(s.id, month), lp = latest(s);
+    const a = att30(cls, s);
+    const off = !!s.leftAt;
+    const acct = s.portalId ? `<span class="chip c-green" title="Tài khoản portal">${esc(s.portalCode || 'có TK')}</span>` : '<span class="chip c-gray" title="Chưa có tài khoản portal">chưa có TK</span>';
+    const debt = b.total > 0
+      ? (p ? `<span class="chip c-green">Đã thu ${vnd(paidAmt(p, b))}</span>` : `<span class="chip c-pink">Nợ ${vnd(b.total)}</span>`)
+      : '<span class="muted">—</span>';
+    const payBtn = b.total > 0 || p
+      ? (p ? `<button class="btn ghost" onclick="FEE.unpay('${s.id}')" title="Bỏ đánh dấu đã thu">↩ Hoàn tác</button>` : `<button class="btn pri" onclick="FEE.pay('${cls.id}','${s.id}')">Đã thu</button>`) : '';
+    return `<div class="fs-row${off ? ' off' : ''}">
+      <div class="fs-name"><span class="zh">${esc(s.name)}</span> ${acct}${off ? ' <span class="chip c-gray">đã nghỉ</span>' : ''}${(!off && lp === 0) ? ' <span class="chip c-yellow" title="Hãy nhập giá mỗi buổi">chưa nhập giá</span>' : ''}
+        <div class="muted">30 ngày: ${a.yes} có mặt · ${a.no} vắng · tháng này ${b.rows.length} buổi</div></div>
+      <div class="fs-price"><input type="number" min="0" step="1000" value="${lp || ''}" placeholder="giá/buổi" onchange="FEE.setPrice('${cls.id}','${s.id}',this)"> <span class="muted">đ/buổi</span></div>
+      <div class="fs-debt">${debt}</div>
+      <div class="fs-act">${payBtn}
+        ${off ? `<button class="btn" onclick="FEE.back('${cls.id}','${s.id}')">Học lại</button>` : `<button class="btn ghost" onclick="FEE.leave('${cls.id}','${s.id}')" title="Cho nghỉ: rời lớp, không nhận bài, giữ tài khoản và lịch sử">Nghỉ</button>`}
+        <button class="btn ghost" onclick="FEE.remove('${cls.id}','${s.id}')" title="Bỏ khỏi lớp này">✕</button>
+        ${s.portalId ? `<button class="btn" onclick="resetPw('${s.portalId}')" title="Đặt lại mật khẩu">🔑</button>` : ''}</div>
+    </div>`;
+  }
+
+  /* ---- thao tác trên một em ---- */
+  const find = (classId, stId) => { const c = (D().classes || []).find(x => x.id === classId); return { c, s: c && c.students.find(x => x.id === stId) }; };
+
+  async function setPrice(classId, stId, inp){
+    const { c, s } = find(classId, stId); if(!s) return;
+    const v = Math.max(0, Math.round(Number(inp.value) || 0));
+    const old = latest(s);
+    if(v === old) return;
+    const h = hist(s);
+    if(old === 0 && h.length === 1){ h[0].price = v; }          // lần đầu nhập giá: áp dụng cho mọi tháng
+    else{
+      const m = prompt('Giá mới ' + vnd(v) + '/buổi áp dụng từ tháng nào? (YYYY-MM)\nCác tháng trước đó giữ nguyên giá cũ.', month);
+      if(m === null){ inp.value = old || ''; return; }
+      if(!/^\d{4}-(0[1-9]|1[0-2])$/.test(m.trim())){ alert('Tháng chưa đúng dạng YYYY-MM, ví dụ 2026-12.'); inp.value = old || ''; return; }
+      s.priceHistory = setFrom(h, m.trim(), v);
+    }
+    s.price = latest(s);
+    try{ await DDStore.save('classes', D().classes); render(); }catch(e){ /* DDStore đã báo lỗi */ }
+  }
+  async function pay(classId, stId){
+    const { c, s } = find(classId, stId); if(!s) return;
+    const b = bill(c, s, month);
+    const ex = payOf(stId, month);
+    if(ex){ ex.paidAt = todayStr(); ex.amount = b.total; }
+    else D().payments.push({ id: genId(), studentId: stId, month, paidAt: todayStr(), amount: b.total });
+    try{ await DDStore.save('payments', D().payments); render(); }catch(e){}
+  }
+  async function unpay(stId){
+    if(!confirm('Bỏ đánh dấu đã thu của tháng này?')) return;
+    D().payments = D().payments.filter(p => !(p.studentId === stId && p.month === month));
+    try{ await DDStore.save('payments', D().payments); render(); }catch(e){}
+  }
+  async function leave(classId, stId){
+    const { s } = find(classId, stId); if(!s) return;
+    if(!confirm('Cho ' + s.name + ' nghỉ học?\nEm rời lớp trên portal và không nhận bài mới. Tài khoản, lịch sử điểm danh và học phí vẫn giữ. Bấm "Học lại" để mở lại.')) return;
+    s.leftAt = todayStr();
+    try{ await DDStore.save('classes', D().classes); render(); }catch(e){}
+  }
+  async function back(classId, stId){
+    const { s } = find(classId, stId); if(!s) return;
+    s.leftAt = null;
+    try{ await DDStore.save('classes', D().classes); render(); }catch(e){}
+  }
+  async function remove(classId, stId){
+    const { c, s } = find(classId, stId); if(!s) return;
+    const att = hasAtt(stId, classId);
+    if(att){ alert(s.name + ' đã có điểm danh ở lớp này nên không xoá hẳn được (sẽ mất lịch sử).\nHãy bấm "Nghỉ" để em rời lớp nhưng vẫn giữ lịch sử.'); return; }
+    if(!confirm('Bỏ ' + s.name + ' khỏi lớp "' + c.name + '"?\nEm chưa có buổi nào ở lớp này nên không mất dữ liệu.')) return;
+    try{
+      if(s.portalId){ await YY.removeFromClass(classId, s.portalId); }   // trigger Supabase tự gỡ khỏi sổ
+      else{
+        const r1 = await YY.sb.from('ledger_enrollments').delete().eq('class_id', classId).eq('ledger_student_id', stId); if(r1.error) throw r1.error;
+        const other = (D().classes || []).some(x => x.id !== classId && x.students.some(y => y.id === stId));
+        if(!other && !hasAtt(stId)){ const r2 = await YY.sb.from('ledger_students').delete().eq('id', stId); if(r2.error) throw r2.error; }
+      }
+      await syncKind(classId); await refresh();
+    }catch(e){ fail(e); }
+  }
+  async function syncKind(classId){        // loại lớp tự tính theo số em đang học
+    try{
+      const r = await YY.sb.from('ledger_enrollments').select('ledger_student_id, ledger_students!inner(left_at)').eq('class_id', classId);
+      if(r.error) return;
+      const n = (r.data || []).filter(x => !(x.ledger_students && x.ledger_students.left_at)).length;
+      await YY.updateClass(classId, { kind: n > 1 ? 'group' : 'one_on_one' });
+    }catch(_e){}
+  }
+
+  /* ---- một nút "Thêm học sinh" duy nhất ---- */
+  function openAdd(classId, presetProfileId){
+    const classes = state.classes;
+    const taken = new Set(); (D().classes || []).forEach(c => c.students.forEach(s => { if(s.portalId) taken.add(s.portalId); }));
+    const ledgerAll = []; const seen = new Set();
+    (D().classes || []).forEach(c => c.students.forEach(s => { if(!seen.has(s.id)){ seen.add(s.id); ledgerAll.push(s); } }));
+    const exist = ledgerAll.map(s => `<option value="L:${s.id}">${esc(s.name)}${s.leftAt ? ' (đã nghỉ)' : ''}</option>`).join('')
+      + (state.students || []).filter(p => !taken.has(p.id) && p.active !== false).map(p => `<option value="P:${p.id}">${esc(p.full_name)} · ${esc(p.code)} (có tài khoản, chưa vào sổ)</option>`).join('');
+    $('#modal-body').innerHTML = `
+      <div class="topbar"><h2 style="margin:0">＋ Thêm học sinh</h2><button class="btn" onclick="closeModal()">Đóng</button></div>
+      <label>Em nào?</label>
+      <select id="ad-who" onchange="FEE.whoChanged()"><option value="">Em mới (nhập tên bên dưới)</option>${exist}</select>
+      <div id="ad-new">
+        <label>Họ tên</label><input id="ad-name" placeholder="Nguyễn Văn A">
+        <label>Liên hệ (SĐT / Zalo, không bắt buộc)</label><input id="ad-contact">
+      </div>
+      <label>Vào lớp</label>
+      <select id="ad-class" onchange="FEE.classChanged()">${classes.map(c => `<option value="${c.id}"${c.id === classId ? ' selected' : ''}>${esc(c.name)}</option>`).join('')}<option value="__new">＋ Lớp mới…</option></select>
+      <div id="ad-newcls" class="hidden"><label>Tên lớp mới</label><input id="ad-clsname" placeholder="Lớp HSK1 tối T3-T5"></div>
+      <label>Học phí mỗi buổi (đ)</label><input id="ad-price" type="number" min="0" step="1000" placeholder="Ví dụ 200000">
+      <div class="muted" style="margin-top:.5rem">Em có tài khoản portal thì tự vào lớp và nhận bài theo lớp. Em chưa có tài khoản vẫn điểm danh và tính học phí bình thường.</div>
+      <div class="err" id="ad-err" style="margin-top:.4rem"></div>
+      <div style="margin-top:.8rem"><button class="btn pri" id="ad-ok" onclick="FEE.submitAdd()">Thêm</button></div>`;
+    $('#modal').classList.remove('hidden');
+    if(presetProfileId){ $('#ad-who').value = 'P:' + presetProfileId; whoChanged(); }
+    classChanged();
+  }
+  function addExisting(classId, profileId){ openAdd(classId, profileId); }
+  function whoChanged(){ $('#ad-new').classList.toggle('hidden', !!$('#ad-who').value); }
+  function classChanged(){ $('#ad-newcls').classList.toggle('hidden', $('#ad-class').value !== '__new'); }
+
+  async function submitAdd(){
+    const err = (m) => { $('#ad-err').textContent = m; };
+    err('');
+    const who = $('#ad-who').value;
+    const price = Math.max(0, Math.round(Number($('#ad-price').value) || 0));
+    let classId = $('#ad-class').value;
+    const clsName = ($('#ad-clsname').value || '').trim();
+    if(classId === '__new' && !clsName){ err('Hãy nhập tên lớp mới.'); return; }
+    let name = ($('#ad-name').value || '').trim();
+    if(!who && !name){ err('Hãy nhập họ tên em.'); return; }
+    // trùng tên?
+    if(!who){
+      const key = noTone(name);
+      const dup = [];
+      (D().classes || []).forEach(c => c.students.forEach(s => { if(noTone(s.name) === key) dup.push(s.name + ' (' + c.name + (s.leftAt ? ', đã nghỉ' : '') + ')'); }));
+      (state.students || []).forEach(p => { if(noTone(p.full_name) === key && !(D().classes || []).some(c => c.students.some(s => s.portalId === p.id))) dup.push(p.full_name + ' (tài khoản ' + p.code + ')'); });
+      if(dup.length && !confirm('Đã có em trùng tên: ' + dup.join('; ') + '.\nVẫn thêm thành một em mới?\n(Bấm Hủy rồi chọn em đó ở ô "Em nào?" nếu là cùng một em.)')) return;
+    }
+    $('#ad-ok').disabled = true;
+    try{
+      if(classId === '__new'){
+        const r = await YY.createClass(clsName, 'one_on_one');
+        let id = r && (r.id || (Array.isArray(r) && r[0] && r[0].id));
+        if(!id){ const list = await YY.listClasses(); const f = list.filter(x => x.name === clsName).pop(); id = f && f.id; }
+        if(!id) throw new Error('Không tạo được lớp mới.');
+        classId = id;
+      }
+      let stId = null, profileId = null, contact = ($('#ad-contact') ? $('#ad-contact').value : '').trim();
+      if(who.startsWith('L:')){ stId = who.slice(2); }
+      else{
+        if(who.startsWith('P:')){ profileId = who.slice(2); const p = state.students.find(x => x.id === profileId); name = p ? p.full_name : name; }
+        stId = genId();
+        const ins = await YY.sb.from('ledger_students').insert({ id: stId, name, contact: contact || null, profile_id: profileId, joined_at: todayStr(), active: true });
+        if(ins.error) throw ins.error;
+      }
+      // học sinh cũ đã nghỉ mà thêm lại => học lại
+      if(who.startsWith('L:')){ const cur = (D().classes || []).flatMap(c => c.students).find(x => x.id === stId); if(cur && cur.leftAt){ const u = await YY.sb.from('ledger_students').update({ left_at: null, active: true }).eq('id', stId); if(u.error) throw u.error; } }
+      const en = await YY.sb.from('ledger_enrollments').upsert({ class_id: classId, ledger_student_id: stId, price, price_history: [{ from: BASE, price }] }, { onConflict: 'class_id,ledger_student_id' });
+      if(en.error) throw en.error;
+      await syncKind(classId);
+      closeModal(); await refresh();
+    }catch(e){ err('Chưa thêm được: ' + ((e && e.message) || e)); $('#ad-ok').disabled = false; }
+  }
+
+  function setMonth(v){ if(/^\d{4}-\d{2}$/.test(v || '')){ month = v; render(); } }
+  const getMonth = () => month;
+  return { render, setMonth, getMonth, setPrice, pay, unpay, leave, back, remove, openAdd, addExisting, whoChanged, classChanged, submitAdd, _t: { bill, priceOf, latest, setFrom, hist } };
+})();
+
 
 /* --- chấm bài --- */
 async function openGrade(id){
