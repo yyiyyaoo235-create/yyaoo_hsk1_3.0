@@ -402,6 +402,70 @@
   .rank-card .rk-fish{width:5.2rem;flex:none}
   .rank-card .rk-fish svg{width:100%;height:auto;display:block}
   .rank-card .rk-main{flex:1;min-width:12rem}
+  /* thanh tiến độ khóa học (Trang chủ học sinh): cá của em bơi trên dòng nước chia chặng */
+  .pg-card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:18px;padding:.8rem 1rem .75rem;margin:.6rem 0;position:relative}
+  .pg-card.pg-done{border-color:#e8c76a;background:linear-gradient(180deg,#fffaf0,rgba(255,255,255,.92))}
+  .pg-head{display:flex;align-items:flex-start;gap:.6rem;flex-wrap:wrap}
+  .pg-titles{flex:1 1 8rem;min-width:0}
+  .pg-lv{display:block;font-weight:900;font-size:1.3rem;color:var(--pink);line-height:1.1}
+  .pg-done .pg-lv{color:#b8861f}
+  .pg-cls{display:block;font-size:.74rem;margin-top:.15rem;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .pg-where{flex:none;background:var(--pink-soft);color:var(--pink);font-weight:800;font-size:.8rem;border-radius:99px;padding:.25rem .75rem;white-space:nowrap}
+  .pg-done .pg-where{background:#fff0c9;color:#9a6d12}
+  .pg-bar{display:flex;gap:.5rem;padding:1.9rem 1.5rem .1rem}
+  .pg-seg{flex:var(--w) 1 0;min-width:0}
+  .pg-track{position:relative;height:1.25rem}
+  .pg-lane{position:absolute;inset:0;border-radius:99px;overflow:hidden;background:var(--sc1);box-shadow:inset 0 1px 3px rgba(20,100,120,.15)}
+  .pg-fill{position:absolute;left:0;top:0;bottom:0;width:var(--p);border-radius:99px;background:linear-gradient(90deg,var(--sc2),var(--sc3))}
+  .pg-fill::after{content:"";position:absolute;inset:0;border-radius:inherit;opacity:.5;
+    background:radial-gradient(circle at 50% 120%,transparent 55%,rgba(255,255,255,.75) 57% 62%,transparent 64%) 0 0/.9rem 100%}
+  .pg-ticks{position:absolute;inset:0;background-image:linear-gradient(90deg,transparent calc(100% - 1.5px),rgba(255,255,255,.85) 0);background-size:calc(100% / var(--n)) 100%}
+  .pg-deco{position:absolute;bottom:.05rem;font-size:.78rem;line-height:1;opacity:.9}
+  .pg-flag{position:absolute;right:-.1rem;bottom:calc(100% - .2rem);font-size:1.05rem;line-height:1;transform-origin:18% 100%;filter:grayscale(1) opacity(.55)}
+  .pg-seg.ok .pg-flag{filter:none}
+  .pg-fish{position:absolute;top:.625rem;left:var(--fx);width:2.7rem;height:2.7rem;margin:-1.35rem 0 0 -1.35rem;padding:0;border:0;background:none;cursor:pointer;z-index:3;-webkit-tap-highlight-color:transparent}
+  .pg-fb{display:block;width:100%;height:100%;border-radius:50%;overflow:hidden;border:2.5px solid #fff;background:#D9F3F0;box-shadow:0 3px 10px rgba(20,128,143,.35)}
+  .pg-fb svg{display:block;width:100%;height:100%}
+  .pg-fish:focus-visible .pg-fb{outline:3px solid var(--pink);outline-offset:2px}
+  .pg-say{position:absolute;left:var(--fx);bottom:calc(100% + .95rem);z-index:6;width:max-content;max-width:12.5rem;background:#fff;border:2px solid var(--pink);border-radius:14px;padding:.4rem .65rem;font-size:.8rem;font-weight:800;line-height:1.35;color:var(--ink);
+    box-shadow:0 6px 16px rgba(20,128,143,.22);transform:translateX(-50%);opacity:0;visibility:hidden;pointer-events:none;transition:opacity .2s}
+  .pg-say.on{opacity:1;visibility:visible}
+  .pg-say::after{content:"";position:absolute;top:100%;left:50%;margin-left:-6px;border:6px solid transparent;border-top-color:var(--pink)}
+  .pg-say.l{transform:translateX(-1.4rem)} .pg-say.l::after{left:1.4rem}
+  .pg-say.r{transform:translateX(calc(-100% + 1.4rem))} .pg-say.r::after{left:calc(100% - 1.4rem)}
+  .pg-say .zh{font-family:KaiTi,'楷体','STKaiti',serif;font-size:.95rem}
+  .pg-lab{display:flex;flex-direction:column;align-items:center;margin-top:1rem;line-height:1.2;text-align:center}
+  .pg-lab b{font-size:.7rem;font-weight:800;color:var(--muted)}
+  .pg-lab span{font-size:.64rem;color:var(--muted);opacity:.85}
+  .pg-seg.cur .pg-lab b{color:var(--pink)}
+  .pg-seg.ok .pg-lab b{color:var(--green)}
+  .pg-hint{font-size:.82rem;font-weight:700;margin-top:.45rem}
+  .sc-pond{--sc1:#d8f1f3;--sc2:#a9e0e8;--sc3:#5fc3d3}
+  .sc-river{--sc1:#d3eaf8;--sc2:#a3d3f1;--sc3:#5aaee6}
+  .sc-lake{--sc1:#d6e6fa;--sc2:#a9c8f2;--sc3:#6f9fe6}
+  .sc-sea{--sc1:#cfe0f7;--sc2:#8fb8ee;--sc3:#3f7fd8}
+  .pg-av{display:block;width:100%;height:100%;object-fit:cover}
+  .pg-lane{cursor:help;touch-action:manipulation}
+  .pg-hl{position:absolute;top:0;bottom:0;border-radius:6px;background:rgba(255,255,255,.5);box-shadow:inset 0 0 0 2px #fff;display:none;pointer-events:none}
+  .pg-tip{position:fixed;z-index:300;pointer-events:none;display:none;background:#1b3a46;color:#fff;border-radius:12px;padding:.45rem .7rem;font-size:.78rem;line-height:1.45;max-width:15rem;box-shadow:0 8px 20px rgba(10,40,50,.3)}
+  .pg-tip b{display:block;font-size:.84rem}
+  .pg-tip .zh{font-family:KaiTi,'楷体','STKaiti',serif;font-size:.95rem}
+  .pg-tip .st-ok{color:#9be7bd} .pg-tip .st-now{color:#ffe08a} .pg-tip .st-no{color:#b8c9d0}
+  .av-card{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
+  .av-prev{width:5rem;height:5rem;flex:none;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 14px rgba(20,128,143,.28);background:#D9F3F0}
+  .av-prev svg,.av-prev img{display:block;width:100%;height:100%;object-fit:cover}
+  .av-main{flex:1;min-width:12rem}
+  .av-btns{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.5rem}
+  @media(prefers-reduced-motion:no-preference){
+    .pg-fb{animation:pgBob 3.2s ease-in-out infinite}
+    .pg-fish.hop .pg-fb{animation:pgHop .9s ease-in-out 2}
+    .pg-fill::after{animation:pgWaves 5s linear infinite}
+    .pg-seg.ok .pg-flag{animation:pgWave 2.6s ease-in-out infinite}
+  }
+  @keyframes pgBob{0%,100%{transform:translateY(0) rotate(-2deg)}50%{transform:translateY(-3px) rotate(2deg)}}
+  @keyframes pgHop{0%,100%{transform:translateY(0)}40%{transform:translateY(-14px) rotate(-8deg)}70%{transform:translateY(2px)}}
+  @keyframes pgWaves{to{background-position:.9rem 0}}
+  @keyframes pgWave{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(7deg)}}
   .cal{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);grid-template-columns:repeat(12,1fr);gap:.25rem;max-width:26rem}
   .cal i{display:block;aspect-ratio:1;border-radius:.3rem;background:rgba(160,185,195,.25)}
   .cal i.on{background:#2bb5c4}
@@ -626,6 +690,7 @@
     <!-- trang chủ -->
     <div id="stab-home">
       <div class="mascot" id="st-mascot"></div>
+      <div id="st-progress"></div>
       <div class="streak-row" id="st-streak"></div>
       <div class="todo-h"><h2>✅ Việc cần làm hôm nay</h2></div>
       <div id="st-todo"></div>
@@ -652,6 +717,8 @@
     <!-- cá của tôi -->
     <div id="stab-fish" class="hidden">
       <div class="card rank-card" id="st-rank"></div>
+      <div class="sec-title"><h2>🖼️ Ảnh đại diện</h2></div>
+      <div class="card av-card" id="st-avatar"></div>
       <div class="sec-title"><h2>🎀 Tủ đồ của cá</h2><span class="chip c-yellow" id="st-pts"></span></div>
       <div class="ward" id="st-ward"></div>
     </div>
@@ -4832,6 +4899,7 @@ function mascotOpts(rows, mood){ const lo = lookOpts(rows); return mood === 'sle
 function refreshMascotFish(){
   const el = $('#st-mascot .mascot-fish'); if(!el || !state.myRows) return;
   el.innerHTML = fishSVG(state.mascotMood || 'normal', mascotOpts(state.myRows, state.mascotMood));
+  renderProgress();
 }
 function wardCard(it, look, pts){
   const art = it.slot === 'bg' ? fishSVG('normal', {bg:it.color, still:true})
@@ -4843,6 +4911,7 @@ function wardCard(it, look, pts){
   return `<div class="ward-it locked" title="${esc(it.hint)}"><div class="ward-art">${art}</div>${esc(it.name)}<div class="muted">🔒 ${esc(it.hint)}</div></div>`;
 }
 function renderWardrobe(rows){
+  try{ renderAvatar(); }catch(e){}
   const list = wardItems(rows), look = wardLook(rows), pts = earnedPoints(rows) - spentPoints(), tab = state.wardTab || 'hat';
   $('#st-pts').textContent = '🐟 ' + pts + ' điểm';
   const tabs = [['hat', '🎩 Đầu'], ['face', '👓 Mặt'], ['bg', '🎨 Nền']];
@@ -4940,7 +5009,8 @@ function badgeStats(rows){
     lucky88: done.some(r => +r.percent === 88),
     bestA: st.best, bestW: st.bestW,
     bestD: calcDayStreak(state.practice).best, practices: (state.practice || []).length,
-    colProps: collDone('props', rows), colOcc: collDone('occ', rows)
+    colProps: collDone('props', rows), colOcc: collDone('occ', rows),
+    stagesDone: stageCounts().stagesDone, coursesDone: stageCounts().coursesDone
   };
 }
 const EXTRA_BADGES = [
@@ -4962,6 +5032,11 @@ const EXTRA_BADGES = [
   {id:'s-night',  name:'Cá nửa đêm',       hint:'Nộp bài đúng giờ Tý (0h00)',             emo:'🌙', mood:'sleep', bg:'#DDE3F7', ring:'#7F8FD0', secret:true, test:c => c.midnight},
   {id:'s-88',     name:'Cá may mắn',       hint:'Đạt đúng 88%',                           emo:'🍀', mood:'happy', bg:'#DDF3E4', ring:'#4DAA6B', secret:true, test:c => c.lucky88}
 ];
+const STAGE_BADGES = [
+  {id:'stg1',   name:'Cá vượt chặng',    hint:'Hoàn thành chặng đầu tiên của khóa',  emo:'🚩', mood:'happy', bg:'#DDF4FF', ring:'#6FC0EA', test:c => c.stagesDone >= 1},
+  {id:'stg3',   name:'Cá chạy nước rút', hint:'Hoàn thành 3 chặng',                  emo:'⚡', mood:'jump',  bg:'#E3F6D8', ring:'#8CCB6B', test:c => c.stagesDone >= 3},
+  {id:'stgAll', name:'Cá về đích',       hint:'Hoàn thành trọn một khóa HSK',        emo:'🏁', mood:'jump',  bg:'#FFF1BF', ring:'#E8A93A', test:c => c.coursesDone >= 1}
+];
 const RANK_BG = [['#FFE0EC','#FF8FB1'], ['#FFF1BF','#F2C94C'], ['#E6D6F8','#9B6BE0']];
 function rankBadges(){
   return rankSet().map(([name, acc, emo], i) => ({
@@ -4969,7 +5044,7 @@ function rankBadges(){
     hint: `Hoàn thành ${RANK_AT[i]} bài`, test: c => c.done >= RANK_AT[i]
   }));
 }
-const allBadges = () => [...BASE_BADGES, ...rankBadges(), ...EXTRA_BADGES, ...DAY_BADGES, ...COLL_BADGES, ...giftBadges()];
+const allBadges = () => [...BASE_BADGES, ...rankBadges(), ...EXTRA_BADGES, ...DAY_BADGES, ...STAGE_BADGES, ...COLL_BADGES, ...giftBadges()];
 const badgeFish = (b, o = {}) => emblemFish(b, o);
 function renderBadges(rows){
   const c = badgeStats(rows), L = allBadges(), got = L.filter(b => b.test(c));
@@ -5129,6 +5204,7 @@ async function _reloadStudentCore(){
   // luyện tập + huy hiệu cô tặng: nếu chưa chạy migration-dot2.sql thì bỏ qua, portal vẫn chạy
   const [rows1, practice, awards, style, items, mats, myClasses, arch] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => []),
     YY.getMyStyle().catch(() => null), YY.listMyItems().catch(() => []), YY.listMaterials().catch(() => []), YY.listMyClasses().catch(() => []), archivedAssignIds()]);
+  state.lessonDates = await (YY.listMyLessonDates ? YY.listMyLessonDates().catch(() => []) : Promise.resolve([]));
   const rows = rows1.filter(r => !arch.has(r.assignment_id));
   state.myClasses = myClasses;
   PRACTICE = (mats || []).filter(m => m.type === 'practice').sort((a, b) => b.lesson - a.lesson)
@@ -5145,6 +5221,7 @@ async function _reloadStudentCore(){
   renderAlbum(rows);
   renderWardrobe(rows);
   renderRank(rows);
+  renderProgress();
   renderCal();
   const gotBadges = renderBadges(rows), freshBadges = newBadges(gotBadges);
   let tab = state.stTab; try{ tab = tab || sessionStorage.getItem('yy_st_tab'); }catch(e){}
@@ -5238,6 +5315,187 @@ function renderCal(){
   }
   $('#st-cal').innerHTML = h;
   $('#st-cal-n').textContent = n + ' ngày';
+}
+/* ===== tiến độ khóa học: đang ở bài nào, chặng nào, cấp HSK mấy =====
+   Lấy từ lớp của em (cấp học + "đang học tới Bài N" do cô chỉnh ở Kho tài liệu).
+   Muốn thêm HSK2/HSK3: thêm một dòng vào COURSE_PATH, ví dụ HSK2:{total:15, stages:[[1,5],[6,10],[11,15]]}.
+   Cô bấm "+1 bài" tới total+1 là đánh dấu xong cả khóa. */
+const COURSE_PATH = {
+  HSK1: {total:15, stages:[[1,5],[6,10],[11,15]]},
+  HSK4: {total:20, stages:[[1,5],[6,10],[11,15],[16,20]]}
+};
+function myCourseLevels(){
+  const m = {};
+  (state.myClasses || []).filter(c => c.course).forEach(c => {
+    const o = m[c.course] || (m[c.course] = {course:c.course, n:0, names:[], dates:{}});
+    o.n = Math.max(o.n, +c.current_lesson || 0);
+    (state.lessonDates || []).filter(d => d.class_id === c.id).forEach(d => {
+      const k = +d.lesson, old = o.dates[k]; if(!old || d.started_on < old) o.dates[k] = d.started_on;   // nhiều lớp cùng cấp: lấy ngày sớm nhất
+    });
+    if(c.name) o.names.push(c.name);
+  });
+  return Object.values(m);
+}
+function stageCounts(){
+  let stagesDone = 0, coursesDone = 0;
+  myCourseLevels().forEach(o => {
+    const cfg = COURSE_PATH[o.course]; if(!cfg) return;
+    stagesDone += cfg.stages.filter(s => o.n > s[1]).length;
+    if(o.n > cfg.total) coursesDone++;
+  });
+  return {stagesDone, coursesDone};
+}
+const PG_SCENES = {
+  3: [['Ao nhỏ','pond',['🌿','🌸']], ['Dòng sông','river',['🪨','🌿']], ['Biển lớn','sea',['🐚','🌊']]],
+  4: [['Ao nhỏ','pond',['🌿','🌸']], ['Dòng sông','river',['🪨','🌿']], ['Hồ lớn','lake',['🦆','🌿']], ['Biển lớn','sea',['🐚','🌊']]]
+};
+function pgScene(i, n){
+  const set = PG_SCENES[n]; if(set) return set[i];
+  const f = ['pond','river','sea'], k = f[Math.min(f.length - 1, Math.floor(i * f.length / n))];
+  return [`Chặng ${i + 1}`, k, k === 'sea' ? ['🐚','🌊'] : k === 'river' ? ['🪨','🌿'] : ['🌿','🌸']];
+}
+const PG_CHEER = ['Cố lên nhé!', 'Mình bơi tiếp nào!', 'Mỗi bài một bước, giỏi lắm!', 'Cá tin bạn làm được!'];
+function pgSay(o, cfg, N, fin){
+  if(fin) return `Về đích rồi! Giỏi lắm! 🎉`;
+  if(!N) return 'Cá đang chờ lớp vào Bài 1 nè!';
+  const row = ((COURSES[o.course] || {}).lessons || []).find(l => l[0] === N);
+  return `Mình đang ở Bài ${N}${row ? ': <span class="zh">' + esc(row[1]) + '</span>' : ''}<br>${PG_CHEER[N % PG_CHEER.length]}`;
+}
+function pgFishTap(btn){
+  const say = btn.closest('.pg-track').querySelector('.pg-say');
+  document.querySelectorAll('.pg-say.on').forEach(x => { if(x !== say) x.classList.remove('on'); });
+  btn.classList.remove('hop'); void btn.offsetWidth; btn.classList.add('hop');
+  say.classList.toggle('on');
+  clearTimeout(say._t);
+  if(say.classList.contains('on')) say._t = setTimeout(() => say.classList.remove('on'), 4500);
+}
+if(!window._pgBound){
+  window._pgBound = true;
+  document.addEventListener('click', e => { if(!e.target.closest('.pg-fish')) document.querySelectorAll('.pg-say.on').forEach(x => x.classList.remove('on')); });
+}
+/* rê chuột (hoặc chạm) vào thanh nước: hiện Bài mấy, tên bài, học vào ngày nào */
+const PG_DOW = ['Chủ nhật','Thứ hai','Thứ ba','Thứ tư','Thứ năm','Thứ sáu','Thứ bảy'];
+function pgDate(iso){
+  const p = String(iso || '').split('-'); if(p.length < 3) return '';
+  const d = new Date(Date.UTC(+p[0], +p[1] - 1, +p[2]));
+  return PG_DOW[d.getUTCDay()] + ', ' + p[2] + '/' + p[1] + '/' + p[0];
+}
+function pgTipShow(e){
+  const trk = e.target.closest && e.target.closest('.pg-track'), lane = trk && trk.querySelector('.pg-lane'); if(!lane) return pgTipHide();
+  const seg = lane.closest('.pg-seg'), o = myCourseLevels().find(x => x.course === seg.dataset.course); if(!o) return;
+  const sa = +seg.dataset.sa, len = +seg.dataset.len, r = lane.getBoundingClientRect();
+  const idx = Math.max(0, Math.min(len - 1, Math.floor((e.clientX - r.left) / r.width * len))), lesson = sa + idx;
+  const cfg = COURSE_PATH[o.course], fin = cfg && o.n > cfg.total;
+  const row = ((COURSES[o.course] || {}).lessons || []).find(l => l[0] === lesson);
+  const dt = o.dates[lesson] ? pgDate(o.dates[lesson]) : '';
+  let st;
+  if(fin || lesson < o.n) st = `<span class="st-ok">✓ Đã học</span>` + (dt ? ' · ' + dt : ' · chưa ghi ngày');
+  else if(lesson === o.n) st = `<span class="st-now">★ Đang học</span>` + (dt ? ' từ ' + dt : '');
+  else st = `<span class="st-no">Chưa học tới</span>`;
+  const tip = $('#pg-tip') || document.body.appendChild(Object.assign(document.createElement('div'), {id:'pg-tip', className:'pg-tip'}));
+  tip.innerHTML = `<b>Bài ${lesson}${row ? ' · <span class="zh">' + esc(row[1]) + '</span>' : ''}</b>${st}`;
+  tip.style.display = 'block';
+  const w = tip.offsetWidth, h = tip.offsetHeight;
+  tip.style.left = Math.max(6, Math.min(innerWidth - w - 6, e.clientX - w / 2)) + 'px';
+  tip.style.top = Math.max(6, r.top - h - 12) + 'px';
+  document.querySelectorAll('.pg-hl').forEach(x => x.style.display = 'none');
+  const hl = lane.querySelector('.pg-hl'); hl.style.left = idx * 100 / len + '%'; hl.style.width = 100 / len + '%'; hl.style.display = 'block';
+  clearTimeout(pgTipShow._t); if(e.pointerType === 'touch') pgTipShow._t = setTimeout(pgTipHide, 3500);
+}
+function pgTipHide(){ const t = $('#pg-tip'); if(t) t.style.display = 'none'; document.querySelectorAll('.pg-hl').forEach(x => x.style.display = 'none'); }
+if(!window._pgTipBound){
+  window._pgTipBound = true;
+  const host = () => document.getElementById('st-progress');
+  document.addEventListener('pointermove', e => { const h = host(); if(h && h.contains(e.target) && e.pointerType !== 'touch') pgTipShow(e); else if(e.pointerType !== 'touch' && !(e.target.closest && e.target.closest('.pg-track'))) pgTipHide(); });
+  document.addEventListener('pointerdown', e => { const h = host(); if(h && h.contains(e.target) && e.pointerType === 'touch') pgTipShow(e); else pgTipHide(); });
+  document.addEventListener('scroll', pgTipHide, true);
+}
+
+/* ===== ảnh đại diện: em chọn ảnh trong kho ảnh, cắt vuông + thu nhỏ rồi lưu ===== */
+function renderAvatar(){
+  const el = $('#st-avatar'); if(!el) return;
+  const av = state.style && state.style.avatar, ok = typeof av === 'string' && av.startsWith('data:image/');
+  el.innerHTML = `<div class="av-prev">${ok ? `<img src="${av}" alt="Ảnh đại diện">` : fishSVG('happy', {...lookOpts(state.myRows || []), still:true})}</div>
+    <div class="av-main"><b>${ok ? 'Bạn đang dùng ảnh của mình' : 'Đang dùng cá của bạn'}</b>
+      <div class="muted">Ảnh này sẽ chạy trên thanh tiến độ ở Trang chủ, thay cho con cá. Chỉ bạn và cô nhìn thấy.</div>
+      <div class="av-btns"><label class="btn pri" style="cursor:pointer">📷 Chọn ảnh từ kho ảnh<input type="file" accept="image/*" hidden onchange="avatarPick(this)"></label>
+        ${ok ? '<button class="btn" type="button" onclick="avatarClear()">🐟 Dùng lại cá</button>' : ''}</div></div>`;
+}
+function avatarFromFile(file, size = 192){
+  return new Promise((res, rej) => {
+    const url = URL.createObjectURL(file), img = new Image();
+    img.onload = () => {
+      const side = Math.min(img.naturalWidth, img.naturalHeight), sx = (img.naturalWidth - side) / 2, sy = (img.naturalHeight - side) / 2;
+      const c = document.createElement('canvas'); c.width = c.height = size;
+      const g = c.getContext('2d'); g.fillStyle = '#fff'; g.fillRect(0, 0, size, size); g.drawImage(img, sx, sy, side, side, 0, 0, size, size);
+      URL.revokeObjectURL(url); res(c.toDataURL('image/jpeg', .82));
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); rej(new Error('Không đọc được ảnh này, bạn thử ảnh khác nhé.')); };
+    img.src = url;
+  });
+}
+async function avatarSave(val){
+  const before = state.style || {};
+  state.style = {...before, avatar: val};
+  renderAvatar(); renderProgress();
+  try{ await YY.saveMyStyle(state.style); }
+  catch(e){ state.style = before; renderAvatar(); renderProgress(); alert('Chưa lưu được ảnh: ' + (e.message || e) + '\n(Đã chạy migration-dot8.sql trong Supabase chưa?)'); }
+}
+async function avatarPick(inp){
+  const f = inp.files && inp.files[0]; inp.value = ''; if(!f) return;
+  if(!/^image\//.test(f.type)){ alert('Bạn hãy chọn một tấm ảnh nhé.'); return; }
+  try{ await avatarSave(await avatarFromFile(f)); }catch(e){ alert(e.message || e); }
+}
+function avatarClear(){ avatarSave(null); }
+
+function renderProgress(){
+  const el = $('#st-progress'); if(!el) return;
+  const rows = state.myRows || [];
+  el.innerHTML = myCourseLevels().map(o => {
+    const cfg = COURSE_PATH[o.course], N = o.n;
+    // tên lớp: bỏ chữ cấp ở đầu (HSK1 ...) cho khỏi lặp với tiêu đề
+    const re = new RegExp('^\\s*' + o.course + '\\b[\\s\\-–·:]*', 'i');
+    const names = o.names.map(x => x.replace(re, '').trim()).filter(Boolean);
+    const cls = names.length ? `<span class="muted pg-cls">${esc(names.join(' · '))}</span>` : '';
+    if(!cfg) return N ? `<div class="pg-card"><div class="pg-head"><div class="pg-titles"><span class="pg-lv">${esc(o.course)}</span>${cls}</div><span class="pg-where">đang học Bài ${N}</span></div></div>` : '';
+    const ns = cfg.stages.length, fin = N > cfg.total;
+    const k = fin ? ns - 1 : Math.max(0, cfg.stages.findIndex(s => N <= s[1])), [a, e] = cfg.stages[k];
+    const stg = cfg.stages.filter(s => N > s[1]).length;
+    const mood = fin ? 'jump' : !N ? 'sleep' : 'happy';
+    const look = mood === 'sleep' ? mascotOpts(rows, 'sleep') : {...lookOpts(rows), still:true};
+    const av = state.style && state.style.avatar, hasAv = typeof av === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(av);
+    const fishHTML = hasAv ? `<img class="pg-av" src="${av}" alt="">` : fishSVG(mood, {...look, still:true});
+    const segs = cfg.stages.map(([sa, se], i) => {
+      const len = se - sa + 1, ok = N > se, isCur = i === k;
+      const [scName, scCls, deco] = pgScene(i, ns);
+      const pct = ok ? 100 : isCur ? (fin ? 100 : N ? Math.max(0, Math.min(1, (N - (sa - 1) - .5) / len)) * 100 : 0) : 0;
+      const align = pct > 72 ? ' r' : pct < 28 ? ' l' : '';
+      const fish = isCur ? `<button type="button" class="pg-fish" style="--fx:${pct}%" onclick="pgFishTap(this)" aria-label="${hasAv ? 'Bạn' : 'Cá của bạn'}${N ? ' đang ở Bài ' + N : ''}, bấm để nghe lời nhắn"><span class="pg-fb">${fishHTML}</span></button>
+        <div class="pg-say${align}" style="--fx:${pct}%" role="status">${pgSay(o, cfg, N, fin)}</div>` : '';
+      return `<div class="pg-seg ${'sc-' + scCls}${ok ? ' ok' : ''}${!fin && isCur && N > 0 ? ' cur' : ''}" style="--w:${len};--n:${len}" data-course="${esc(o.course)}" data-sa="${sa}" data-len="${len}">
+        <div class="pg-track"><div class="pg-lane"><div class="pg-fill" style="--p:${pct}%"></div><div class="pg-ticks"></div><div class="pg-hl"></div>
+          <i class="pg-deco" style="left:22%">${deco[0]}</i><i class="pg-deco" style="left:66%">${deco[1]}</i></div>
+          <span class="pg-flag" aria-hidden="true">${i === ns - 1 ? '🏁' : '🚩'}</span>${fish}</div>
+        <div class="pg-lab"><b>Chặng ${i + 1}${ok ? ' ✓' : ''}</b><span>${scName}</span></div></div>`;
+    }).join('');
+    const last = k === ns - 1;
+    let where, hint;
+    if(fin){ where = 'Hoàn thành khóa 🎉'; hint = `Bạn đã về đích ${esc(o.course)}! Giỏi lắm!`; }
+    else if(N === 0){ where = 'Chưa bắt đầu'; hint = 'Khi lớp vào Bài 1, cá sẽ bắt đầu bơi nhé!'; }
+    else{
+      where = `Chặng ${k + 1}/${ns} · Bài ${N}/${cfg.total}`;
+      hint = N < e ? `Còn ${e - N} bài nữa là ${last ? 'về đích ' + esc(o.course) : 'xong chặng ' + (k + 1) + ', rồi ôn tập chặng nhé'}!`
+                   : (last ? `Bài cuối cùng của ${esc(o.course)} rồi, cố lên!` : `Đây là bài cuối của chặng ${k + 1}! Sau đó là ôn tập chặng.`);
+    }
+    return `<div class="pg-card${fin ? ' pg-done' : ''}" data-course="${esc(o.course)}" data-stg="${stg}"><div class="pg-head"><div class="pg-titles"><span class="pg-lv">${esc(o.course)}</span>${cls}</div><span class="pg-where">${where}</span></div><div class="pg-bar">${segs}</div><div class="pg-hint">${hint}</div></div>`;
+  }).join('');
+  // vừa qua chặng mới: cá nhảy lên một cái
+  el.querySelectorAll('.pg-card[data-course]').forEach(c => {
+    const key = 'yy_pg_stg_' + c.dataset.course, now = +c.dataset.stg;
+    let old = null; try{ old = localStorage.getItem(key); }catch(e){}
+    if(old !== null && now > +old){ const f = c.querySelector('.pg-fish'); if(f) f.classList.add('hop'); }
+    try{ localStorage.setItem(key, String(now)); }catch(e){}
+  });
 }
 function renderRank(rows){
   const done = doneRows(rows).length, rk = rankOf(done), nextI = RANK_AT.findIndex(x => done < x);
