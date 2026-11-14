@@ -639,6 +639,7 @@
       <div class="card">
         <h2>Lớp học</h2>
         <div id="pp-classes"></div>
+        <div id="pp-arch-classes"></div>
         <form id="class-form" class="row" style="margin-top:.6rem;align-items:end">
           <div><label>Tên lớp mới</label><input id="cl-name" placeholder="Lớp HSK1 tối T3-T5" required></div>
           <div><label>Hình thức</label><select id="cl-kind"><option value="group">Nhóm 2–3 người</option><option value="one_on_one">Lớp 1-1</option></select></div>
@@ -655,6 +656,7 @@
       <div class="card">
         <h2>Học sinh</h2>
         <input id="pp-search" type="search" placeholder="🔍 Tìm theo tên hoặc mã…" oninput="renderPeople()" style="max-width:20rem;margin-bottom:.5rem">
+        <label id="pp-off-box" style="display:none;margin:.2rem 0 .5rem"><input type="checkbox" id="pp-off" onchange="renderPeople()"> Hiện cả <span id="pp-off-n">0</span> em đã nghỉ</label>
         <div class="scroll"><table>
           <thead><tr><th>Mã</th><th>Họ tên</th><th>Lớp</th><th>Năm sinh</th><th>Giới tính</th><th>Thêm vào lớp</th><th>Huy hiệu / Mật khẩu</th></tr></thead>
           <tbody id="pp-students"></tbody>
@@ -4680,6 +4682,10 @@ async function boot(){
     const me = await YY.getProfile();
     if(!me){ show('login'); return; }
     state.me = me;
+    if(me.role !== 'teacher' && me.active === false){
+      await YY.logout(); show('login');
+      $('#login-err').textContent = 'Tài khoản này đã ngừng học. Hãy liên hệ cô nếu cần học lại.'; return;
+    }
     if(me.role === 'teacher'){ show('teacher'); await reloadTeacher(); }
     else { show('student'); await reloadStudent(); }
   }catch(e){ show('login'); $('#login-err').textContent = 'Lỗi kết nối: ' + e.message; }
@@ -4711,8 +4717,9 @@ async function doLogout(){ await YY.logout(); location.href = YY.config.PORTAL_U
 async function reloadStudent(){
   $('#st-sbname').textContent = state.me.full_name;
   // luyện tập + huy hiệu cô tặng: nếu chưa chạy migration-dot2.sql thì bỏ qua, portal vẫn chạy
-  const [rows, practice, awards, style, items, mats, myClasses] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => []),
-    YY.getMyStyle().catch(() => null), YY.listMyItems().catch(() => []), YY.listMaterials().catch(() => []), YY.listMyClasses().catch(() => [])]);
+  const [rows1, practice, awards, style, items, mats, myClasses, arch] = await Promise.all([YY.listMyAssignments(), YY.listMyPractice().catch(() => []), YY.listMyAwards().catch(() => []),
+    YY.getMyStyle().catch(() => null), YY.listMyItems().catch(() => []), YY.listMaterials().catch(() => []), YY.listMyClasses().catch(() => []), archivedAssignIds()]);
+  const rows = rows1.filter(r => !arch.has(r.assignment_id));
   state.myClasses = myClasses;
   PRACTICE = (mats || []).filter(m => m.type === 'practice').sort((a, b) => b.lesson - a.lesson)
     .map(m => ({level: m.course, title: (m.lesson ? 'Bài ' + m.lesson + ' · ' : '') + m.title, url: m.url}));
@@ -4927,10 +4934,20 @@ window.addEventListener('storage', (e) => {
 window.addEventListener('dd-changed', () => { try{ renderAttendanceHome(); renderPeople(); }catch(err){} });
 
 /* ---------------- GIÁO VIÊN ---------------- */
+async function archivedAssignIds(){   // chưa chạy migration-dot5.sql thì trả về rỗng, portal vẫn chạy
+  try{
+    const r = await YY.sb.from('assignments').select('id').eq('archived', true);
+    return r.error ? new Set() : new Set((r.data || []).map(x => x.id));
+  }catch(_e){ return new Set(); }
+}
 async function reloadTeacher(){
-  const [rows, students, classes, practiceAll, awardsAll, mats] = await Promise.all([YY.listAllAssignmentRows(), YY.listStudents(), YY.listClasses(),
+  const [rows0, students, classes0, practiceAll, awardsAll, mats] = await Promise.all([YY.listAllAssignmentRows(), YY.listStudents(), YY.listClasses(),
     YY.listAllPractice().catch(() => []), YY.listAllAwards().catch(() => []), YY.listMaterials().catch(() => state.mats || [])]);
-  Object.assign(state, { rows, students, classes, practiceAll, awardsAll, mats });
+  const arch = await archivedAssignIds();
+  const gone = new Set(students.filter(p => p.active === false).map(p => p.id));
+  const rows = rows0.filter(r => !arch.has(r.assignment_id) && !gone.has(r.student_id));   // bài lưu trữ và em đã nghỉ không tính vào thống kê
+  const classes = classes0.filter(c => !c.archived);
+  Object.assign(state, { rows, students, classes, classesAll: classes0, practiceAll, awardsAll, mats });
   const cnt = (s) => rows.filter(r => r.status === s).length;
   $('#n-pending').textContent = cnt('pending_review');
   $('#n-redo').textContent = cnt('needs_redo');
@@ -5167,7 +5184,7 @@ function assignedAudience(a){
   const ids = new Set(), names = [];
   (a.assignment_targets || []).forEach(t => {
     if(t.class_id){
-      const c = state.classes.find(x => x.id === t.class_id);
+      const c = (state.classesAll || state.classes).find(x => x.id === t.class_id);
       names.push(c ? c.name : '(lớp đã xóa)');
       (c?.class_members || []).forEach(m => ids.add(m.student_id));
     }else if(t.student_id){
@@ -5180,23 +5197,34 @@ function assignedAudience(a){
 }
 function renderAssigned(){
   const box = $('#assigned-list'); if(!box) return;
-  const list = state.assigned || [];
-  if(!list.length){ box.innerHTML = '<div class="muted">Chưa giao bài nào.</div>'; return; }
+  const all = state.assigned || [];
+  const nArch = all.filter(a => a.archived).length;
+  const list = all.filter(a => state.showArchAssign ? true : !a.archived);
+  const toggle = nArch ? `<label style="display:block;margin:.3rem 0"><input type="checkbox" ${state.showArchAssign ? 'checked' : ''} onchange="state.showArchAssign=this.checked;renderAssigned()"> Hiện cả ${nArch} bài đã lưu trữ</label>` : '';
+  if(!list.length){ box.innerHTML = toggle + '<div class="muted">Chưa giao bài nào.</div>'; return; }
   const now = Date.now();
-  box.innerHTML = '<div class="scroll"><table><thead><tr><th>Bài</th><th>Giao lúc</th><th>Giao cho</th><th>Hạn nộp</th><th>Đã nộp</th><th></th></tr></thead><tbody>' +
+  box.innerHTML = toggle + '<div class="scroll"><table><thead><tr><th>Bài</th><th>Giao lúc</th><th>Giao cho</th><th>Hạn nộp</th><th>Đã nộp</th><th></th></tr></thead><tbody>' +
     list.map(a => {
       const aud = assignedAudience(a);
       const done = state.subsBy[a.id] ? state.subsBy[a.id].size : 0;
       const fresh = a.created_at && (now - new Date(a.created_at).getTime()) < 30 * 60000;
       return `<tr>
-        <td><b>${esc(a.title)}</b>${a.lesson ? ' · ' + esc(a.lesson) : ''}<div class="muted">${a.kind === 'test' ? 'Kiểm tra' : 'Bài tập'}</div></td>
+        <td${a.archived ? ' style="opacity:.55"' : ''}><b>${esc(a.title)}</b>${a.lesson ? ' · ' + esc(a.lesson) : ''}${a.archived ? ' <span class="chip c-gray">Đã lưu trữ</span>' : ''}<div class="muted">${a.kind === 'test' ? 'Kiểm tra' : 'Bài tập'}</div></td>
         <td>${a.created_at ? fmt(a.created_at) : '<span class="muted">không có dữ liệu</span>'}${fresh ? '<div><span class="chip c-gray">Vừa giao</span></div>' : ''}</td>
         <td>${esc(aud.names.join(', ') || '—')}<div class="muted">${aud.ids.size} học sinh</div></td>
         <td>${fmt(a.due_at)}</td>
         <td>${done}/${aud.ids.size}</td>
-        <td><button class="btn ghost" style="color:#c0392b" onclick="deleteAssigned('${a.id}')">Xóa</button></td>
+        <td style="white-space:nowrap"><button class="btn" onclick="archiveAssigned('${a.id}',${a.archived ? 'false' : 'true'})">${a.archived ? 'Khôi phục' : 'Lưu trữ'}</button> <button class="btn ghost" style="color:#c0392b" onclick="deleteAssigned('${a.id}')">Xóa</button></td>
       </tr>`;
     }).join('') + '</tbody></table></div>';
+}
+async function archiveAssigned(id, flag){
+  try{
+    const r = await YY.sb.from('assignments').update({ archived: flag }).eq('id', id).select();
+    if(r.error) throw r.error;
+    if(!r.data || !r.data.length) throw new Error('Không có quyền hoặc bài không còn tồn tại.');
+    await reloadTeacher();
+  }catch(e){ alert('Chưa lưu trữ được: ' + (e.message || e) + '\n(Đã chạy migration-dot5.sql trong Supabase chưa?)'); }
 }
 async function deleteAssigned(id){
   const a = (state.assigned || []).find(x => x.id === id); if(!a) return;
@@ -5205,7 +5233,7 @@ async function deleteAssigned(id){
   const when = a.created_at ? fmt(a.created_at) : 'không rõ giờ';
   let ok;
   if(done > 0){
-    const ans = prompt('Bài "' + a.title + '" (giao lúc ' + when + ') đã có ' + done + ' học sinh nộp bài.\nXóa sẽ mất luôn bài làm và điểm của các em này.\n(Máy sẽ tự tải một bản sao lưu trước khi xóa.)\n\nGõ XOA để xác nhận:');
+    const ans = prompt('Bài "' + a.title + '" (giao lúc ' + when + ') đã có ' + done + ' học sinh nộp bài.\nNếu chỉ muốn ẩn bài thì bấm Hủy rồi dùng nút "Lưu trữ" (không mất gì).\nXóa sẽ mất luôn bài làm và điểm của các em này.\n(Máy sẽ tự tải một bản sao lưu trước khi xóa.)\n\nGõ XOA để xác nhận:');
     ok = ans && ans.trim().toUpperCase() === 'XOA';
   }else{
     ok = confirm('Xóa bài "' + a.title + '" (giao lúc ' + when + ', cho ' + (aud.names.join(', ') || '—') + ')?\nChưa có học sinh nào nộp bài.');
@@ -5272,7 +5300,7 @@ $('#restore-file').addEventListener('change', async (ev) => {
 function renderAssignForm(){
   $('#as-classes').innerHTML = state.classes.map(c =>
     `<label><input type="checkbox" name="cls" value="${c.id}"> ${esc(c.name)}</label>`).join('') || '<span class="muted">Chưa có lớp</span>';
-  $('#as-students').innerHTML = state.students.map(s =>
+  $('#as-students').innerHTML = state.students.filter(s => s.active !== false).map(s =>
     `<label><input type="checkbox" name="stu" value="${s.id}"> <span class="zh">${esc(s.full_name)}</span> (${esc(s.code)})</label>`).join('') || '<span class="muted">Chưa có học sinh</span>';
 }
 $('#assign-form').addEventListener('submit', async (ev) => {
@@ -5316,6 +5344,17 @@ async function resetPw(id){
     }
     alert('Đã đặt lại mật khẩu cho ' + st.full_name + '.');
   }catch(e){ alert('Chưa đặt lại được: ' + (e.message || e) + '\n(Đã cập nhật Edge Function create-students bản mới chưa?)'); }
+}
+async function archiveClass(id, flag){
+  const c = (state.classesAll || state.classes).find(x => x.id === id); if(!c) return;
+  if(flag && !confirm('Lưu trữ lớp "' + c.name + '"?\nLớp sẽ ẩn khỏi danh sách, học sinh và bài đã giao vẫn giữ nguyên. Có thể khôi phục bất cứ lúc nào.')) return;
+  await saveClass(id, { archived: flag });
+}
+async function setActive(id, flag){
+  const st = state.students.find(x => x.id === id); if(!st) return;
+  if(!flag && !confirm('Cho ' + st.full_name + ' nghỉ học?\nEm sẽ ẩn khỏi danh sách và thống kê, không đăng nhập được nữa. Dữ liệu và bài nộp vẫn giữ, bấm "Học lại" để mở lại.')) return;
+  try{ await YY.updateStudent(id, { active: flag }); await reloadTeacher(); }
+  catch(e){ alert('Chưa cập nhật được: ' + (e.message || e)); }
 }
 async function renameClass(id){
   const c = state.classes.find(x => x.id === id); if(!c) return;
@@ -5555,7 +5594,7 @@ async function syCreate(btn){
 
 function renderPeople(){
   $('#pp-classes').innerHTML = state.classes.map(c => `<div style="margin:.4rem 0">
-    <b>${esc(c.name)}</b> <a href="#" title="Đổi tên lớp" onclick="renameClass('${c.id}');return false">✎</a> <span class="chip c-gray">${c.kind === 'one_on_one' ? '1-1' : 'Nhóm'}</span>
+    <b>${esc(c.name)}</b> <a href="#" title="Đổi tên lớp" onclick="renameClass('${c.id}');return false">✎</a> <a href="#" title="Lưu trữ lớp (ẩn, không mất dữ liệu)" onclick="archiveClass('${c.id}',true);return false">📦</a> <span class="chip c-gray">${c.kind === 'one_on_one' ? '1-1' : 'Nhóm'}</span>
     <span style="display:inline-flex;align-items:center;gap:.4rem;margin-left:.5rem;flex-wrap:wrap">
       <select style="width:auto" onchange="saveClass('${c.id}',{course:this.value||null})"><option value="">Chưa chọn cấp</option>${['HSK1','HSK2','HSK3','HSK4'].map(k => `<option${c.course === k ? ' selected' : ''}>${k}</option>`).join('')}</select>
       <span class="muted">đang học tới Bài</span>
@@ -5564,16 +5603,24 @@ function renderPeople(){
     </span>
     <div class="muted">${(c.class_members || []).map(m => `<span class="zh">${esc(m.profiles?.full_name)}</span> <a href="#" onclick="rmMember('${c.id}','${m.student_id}');return false">✕</a>`).join(' · ') || 'Chưa có học sinh'}</div>
   </div>`).join('') || '<div class="muted">Chưa có lớp nào.</div>';
+  const arch = (state.classesAll || []).filter(c => c.archived);
+  const ah = $('#pp-arch-classes');
+  if(ah) ah.innerHTML = arch.length ? `<details style="margin-top:.6rem"><summary class="muted">Lớp đã lưu trữ (${arch.length})</summary>${arch.map(c => `<div style="margin:.3rem 0">${esc(c.name)} <span class="muted">· ${(c.class_members || []).length} học sinh</span> <a href="#" onclick="archiveClass('${c.id}',false);return false">Khôi phục</a></div>`).join('')}</details>` : '';
   const opts = '<option value="">Chọn lớp…</option>' + state.classes.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
   const q = (($('#pp-search') || {}).value || '').trim().toLowerCase();
-  const list = q ? state.students.filter(s => ((s.full_name || '') + ' ' + (s.code || '')).toLowerCase().includes(q)) : state.students;
-  $('#pp-students').innerHTML = list.map(s => `<tr>
+  const nOff = state.students.filter(s => s.active === false).length;
+  const offBox = $('#pp-off-box'); if(offBox) offBox.style.display = nOff ? '' : 'none';
+  const offLbl = $('#pp-off-n'); if(offLbl) offLbl.textContent = nOff;
+  const showOff = !!($('#pp-off') && $('#pp-off').checked);
+  const base = showOff ? state.students : state.students.filter(s => s.active !== false);
+  const list = q ? base.filter(s => ((s.full_name || '') + ' ' + (s.code || '')).toLowerCase().includes(q)) : base;
+  $('#pp-students').innerHTML = list.map(s => `<tr${s.active === false ? ' style="opacity:.5"' : ''}>
     <td>${esc(s.code)}</td><td><span class="zh">${esc(s.full_name)}</span>${attLine(s.id)}</td>
     <td>${esc(clsOf(s.id))}</td>
     <td style="width:7.5rem"><input type="number" min="1950" max="2100" placeholder="Năm sinh" value="${s.birth_year ?? ''}" onchange="saveProf('${s.id}',{birth_year:this.value?+this.value:null})"></td>
     <td style="width:8rem"><select onchange="saveProf('${s.id}',{gender:this.value||null})"><option value="">—</option><option value="female"${s.gender === 'female' ? ' selected' : ''}>Nữ</option><option value="male"${s.gender === 'male' ? ' selected' : ''}>Nam</option></select></td>
     <td><select onchange="addMember(this,'${s.id}')">${opts}</select></td>
-    <td><button class="btn" onclick="openGift('${s.id}')">🎁 Tặng</button> <button class="btn" onclick="resetPw('${s.id}')" title="Đặt lại mật khẩu">🔑</button></td></tr>`).join('') || '<tr><td colspan="7" class="muted">Không thấy học sinh nào khớp.</td></tr>';
+    <td><button class="btn" onclick="openGift('${s.id}')">🎁 Tặng</button> <button class="btn" onclick="resetPw('${s.id}')" title="Đặt lại mật khẩu">🔑</button> ${s.active === false ? `<button class="btn" onclick="setActive('${s.id}',true)">Học lại</button>` : `<button class="btn ghost" onclick="setActive('${s.id}',false)" title="Cho nghỉ học (ẩn, không mất dữ liệu)">Nghỉ</button>`}</td></tr>`).join('') || '<tr><td colspan="7" class="muted">Không thấy học sinh nào khớp.</td></tr>';
   try{ renderSync(); }catch(e){ console.warn(e); }
 }
 $('#class-form').addEventListener('submit', async (ev) => {
