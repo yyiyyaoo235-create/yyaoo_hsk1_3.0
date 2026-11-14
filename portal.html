@@ -656,7 +656,7 @@
         <h2>Học sinh</h2>
         <input id="pp-search" type="search" placeholder="🔍 Tìm theo tên hoặc mã…" oninput="renderPeople()" style="max-width:20rem;margin-bottom:.5rem">
         <div class="scroll"><table>
-          <thead><tr><th>Mã</th><th>Họ tên</th><th>Lớp</th><th>Năm sinh</th><th>Giới tính</th><th>Thêm vào lớp</th><th>Huy hiệu</th></tr></thead>
+          <thead><tr><th>Mã</th><th>Họ tên</th><th>Lớp</th><th>Năm sinh</th><th>Giới tính</th><th>Thêm vào lớp</th><th>Huy hiệu / Mật khẩu</th></tr></thead>
           <tbody id="pp-students"></tbody>
         </table></div>
       </div>
@@ -5290,6 +5290,22 @@ async function saveClass(id, patch){
   try{ await YY.updateClass(id, patch); await reloadTeacher(); }
   catch(e){ alert('Chưa lưu được lớp: ' + e.message + '\n(Đã chạy migration-dot4.sql chưa?)'); }
 }
+async function resetPw(id){
+  const st = state.students.find(x => x.id === id); if(!st) return;
+  const pw = prompt('Mật khẩu mới cho ' + st.full_name + ' (' + st.code + '), từ 6 ký tự:', '');
+  if(pw === null) return;
+  if(pw.trim().length < 6){ alert('Mật khẩu phải từ 6 ký tự.'); return; }
+  try{
+    const res = await YY.sb.functions.invoke('create-students', { body: { action: 'reset', id, password: pw.trim() } });
+    if(res.error){
+      let msg = res.error.message || 'Lỗi không rõ';
+      const ctx = res.error.context;
+      if(ctx && typeof ctx.json === 'function'){ try{ const j = await ctx.json(); if(j && j.error) msg = j.error; }catch(_e){} }
+      throw new Error(msg);
+    }
+    alert('Đã đặt lại mật khẩu cho ' + st.full_name + '.');
+  }catch(e){ alert('Chưa đặt lại được: ' + (e.message || e) + '\n(Đã cập nhật Edge Function create-students bản mới chưa?)'); }
+}
 async function renameClass(id){
   const c = state.classes.find(x => x.id === id); if(!c) return;
   const v = prompt('Tên mới cho lớp:', c.name); if(v === null) return;
@@ -5430,7 +5446,8 @@ function renderSync(force){
     h += '<div class="sy-h">Chưa có tài khoản trên portal (cần tạo)</div>' + none.map((r, i) =>
       `<div class="sy-row"><input type="checkbox" class="sy-mk" data-i="${i}" checked>${syTag(r.c)}<b>${esc(r.st.name)}</b> mã đăng nhập: <input type="text" class="sy-code" data-i="${i}" value="${esc(sugg[i])}" maxlength="20" style="width:11rem;text-transform:uppercase"></div>`).join('') +
       `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" id="sy-create">Tạo tài khoản portal cho các em đã tích</button><button type="button" class="btn" id="sy-copy">Sao chép danh sách</button></div>
-       <p class="muted">Mật khẩu được tạo ngẫu nhiên và chỉ hiện một lần sau khi tạo. Nên thử tích một em trước.</p>`;
+       <div style="margin-top:8px"><label>Mật khẩu ban đầu cho cả lô (từ 6 ký tự; để trống = ngẫu nhiên)</label><input type="text" id="sy-pw" placeholder="ví dụ 020305" style="max-width:14rem"></div>
+       <p class="muted">Để trống thì mật khẩu ngẫu nhiên, chỉ hiện một lần sau khi tạo. Nên thử tích một em trước.</p>`;
   }
   h += '<div class="sy-h">Đối chiếu lớp</div>';
   if(!clsRows.length) h += '<p class="muted">Chưa có lớp nào đang học trong sổ.</p>';
@@ -5494,10 +5511,12 @@ async function syCreate(btn){
   if(taken.length){ alert('Mã ' + taken[0].code + ' đã có trên portal. Hãy đổi mã khác.'); return; }
   if(!window.YY || !YY.sb || !YY.sb.functions){ alert('Chưa kết nối được Supabase.'); return; }
   const list = items.map(x => ({ code: x.code, full_name: syNone[x.i].st.name }));
-  if(!confirm('Tạo ' + list.length + ' tài khoản học sinh trên portal?\nMật khẩu ngẫu nhiên sẽ hiện một lần ở đầu mục này.')) return;
+  const pwEl = box.querySelector('#sy-pw'), fixedPw = pwEl ? pwEl.value.trim() : '';
+  if(fixedPw && fixedPw.length < 6){ alert('Mật khẩu cố định phải từ 6 ký tự (hoặc để trống để tạo ngẫu nhiên).'); return; }
+  if(!confirm('Tạo ' + list.length + ' tài khoản học sinh trên portal?\n' + (fixedPw ? 'Tất cả dùng mật khẩu: ' + fixedPw : 'Mật khẩu ngẫu nhiên sẽ hiện một lần ở đầu mục này.'))) return;
   btn.disabled = true; btn.textContent = 'Đang tạo…';
   try{
-    const res = await YY.sb.functions.invoke('create-students', { body: { students: list } });
+    const res = await YY.sb.functions.invoke('create-students', { body: fixedPw ? { students: list, password: fixedPw } : { students: list } });
     if(res.error){
       let msg = res.error.message || 'Lỗi không rõ';
       const ctx = res.error.context;
@@ -5543,7 +5562,7 @@ function renderPeople(){
     <td style="width:7.5rem"><input type="number" min="1950" max="2100" placeholder="Năm sinh" value="${s.birth_year ?? ''}" onchange="saveProf('${s.id}',{birth_year:this.value?+this.value:null})"></td>
     <td style="width:8rem"><select onchange="saveProf('${s.id}',{gender:this.value||null})"><option value="">—</option><option value="female"${s.gender === 'female' ? ' selected' : ''}>Nữ</option><option value="male"${s.gender === 'male' ? ' selected' : ''}>Nam</option></select></td>
     <td><select onchange="addMember(this,'${s.id}')">${opts}</select></td>
-    <td><button class="btn" onclick="openGift('${s.id}')">🎁 Tặng</button></td></tr>`).join('') || '<tr><td colspan="7" class="muted">Không thấy học sinh nào khớp.</td></tr>';
+    <td><button class="btn" onclick="openGift('${s.id}')">🎁 Tặng</button> <button class="btn" onclick="resetPw('${s.id}')" title="Đặt lại mật khẩu">🔑</button></td></tr>`).join('') || '<tr><td colspan="7" class="muted">Không thấy học sinh nào khớp.</td></tr>';
   try{ renderSync(); }catch(e){ console.warn(e); }
 }
 $('#class-form').addEventListener('submit', async (ev) => {
