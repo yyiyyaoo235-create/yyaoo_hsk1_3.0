@@ -370,6 +370,22 @@
     *,*::before,*::after{animation:none!important}
     .cf{display:none}
   }
+
+/* ---- Đồng bộ với sổ điểm danh (tab Lớp & học sinh) ---- */
+.sy-sum{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
+.sy-pill{border:1px solid var(--line); border-radius:12px; padding:6px 12px; background:#fff; font-size:13px;}
+.sy-pill b{font-size:17px; display:block;}
+.sy-ok{background:#E3F5EA; border-color:#BFE3CD;}
+.sy-warn{background:#FFF3D6; border-color:#F0D08A;}
+.sy-bad{background:#FBE6E3; border-color:#EFC0B9;}
+.sy-h{font-weight:700; margin:12px 0 4px; font-size:13.5px;}
+.sy-row{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; padding:5px 0; border-bottom:1px dashed var(--line); font-size:13.5px;}
+.sy-row input[type=checkbox]{width:auto; margin:0;}
+.sy-tag{font-size:11.5px; font-weight:700; border-radius:999px; padding:1px 9px; white-space:nowrap;}
+.sy-tag.ok{background:#CDEED9; color:#1F6B43;}
+.sy-tag.warn{background:#FCE7B2; color:#7A5200;}
+.sy-tag.bad{background:#F8CFC9; color:#8A2A1D;}
+#sy-d > summary{cursor:pointer; margin-bottom:.2rem;}
 </style>
 </head>
 <body>
@@ -629,9 +645,15 @@
           <div><button class="btn pri" type="submit">Tạo lớp</button></div>
         </form>
       </div>
+      <div class="card" id="sy-card">
+        <details id="sy-d" open>
+          <summary><h2 style="display:inline;margin:0">Đồng bộ với sổ điểm danh</h2> <span class="muted" id="sy-note"></span></summary>
+          <p class="muted" style="margin:.4rem 0">So học sinh trong sổ điểm danh (lưu trên trình duyệt này) với tài khoản trên portal, tạo tài khoản cho em chưa có, liên kết tên. Chỉ gửi mã và họ tên lên portal, không gửi học phí.</p>
+          <div id="sy-body"></div>
+        </details>
+      </div>
       <div class="card">
         <h2>Học sinh</h2>
-        <div class="muted" style="margin-bottom:.4rem">Tạo tài khoản mới: Supabase → Authentication → Add user (xem HUONG_DAN.md)</div>
         <div class="scroll"><table>
           <thead><tr><th>Mã</th><th>Họ tên</th><th>Năm sinh</th><th>Giới tính</th><th>Thêm vào lớp</th><th>Huy hiệu</th></tr></thead>
           <tbody id="pp-students"></tbody>
@@ -1259,16 +1281,6 @@
   .inc-seg.is-dim{opacity:.22;}
   .inc-seg-paid{width:100%;}
   .income-chart-note{font-size:12px; color:var(--ink-soft); margin-top:6px;}
-  .sy-sum{display:flex; flex-wrap:wrap; gap:8px; margin:10px 0;}
-  .sy-pill{border:1px solid var(--line); border-radius:12px; padding:6px 12px; background:#fff; font-size:13px;}
-  .sy-pill b{font-size:17px; display:block;}
-  .sy-ok{background:#E3F5EA; border-color:#BFE3CD;}
-  .sy-warn{background:#FFF3D6; border-color:#F0D08A;}
-  .sy-bad{background:#FBE6E3; border-color:#EFC0B9;}
-  .sy-h{font-weight:700; margin:12px 0 4px; font-size:13.5px;}
-  .sy-row{display:flex; flex-wrap:wrap; gap:6px 10px; align-items:center; padding:5px 0; border-bottom:1px dashed var(--line); font-size:13.5px;}
-  .sy-tag{font-size:11.5px; font-weight:700; border-radius:999px; padding:1px 9px; white-space:nowrap;}
-  .sy-tag.ok{background:#CDEED9; color:#1F6B43;} .sy-tag.warn{background:#FCE7B2; color:#7A5200;} .sy-tag.bad{background:#F8CFC9; color:#8A2A1D;}
 
   [hidden]{display:none !important;}
   .brand h1{display:none;}
@@ -1382,7 +1394,6 @@
           <div class="row-actions"><button class="btn-outline small" id="pl-auto" type="button">Tự khớp theo tên</button></div>
           <details id="pl-un-d" style="margin-top:8px" hidden><summary>Học sinh trong sổ chưa liên kết <span id="pl-un-n"></span></summary><div id="pl-un"></div></details>
           <details id="pl-miss-d" style="margin-top:8px" hidden><summary>Học sinh có trong portal nhưng chưa có trong sổ <span id="pl-miss-n"></span></summary><div id="pl-miss"></div></details>
-          <details id="sy-d" style="margin-top:12px" open><summary><b>Trung tâm đồng bộ</b> <span class="hint">(chỉ xem, chưa ghi gì lên portal)</span></summary><div id="sy-body"></div></details>
         </div>
         <div class="lh-actions">
           <button class="btn-primary" id="lh-one-toggle" type="button">+ Thêm học sinh 1:1</button>
@@ -3835,7 +3846,6 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       });
       miss.appendChild(row);
     });
-    try{ renderSyncCenter(); }catch(e){ console.warn(e); }
   }
   function keyOf(x){ return normName(x).replace(/\s+/g,''); }
   // Một học sinh portal khớp học sinh sổ khi tên (bỏ dấu, bỏ khoảng trắng) hoặc mã trùng nhau
@@ -3856,186 +3866,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       renderPortalLink();
     });
   });
-  // ---------- Trung tâm đồng bộ (chỉ xem) ----------
-  var portalClasses = [];
-  var NONE_LIST = [];
-  function renderSyncCenter(){
-    var box = qs('#sy-body'); if(!box || !portalRoster) return;
-    var pById = {}; portalRoster.forEach(function(p){ pById[p.id] = p; });
-    var linked = {}, rows = [];
-    state.classes.forEach(function(c){ c.students.forEach(function(st){
-      if(isArchived(st)) return;
-      rows.push({cls:c, st:st});
-      if(st.portalId && pById[st.portalId]) linked[st.portalId] = true;
-    }); });
-    var okN = 0, sure = [], dup = [], none = [];
-    rows.forEach(function(r){
-      if(r.st.portalId && pById[r.st.portalId]){ okN++; return; }
-      var m = portalRoster.filter(function(p){ return !linked[p.id] && portalMatches(p, r.st); });
-      if(m.length===1) sure.push({r:r, p:m[0]});
-      else if(m.length>1) dup.push({r:r, m:m});
-      else none.push(r);
-    });
-    NONE_LIST = none;
-    var onlyPortal = portalRoster.filter(function(p){ return !linked[p.id] && !rows.some(function(r){ return portalMatches(p, r.st); }); });
-
-    // Đối chiếu lớp: lớp sổ ↔ lớp portal (ưu tiên trùng tên, sau đó theo số thành viên chung)
-    var clsRows = [];
-    state.classes.forEach(function(c){
-      var act = c.students.filter(function(st){ return !isArchived(st); });
-      if(!act.length) return;
-      var mine = {}; act.forEach(function(st){ if(st.portalId && pById[st.portalId]) mine[st.portalId] = st; });
-      var best = null, bestN = 0, tie = false;
-      portalClasses.forEach(function(pc){
-        var nm = keyOf(pc.name)===keyOf(c.name) ? 1000 : 0;
-        var ov = pc.memberIds.filter(function(id){ return mine[id]; }).length + nm;
-        if(ov>bestN){ best = pc; bestN = ov; tie = false; } else if(ov===bestN && ov>0) tie = true;
-      });
-      if(!best || tie){ clsRows.push({c:c, state:'none', tie:tie}); return; }
-      var inPortalOnly = best.memberIds.filter(function(id){ return !mine[id]; }).map(function(id){ return pById[id] ? pById[id].name : '(không rõ)'; });
-      var inSoOnly = act.filter(function(st){ return !(st.portalId && best.memberIds.indexOf(st.portalId)>=0); }).map(function(st){ return st.name; });
-      clsRows.push({c:c, pc:best, state:(!inPortalOnly.length && !inSoOnly.length) ? 'ok' : 'diff', inPortalOnly:inPortalOnly, inSoOnly:inSoOnly});
-    });
-
-    function pill(cls, n, label){ return '<div class="sy-pill '+cls+'"><b>'+n+'</b>'+label+'</div>'; }
-    var h = '<div class="sy-sum">'+
-      pill('sy-ok', okN, 'học sinh đã liên kết')+
-      pill(sure.length?'sy-warn':'', sure.length, 'khớp chắc, bấm “Tự khớp theo tên”')+
-      pill(dup.length?'sy-warn':'', dup.length, 'nghi trùng, cần chọn tay')+
-      pill(none.length?'sy-bad':'', none.length, 'chưa có tài khoản trên portal')+
-      pill('', onlyPortal.length, 'có trên portal, chưa có trong sổ')+'</div>';
-
-    if(sure.length){
-      h += '<div class="sy-h">Khớp chắc chắn (chưa liên kết)</div>' + sure.map(function(x){
-        return '<div class="sy-row">'+tagHtml(x.r.cls)+'<b>'+escapeHtml(x.r.st.name)+'</b> ↔ '+escapeHtml(x.p.name)+' <span class="hint">('+escapeHtml(x.p.code||'')+')</span><span class="sy-tag warn">chờ liên kết</span></div>';
-      }).join('');
-    }
-    if(dup.length){
-      h += '<div class="sy-h">Nghi trùng, chọn tay ở mục “chưa liên kết” phía trên</div>' + dup.map(function(x){
-        return '<div class="sy-row">'+tagHtml(x.r.cls)+'<b>'+escapeHtml(x.r.st.name)+'</b> có thể là: '+x.m.map(function(p){ return escapeHtml(p.name)+' ('+escapeHtml(p.code||'')+')'; }).join(' · ')+'</div>';
-      }).join('');
-    }
-    var usedCodes = {}; portalRoster.forEach(function(p){ usedCodes[String(p.code||'').toUpperCase()] = true; });
-    var sugg = none.map(function(r){
-      var base = keyOf(r.st.name).toUpperCase().replace(/[^A-Z0-9]/g,'') || 'HS', c = base, k = 2;
-      while(usedCodes[c]){ c = base+k; k++; }
-      usedCodes[c] = true;
-      return c;
-    });
-    if(none.length){
-      h += '<div class="sy-h">Chưa có tài khoản trên portal (cần tạo)</div>' + none.map(function(r, i){
-        return '<div class="sy-row"><input type="checkbox" class="sy-mk" data-i="'+i+'" checked>'+tagHtml(r.cls)+'<b>'+escapeHtml(r.st.name)+'</b> mã đăng nhập: <input type="text" class="sy-code" data-i="'+i+'" value="'+escapeHtml(sugg[i])+'" maxlength="20" style="width:11rem;text-transform:uppercase"></div>';
-      }).join('') + '<div class="row-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap">'+
-        '<button type="button" class="btn-primary small" id="sy-create">Tạo tài khoản portal cho các em đã tích</button>'+
-        '<button type="button" class="btn-outline small" id="sy-copy">Sao chép danh sách</button></div>'+
-        '<p class="hint">Mật khẩu được tạo ngẫu nhiên và chỉ hiện một lần sau khi tạo. Chỉ gửi mã và tên lên portal, không gửi học phí.</p>';
-    }
-    h += '<div class="sy-h">Đối chiếu lớp</div>';
-    if(!clsRows.length) h += '<p class="hint">Chưa có lớp nào đang học.</p>';
-    clsRows.forEach(function(r){
-      var head = tagHtml(r.c)+'<b>'+escapeHtml(r.c.name)+'</b> '+kindBadgeHtml(r.c)+' ';
-      if(r.state==='ok') h += '<div class="sy-row">'+head+'↔ '+escapeHtml(r.pc.name)+' <span class="sy-tag ok">khớp thành viên</span></div>';
-      else if(r.state==='none') h += '<div class="sy-row">'+head+'<span class="sy-tag bad">'+(r.tie?'nhiều lớp portal giống nhau, cần chọn tay':'chưa thấy lớp tương ứng trên portal')+'</span></div>';
-      else h += '<div class="sy-row">'+head+'↔ '+escapeHtml(r.pc.name)+' <span class="sy-tag warn">lệch thành viên</span>'+
-        (r.inSoOnly.length?'<span class="hint">Chỉ ở sổ: '+r.inSoOnly.map(escapeHtml).join(', ')+'</span>':'')+
-        (r.inPortalOnly.length?'<span class="hint">Chỉ ở portal: '+r.inPortalOnly.map(escapeHtml).join(', ')+'</span>':'')+'</div>';
-    });
-    box.innerHTML = createResultHtml() + h;
-    wireCreateResult(box);
-    var cp = qs('#sy-copy', box);
-    if(cp) cp.addEventListener('click', function(){
-      var txt = 'Mã gợi ý\tHọ tên\tLớp\n' + none.map(function(r, i){ var ci = qs('.sy-code[data-i="'+i+'"]', box); return ((ci&&ci.value)||sugg[i]).toUpperCase()+'\t'+r.st.name+'\t'+r.cls.name; }).join('\n');
-      var done = function(){ showToast('Đã sao chép '+none.length+' học sinh'); };
-      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, function(){ prompt('Sao chép danh sách:', txt); });
-      else prompt('Sao chép danh sách:', txt);
-    });
-  }
-  // ---------- Tạo tài khoản portal hàng loạt (qua Edge Function "create-students") ----------
-  var lastCreate = null;   // {at, rows:[{code,name,password,status,message}]}
-  function createResultHtml(){
-    if(!lastCreate) return '';
-    var bad = lastCreate.rows.filter(function(r){ return r.status!=='ok'; }).length;
-    return '<div class="sy-sum"><div class="sy-pill sy-ok" style="flex:1 1 100%"><b>Kết quả tạo tài khoản lúc '+escapeHtml(lastCreate.at)+'</b>'+
-      '<span class="hint">Lưu lại mật khẩu ngay: đóng trang là không xem lại được.</span>'+
-      '<table style="width:100%;font-size:13px;margin-top:6px;border-collapse:collapse"><thead><tr><th align="left">Tên</th><th align="left">Mã đăng nhập</th><th align="left">Mật khẩu</th><th align="left">Kết quả</th></tr></thead><tbody>'+
-      lastCreate.rows.map(function(r){
-        return '<tr><td>'+escapeHtml(r.name)+'</td><td><b>'+escapeHtml(r.code)+'</b></td><td><code>'+escapeHtml(r.password||'—')+'</code></td><td>'+
-          (r.status==='ok' ? '<span class="sy-tag ok">đã tạo</span>' : '<span class="sy-tag bad">'+escapeHtml(r.message||r.status)+'</span>')+'</td></tr>';
-      }).join('')+'</tbody></table>'+
-      '<div class="row-actions" style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn-outline small" id="sy-res-csv">Tải file Excel (CSV)</button>'+
-      '<button type="button" class="btn-outline small" id="sy-res-copy">Sao chép</button><button type="button" class="btn-text" id="sy-res-hide">Ẩn kết quả</button></div>'+
-      (bad?'<p class="hint">Có '+bad+' mục chưa tạo được, xem cột Kết quả rồi sửa mã và tạo lại.</p>':'')+'</div></div>';
-  }
-  function resultCsv(){
-    return '\uFEFFHọ tên,Mã đăng nhập,Mật khẩu,Kết quả\n' + lastCreate.rows.map(function(r){
-      return [r.name, r.code, r.password||'', r.status==='ok'?'đã tạo':(r.message||r.status)].map(function(x){ return '"'+String(x).replace(/"/g,'""')+'"'; }).join(',');
-    }).join('\n');
-  }
-  function downloadResultCsv(){
-    var url = URL.createObjectURL(new Blob([resultCsv()], {type:'text/csv;charset=utf-8'}));
-    var a = document.createElement('a'); a.href = url; a.download = 'tai-khoan-hoc-sinh-'+todayStr()+'.csv';
-    document.body.appendChild(a); a.click(); a.remove(); setTimeout(function(){ URL.revokeObjectURL(url); }, 2000);
-  }
-  function wireCreateResult(box){
-    var c = qs('#sy-res-csv', box); if(c) c.addEventListener('click', downloadResultCsv);
-    var p = qs('#sy-res-copy', box); if(p) p.addEventListener('click', function(){
-      var txt = lastCreate.rows.map(function(r){ return r.name+'\t'+r.code+'\t'+(r.password||'')+'\t'+(r.status==='ok'?'đã tạo':(r.message||r.status)); }).join('\n');
-      if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(function(){ showToast('Đã sao chép'); }, function(){ prompt('Sao chép:', txt); });
-      else prompt('Sao chép:', txt);
-    });
-    var h = qs('#sy-res-hide', box); if(h) h.addEventListener('click', function(){
-      if(!confirm('Ẩn kết quả? Mật khẩu sẽ không xem lại được nữa.')) return;
-      lastCreate = null; renderSyncCenter();
-    });
-    var btn = qs('#sy-create', box);
-    if(btn) btn.addEventListener('click', function(){ createAccounts(box); });
-  }
-  function createAccounts(box){
-    var items = [];
-    qsa('.sy-mk', box).forEach(function(ck){
-      if(!ck.checked) return;
-      var i = Number(ck.dataset.i), ci = qs('.sy-code[data-i="'+i+'"]', box);
-      items.push({i:i, code:String((ci&&ci.value)||'').toUpperCase().replace(/[^A-Z0-9]/g,'')});
-    });
-    if(!items.length){ alert('Chưa tích em nào.'); return; }
-    var bad = items.filter(function(x){ return !/^[A-Z0-9]{3,20}$/.test(x.code); });
-    if(bad.length){ alert('Mã đăng nhập phải gồm 3–20 chữ/số không dấu, không có dấu cách.'); return; }
-    var codes = items.map(function(x){ return x.code; });
-    if(codes.some(function(c,k){ return codes.indexOf(c)!==k; })){ alert('Có hai em đang dùng cùng một mã. Hãy sửa lại cho khác nhau.'); return; }
-    var taken = portalRoster.filter(function(p){ return codes.indexOf(String(p.code||'').toUpperCase())>=0; });
-    if(taken.length){ alert('Mã '+taken[0].code+' đã có trên portal. Hãy đổi mã khác.'); return; }
-    if(!window.YY || !YY.sb || !YY.sb.functions){ alert('Chưa kết nối được Supabase.'); return; }
-    var list = items.map(function(x){ return {code:x.code, full_name:NONE_LIST[x.i].st.name}; });
-    if(!confirm('Tạo '+list.length+' tài khoản học sinh trên portal?\nMật khẩu ngẫu nhiên sẽ hiện một lần ở đầu mục này.')) return;
-    var btn = qs('#sy-create', box); btn.disabled = true; btn.textContent = 'Đang tạo…';
-    YY.sb.functions.invoke('create-students', {body:{students:list}}).then(function(res){
-      if(res.error){
-        var msg = res.error.message || 'Lỗi không rõ';
-        var ctx = res.error.context;
-        if(ctx && typeof ctx.json==='function') return ctx.json().then(function(j){ throw new Error((j&&j.error)||msg); }, function(){ throw new Error(msg); });
-        throw new Error(msg);
-      }
-      return res.data;
-    }).then(function(data){
-      var rows = (data.results||[]).map(function(r, k){
-        var src = NONE_LIST[items[k] ? items[k].i : -1];
-        if(r.status==='ok' && src){ src.st.portalId = r.id; src.st.portalCode = r.code; }
-        return {name:r.full_name, code:r.code, password:r.password, status:r.status, message:r.message};
-      });
-      var d = new Date();
-      lastCreate = {at: pad2(d.getHours())+':'+pad2(d.getMinutes())+' '+formatDate(todayStr()), rows:rows};
-      return saveClasses().then(function(){
-        try{ downloadResultCsv(); }catch(e){}
-        showToast('Đã tạo '+rows.filter(function(r){return r.status==='ok';}).length+'/'+rows.length+' tài khoản', 3500);
-        if(typeof window.reloadTeacher==='function') return window.reloadTeacher();
-        renderPortalLink();
-      });
-    }).catch(function(e){
-      btn.disabled = false; btn.textContent = 'Tạo tài khoản portal cho các em đã tích';
-      alert('Chưa tạo được: '+(e.message||e)+'\n\nNếu báo "Function not found" thì bạn chưa đưa Edge Function lên Supabase.');
-    });
-  }
-  window.__ddSetPortalClasses = function(list){ portalClasses = Array.isArray(list) ? list : []; try{ renderSyncCenter(); }catch(e){} };
+  // Portal (tab Lớp & học sinh) vừa ghi liên kết học sinh vào localStorage: nạp lại để sổ không ghi đè bằng bản cũ trong bộ nhớ
+  window.__ddReloadClasses = function(){ state.classes = safeGet('classes', state.classes); try{ renderPortalLink(); }catch(e){} try{ refreshDiemDanh(); }catch(e){} };
   window.__ddSetRoster = function(list){ portalRoster = Array.isArray(list) ? list : []; renderPortalLink(); };
 
   // ---------- Init ----------
@@ -5003,8 +4835,6 @@ function ddLoadScript(src){
 function ddPushRoster(){
   if(typeof window.__ddSetRoster === 'function')
     window.__ddSetRoster((state.students || []).map(s => ({ id: s.id, name: s.full_name, code: s.code })));
-  if(typeof window.__ddSetPortalClasses === 'function')
-    window.__ddSetPortalClasses((state.classes || []).map(c => ({ id: c.id, name: c.name, memberIds: (c.class_members || []).map(m => m.student_id) })));
 }
 function loadDD(){
   const host = document.getElementById('dd-host');
@@ -5459,6 +5289,226 @@ async function saveClass(id, patch){
   try{ await YY.updateClass(id, patch); await reloadTeacher(); }
   catch(e){ alert('Chưa lưu được lớp: ' + e.message + '\n(Đã chạy migration-dot4.sql chưa?)'); }
 }
+/* ---------------- ĐỒNG BỘ VỚI SỔ ĐIỂM DANH (liên kết tên, tạo tài khoản hàng loạt, đối chiếu lớp) ---------------- */
+let syLast = null;      // kết quả tạo tài khoản gần nhất (mật khẩu chỉ hiện một lần)
+let syNone = [];        // học sinh trong sổ chưa có tài khoản, cùng thứ tự với ô tích
+let syWired = false;
+const syNorm = (x) => String(x || '').toLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g, '').replace(/đ/g, 'd').replace(/\s+/g, ' ').trim();
+const syKey = (x) => syNorm(x).replace(/\s+/g, '');
+const syMatch = (p, st) => { const k = syKey(st.name); return !!k && (syKey(p.full_name) === k || syKey(p.code) === k); };
+const syPad = (n) => String(n).padStart(2, '0');
+const syToday = () => { const d = new Date(); return d.getFullYear() + '-' + syPad(d.getMonth() + 1) + '-' + syPad(d.getDate()); };
+function syBook(){
+  try{ const c = JSON.parse(localStorage.getItem('diemdanh_classes') || '[]'); return Array.isArray(c) ? c : []; }
+  catch(e){ return []; }
+}
+function syWrite(classes){
+  localStorage.setItem('diemdanh_classes', JSON.stringify(classes));
+  try{ window.dispatchEvent(new Event('dd-changed')); }catch(e){}
+  // nếu sổ đã mở trong phiên này thì nạp lại bản mới, tránh sổ ghi đè bằng dữ liệu cũ
+  if(typeof window.__ddReloadClasses === 'function'){ try{ window.__ddReloadClasses(); }catch(e){} }
+}
+function syLink(pairs){
+  const classes = syBook(); let n = 0;
+  pairs.forEach(({ sid, p }) => classes.forEach(c => (c.students || []).forEach(st => {
+    if(st.id === sid){ st.portalId = p.id; st.portalCode = p.code; n++; }
+  })));
+  syWrite(classes); return n;
+}
+function syNote(msg){
+  const n = $('#sy-note'); if(!n) return;
+  n.textContent = msg; clearTimeout(syNote.t); syNote.t = setTimeout(() => { n.textContent = ''; }, 5000);
+}
+function syTag(c){
+  const h = typeof c.hue === 'number' ? c.hue : null;
+  const st = h === null ? 'background:#EEF1F3;color:#44525A' : `background:hsl(${h},70%,92%);color:hsl(${h},60%,24%)`;
+  return `<span class="chip" style="${st}">${esc(c.name)}</span>`;
+}
+function syResultHtml(){
+  if(!syLast) return '';
+  const bad = syLast.rows.filter(r => r.status !== 'ok').length;
+  return `<div class="sy-sum"><div class="sy-pill sy-ok" style="flex:1 1 100%"><b>Kết quả tạo tài khoản lúc ${esc(syLast.at)}</b>
+    <span class="muted">Lưu lại mật khẩu ngay: đóng trang là không xem lại được.</span>
+    <div class="scroll"><table style="width:100%;font-size:13px;margin-top:6px"><thead><tr><th align="left">Tên</th><th align="left">Mã đăng nhập</th><th align="left">Mật khẩu</th><th align="left">Kết quả</th></tr></thead><tbody>${
+      syLast.rows.map(r => `<tr><td>${esc(r.name)}</td><td><b>${esc(r.code)}</b></td><td><code>${esc(r.password || '—')}</code></td><td>${
+        r.status === 'ok' ? '<span class="sy-tag ok">đã tạo</span>' : `<span class="sy-tag bad">${esc(r.message || r.status)}</span>`}</td></tr>`).join('')
+    }</tbody></table></div>
+    <div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn" id="sy-res-csv">Tải file Excel (CSV)</button><button type="button" class="btn" id="sy-res-copy">Sao chép</button><button type="button" class="btn" id="sy-res-hide">Ẩn kết quả</button></div>
+    ${bad ? `<p class="muted">Có ${bad} mục chưa tạo được, xem cột Kết quả, sửa mã rồi tạo lại.</p>` : ''}</div></div>`;
+}
+function syCsv(){
+  return '\uFEFFHọ tên,Mã đăng nhập,Mật khẩu,Kết quả\n' + syLast.rows.map(r =>
+    [r.name, r.code, r.password || '', r.status === 'ok' ? 'đã tạo' : (r.message || r.status)].map(x => '"' + String(x).replace(/"/g, '""') + '"').join(',')).join('\n');
+}
+function syDownload(){
+  const url = URL.createObjectURL(new Blob([syCsv()], { type: 'text/csv;charset=utf-8' }));
+  const a = document.createElement('a'); a.href = url; a.download = 'tai-khoan-hoc-sinh-' + syToday() + '.csv';
+  document.body.appendChild(a); a.click(); a.remove(); setTimeout(() => URL.revokeObjectURL(url), 2000);
+}
+function syCopyText(txt, done){
+  if(navigator.clipboard && navigator.clipboard.writeText) navigator.clipboard.writeText(txt).then(done, () => prompt('Sao chép:', txt));
+  else prompt('Sao chép:', txt);
+}
+function renderSync(force){
+  const box = $('#sy-body'); if(!box) return;
+  if(!syWired){ syWired = true; box.addEventListener('click', syClick); box.addEventListener('change', syChange); }
+  const ae = document.activeElement;
+  if(!force && ae && box.contains(ae) && /^(INPUT|SELECT)$/.test(ae.tagName)) return;   // đang gõ mã thì không vẽ lại
+  const book = syBook(), roster = state.students || [];
+  if(!book.length){
+    box.innerHTML = syResultHtml() + '<p class="muted">Chưa thấy dữ liệu sổ điểm danh trên trình duyệt này. Hãy dùng đúng trình duyệt đã điểm danh, hoặc mở mục Sổ điểm danh để tạo lớp và học sinh.</p>';
+    return;
+  }
+  const pById = {}; roster.forEach(p => { pById[p.id] = p; });
+  const rows = [], linked = {};
+  book.forEach(c => (c.students || []).forEach(st => {
+    if(st.leftAt) return;
+    rows.push({ c, st });
+    if(st.portalId && pById[st.portalId]) linked[st.portalId] = true;
+  }));
+  let okN = 0; const sure = [], dup = [], none = [];
+  rows.forEach(r => {
+    if(r.st.portalId && pById[r.st.portalId]){ okN++; return; }
+    const m = roster.filter(p => !linked[p.id] && syMatch(p, r.st));
+    if(m.length === 1) sure.push({ r, m: m[0] }); else if(m.length > 1) dup.push({ r, m }); else none.push(r);
+  });
+  // hai em trong sổ cùng khớp một tài khoản portal: không tự liên kết, để chọn tay
+  const claim = {}; sure.forEach(x => { claim[x.m.id] = (claim[x.m.id] || 0) + 1; });
+  const sureOk = sure.filter(x => claim[x.m.id] === 1);
+  sure.filter(x => claim[x.m.id] > 1).forEach(x => dup.push({ r: x.r, m: [x.m] }));
+  syNone = none;
+  const onlyPortal = roster.filter(p => !linked[p.id] && !rows.some(r => syMatch(p, r.st)));
+
+  const clsRows = [];
+  book.forEach(c => {
+    const act = (c.students || []).filter(st => !st.leftAt); if(!act.length) return;
+    const mine = {}; act.forEach(st => { if(st.portalId && pById[st.portalId]) mine[st.portalId] = st; });
+    let best = null, bestN = 0, tie = false;
+    (state.classes || []).forEach(pc => {
+      const ids = (pc.class_members || []).map(m => m.student_id);
+      const ov = ids.filter(id => mine[id]).length + (syKey(pc.name) === syKey(c.name) ? 1000 : 0);
+      if(ov > bestN){ best = pc; bestN = ov; tie = false; } else if(ov === bestN && ov > 0) tie = true;
+    });
+    if(!best || tie){ clsRows.push({ c, state: 'none', tie }); return; }
+    const ids = (best.class_members || []).map(m => m.student_id);
+    const inPortalOnly = ids.filter(id => !mine[id]).map(id => pById[id] ? pById[id].full_name : '(không rõ)');
+    const inSoOnly = act.filter(st => !(st.portalId && ids.indexOf(st.portalId) >= 0)).map(st => st.name);
+    clsRows.push({ c, pc: best, state: (!inPortalOnly.length && !inSoOnly.length) ? 'ok' : 'diff', inPortalOnly, inSoOnly });
+  });
+
+  const pill = (cls, n, label) => `<div class="sy-pill ${cls}"><b>${n}</b>${label}</div>`;
+  let h = `<div class="sy-sum">${pill('sy-ok', okN, 'học sinh đã liên kết')}${pill(sureOk.length ? 'sy-warn' : '', sureOk.length, 'khớp chắc, chờ liên kết')}${pill(dup.length ? 'sy-warn' : '', dup.length, 'nghi trùng, cần chọn tay')}${pill(none.length ? 'sy-bad' : '', none.length, 'chưa có tài khoản trên portal')}${pill('', onlyPortal.length, 'có trên portal, chưa có trong sổ')}</div>`;
+
+  if(sureOk.length){
+    h += '<div class="sy-h">Khớp chắc chắn (chưa liên kết)</div>' + sureOk.map(x =>
+      `<div class="sy-row">${syTag(x.r.c)}<b>${esc(x.r.st.name)}</b> ↔ ${esc(x.m.full_name)} <span class="muted">(${esc(x.m.code || '')})</span><span class="sy-tag warn">chờ liên kết</span></div>`).join('') +
+      `<div style="margin-top:8px"><button type="button" class="btn pri" id="sy-link-sure">Liên kết ${sureOk.length} em khớp chắc</button></div>`;
+  }
+  if(dup.length){
+    const opts = (x) => {
+      const first = x.m.map(p => p.id), rest = roster.filter(p => !linked[p.id] && first.indexOf(p.id) < 0);
+      const o = (p) => `<option value="${esc(p.id)}">${esc(p.full_name)}${p.code ? ' (' + esc(p.code) + ')' : ''}</option>`;
+      return x.m.map(o).join('') + (rest.length ? '<option disabled>──────</option>' + rest.map(o).join('') : '');
+    };
+    h += '<div class="sy-h">Nghi trùng, chọn đúng tài khoản</div>' + dup.map(x =>
+      `<div class="sy-row">${syTag(x.r.c)}<b>${esc(x.r.st.name)}</b> <select class="sy-pick" data-sid="${esc(x.r.st.id)}" style="width:auto;max-width:100%"><option value="">— chọn học sinh trên portal —</option>${opts(x)}</select></div>`).join('');
+  }
+  const used = {}; roster.forEach(p => { used[String(p.code || '').toUpperCase()] = true; });
+  const sugg = none.map(r => {
+    const base = syKey(r.st.name).toUpperCase().replace(/[^A-Z0-9]/g, '') || 'HS'; let c = base, k = 2;
+    while(used[c]){ c = base + k; k++; }
+    used[c] = true; return c;
+  });
+  if(none.length){
+    h += '<div class="sy-h">Chưa có tài khoản trên portal (cần tạo)</div>' + none.map((r, i) =>
+      `<div class="sy-row"><input type="checkbox" class="sy-mk" data-i="${i}" checked>${syTag(r.c)}<b>${esc(r.st.name)}</b> mã đăng nhập: <input type="text" class="sy-code" data-i="${i}" value="${esc(sugg[i])}" maxlength="20" style="width:11rem;text-transform:uppercase"></div>`).join('') +
+      `<div style="margin-top:8px;display:flex;gap:8px;flex-wrap:wrap"><button type="button" class="btn pri" id="sy-create">Tạo tài khoản portal cho các em đã tích</button><button type="button" class="btn" id="sy-copy">Sao chép danh sách</button></div>
+       <p class="muted">Mật khẩu được tạo ngẫu nhiên và chỉ hiện một lần sau khi tạo. Nên thử tích một em trước.</p>`;
+  }
+  h += '<div class="sy-h">Đối chiếu lớp</div>';
+  if(!clsRows.length) h += '<p class="muted">Chưa có lớp nào đang học trong sổ.</p>';
+  clsRows.forEach(r => {
+    const head = `${syTag(r.c)} `;
+    if(r.state === 'ok') h += `<div class="sy-row">${head}↔ ${esc(r.pc.name)} <span class="sy-tag ok">khớp thành viên</span></div>`;
+    else if(r.state === 'none') h += `<div class="sy-row">${head}<span class="sy-tag bad">${r.tie ? 'nhiều lớp portal giống nhau, cần chọn tay' : 'chưa thấy lớp tương ứng trên portal'}</span></div>`;
+    else h += `<div class="sy-row">${head}↔ ${esc(r.pc.name)} <span class="sy-tag warn">lệch thành viên</span>${
+      r.inSoOnly.length ? `<span class="muted">Chỉ ở sổ: ${r.inSoOnly.map(esc).join(', ')}</span>` : ''}${
+      r.inPortalOnly.length ? `<span class="muted">Chỉ ở portal: ${r.inPortalOnly.map(esc).join(', ')}</span>` : ''}</div>`;
+  });
+  box._sure = sureOk; box._sugg = sugg;
+  box.innerHTML = syResultHtml() + h;
+}
+function syChange(e){
+  const sel = e.target.closest && e.target.closest('.sy-pick'); if(!sel || !sel.value) return;
+  const p = (state.students || []).find(x => x.id === sel.value); if(!p) return;
+  syLink([{ sid: sel.dataset.sid, p }]);
+  syNote('Đã liên kết với ' + p.full_name); renderSync(true);
+}
+function syClick(e){
+  const b = e.target.closest && e.target.closest('button'); if(!b) return;
+  const box = $('#sy-body');
+  if(b.id === 'sy-link-sure'){
+    const n = syLink((box._sure || []).map(x => ({ sid: x.r.st.id, p: x.m })));
+    syNote('Đã liên kết ' + n + ' học sinh'); renderSync(true);
+  }else if(b.id === 'sy-create') syCreate(b);
+  else if(b.id === 'sy-copy'){
+    const txt = 'Mã gợi ý\tHọ tên\tLớp\n' + syNone.map((r, i) => {
+      const ci = box.querySelector(`.sy-code[data-i="${i}"]`);
+      return ((ci && ci.value) || (box._sugg || [])[i] || '').toUpperCase() + '\t' + r.st.name + '\t' + r.c.name;
+    }).join('\n');
+    syCopyText(txt, () => syNote('Đã sao chép ' + syNone.length + ' học sinh'));
+  }else if(b.id === 'sy-res-csv') syDownload();
+  else if(b.id === 'sy-res-copy' && syLast){
+    syCopyText(syLast.rows.map(r => r.name + '\t' + r.code + '\t' + (r.password || '') + '\t' + (r.status === 'ok' ? 'đã tạo' : (r.message || r.status))).join('\n'), () => syNote('Đã sao chép'));
+  }else if(b.id === 'sy-res-hide'){
+    if(!confirm('Ẩn kết quả? Mật khẩu sẽ không xem lại được nữa.')) return;
+    syLast = null; renderSync(true);
+  }
+}
+async function syCreate(btn){
+  const box = $('#sy-body'), items = [];
+  box.querySelectorAll('.sy-mk').forEach(ck => {
+    if(!ck.checked) return;
+    const i = Number(ck.dataset.i), ci = box.querySelector(`.sy-code[data-i="${i}"]`);
+    items.push({ i, code: String((ci && ci.value) || '').toUpperCase().replace(/[^A-Z0-9]/g, '') });
+  });
+  if(!items.length){ alert('Chưa tích em nào.'); return; }
+  if(items.some(x => !/^[A-Z0-9]{3,20}$/.test(x.code))){ alert('Mã đăng nhập phải gồm 3–20 chữ/số không dấu, không có dấu cách.'); return; }
+  const codes = items.map(x => x.code);
+  if(codes.some((c, k) => codes.indexOf(c) !== k)){ alert('Có hai em đang dùng cùng một mã. Hãy sửa lại cho khác nhau.'); return; }
+  const taken = (state.students || []).filter(p => codes.indexOf(String(p.code || '').toUpperCase()) >= 0);
+  if(taken.length){ alert('Mã ' + taken[0].code + ' đã có trên portal. Hãy đổi mã khác.'); return; }
+  if(!window.YY || !YY.sb || !YY.sb.functions){ alert('Chưa kết nối được Supabase.'); return; }
+  const list = items.map(x => ({ code: x.code, full_name: syNone[x.i].st.name }));
+  if(!confirm('Tạo ' + list.length + ' tài khoản học sinh trên portal?\nMật khẩu ngẫu nhiên sẽ hiện một lần ở đầu mục này.')) return;
+  btn.disabled = true; btn.textContent = 'Đang tạo…';
+  try{
+    const res = await YY.sb.functions.invoke('create-students', { body: { students: list } });
+    if(res.error){
+      let msg = res.error.message || 'Lỗi không rõ';
+      const ctx = res.error.context;
+      if(ctx && typeof ctx.json === 'function'){ try{ const j = await ctx.json(); if(j && j.error) msg = j.error; }catch(_e){} }
+      throw new Error(msg);
+    }
+    const data = res.data || {}, pairs = [];
+    const rows = (data.results || []).map((r, k) => {
+      const src = syNone[items[k] ? items[k].i : -1];
+      if(r.status === 'ok' && src) pairs.push({ sid: src.st.id, p: { id: r.id, code: r.code } });
+      return { name: r.full_name, code: r.code, password: r.password, status: r.status, message: r.message };
+    });
+    const d = new Date();
+    syLast = { at: syPad(d.getHours()) + ':' + syPad(d.getMinutes()) + ' ' + syToday().split('-').reverse().join('/'), rows };
+    if(pairs.length) syLink(pairs);
+    try{ syDownload(); }catch(_e){}
+    syNote('Đã tạo ' + rows.filter(r => r.status === 'ok').length + '/' + rows.length + ' tài khoản');
+    await reloadTeacher();
+    renderSync(true);
+  }catch(e){
+    btn.disabled = false; btn.textContent = 'Tạo tài khoản portal cho các em đã tích';
+    alert('Chưa tạo được: ' + (e.message || e) + '\n\nNếu báo "Function not found" thì bạn chưa đưa Edge Function create-students lên Supabase.');
+  }
+}
+
 function renderPeople(){
   $('#pp-classes').innerHTML = state.classes.map(c => `<div style="margin:.4rem 0">
     <b>${esc(c.name)}</b> <span class="chip c-gray">${c.kind === 'one_on_one' ? '1-1' : 'Nhóm'}</span>
@@ -5477,6 +5527,7 @@ function renderPeople(){
     <td style="width:8rem"><select onchange="saveProf('${s.id}',{gender:this.value||null})"><option value="">—</option><option value="female"${s.gender === 'female' ? ' selected' : ''}>Nữ</option><option value="male"${s.gender === 'male' ? ' selected' : ''}>Nam</option></select></td>
     <td><select onchange="addMember(this,'${s.id}')">${opts}</select></td>
     <td><button class="btn" onclick="openGift('${s.id}')">🎁 Tặng</button></td></tr>`).join('');
+  try{ renderSync(); }catch(e){ console.warn(e); }
 }
 $('#class-form').addEventListener('submit', async (ev) => {
   ev.preventDefault();
