@@ -216,6 +216,8 @@ const YY_CONFIG = {
     const { data: { session } } = await sb.auth.getSession();
     const row = { student_id: session.user.id, title: g.title, target_date: g.target_date || null, course: g.course || null,
       shared: !!g.shared, result: g.result || null, done_at: g.done_at || null };
+    // loại mục tiêu mới (migration-dot10.sql): chỉ gửi khi không phải kỳ thi, để bản cũ chưa chạy dot10 vẫn lưu được kỳ thi
+    if (g.kind && g.kind !== 'exam') { row.kind = g.kind; row.target_value = g.target_value ?? null; row.target_count = g.target_count ?? null; }
     if (g.id) return unwrap(await sb.from('student_goals').update(row).eq('id', g.id).select().single());
     return unwrap(await sb.from('student_goals').insert(row).select().single());
   };
