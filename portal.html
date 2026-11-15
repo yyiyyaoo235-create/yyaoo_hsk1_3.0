@@ -298,6 +298,7 @@
   /* học sinh: mascot + lời thoại */
   .mascot{display:flex;align-items:center;gap:1rem;margin:.8rem 0 .4rem}
   .mascot-fish{width:5.2rem;height:5.2rem;flex:none;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 14px rgba(20,128,143,.28);background:#D9F3F0;animation:swim 4.2s ease-in-out infinite}
+  .face-av{display:block;width:100%;height:100%;object-fit:cover;border-radius:50%}
   .mascot-fish.hop{animation:hop .9s ease-in-out 3}
   .speech{position:relative;background:#fff;border:1px solid var(--line);border-radius:16px;padding:.5rem .9rem;font-weight:700;font-size:.85rem}
   .speech::before{content:"";position:absolute;left:-.45rem;top:50%;width:.8rem;height:.8rem;background:#fff;border-left:1px solid var(--line);border-bottom:1px solid var(--line);transform:translateY(-50%) rotate(45deg)}
@@ -401,6 +402,7 @@
   .rank-card{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
   .rank-card .rk-fish{width:5.2rem;flex:none}
   .rank-card .rk-fish svg{width:100%;height:auto;display:block}
+  .rank-card .rk-fish img{width:100%;aspect-ratio:1;object-fit:cover;border-radius:50%;border:3px solid #fff;box-shadow:0 4px 14px rgba(20,128,143,.28);display:block}
   .rank-card .rk-main{flex:1;min-width:12rem}
   /* thanh tiến độ khóa học (Trang chủ học sinh): cá của em bơi trên dòng nước chia chặng */
   .pg-card{background:rgba(255,255,255,.92);border:1px solid var(--line);border-radius:18px;padding:.8rem 1rem .75rem;margin:.6rem 0;position:relative}
@@ -4844,7 +4846,7 @@ function renderMascot(rows, ev){
   }
   state.mascotMood = mood;
   $('#st-mascot').innerHTML = `
-    <div class="mascot-fish${party ? ' hop' : ''}">${fishSVG(mood, mascotOpts(rows, mood))}</div>
+    <div class="mascot-fish${party ? ' hop' : ''}">${faceHTML(mood, mascotOpts(rows, mood))}</div>
     <div class="speech">${msg}${rk ? `<div class="muted">${rk.emo} ${esc(rk.name)}</div>` : ''}</div>`;
   if(party) confetti($('#st-mascot .mascot-fish'));
 }
@@ -4950,9 +4952,24 @@ function lookOpts(rows){
   return o;
 }
 function mascotOpts(rows, mood){ const lo = lookOpts(rows); return mood === 'sleep' ? {acc:'lazy', bg:lo.bg} : lo; }
+/* ảnh đại diện của em: khi đã chọn ảnh thì mọi khung "cá của em" (logo, cá trò chuyện, hạng, danh sách bài) hiện ảnh đó */
+function myAvatar(){
+  const a = state.style && state.style.avatar;
+  return typeof a === 'string' && /^data:image\/(jpeg|png|webp);base64,[A-Za-z0-9+\/=]+$/.test(a) ? a : null;
+}
+function faceHTML(mood, opts){
+  const a = myAvatar();
+  return a ? `<img class="face-av" src="${a}" alt="">` : fishSVG(mood, opts);
+}
+function applyAvatarEverywhere(){
+  const lg = document.querySelector('#st-shell .brand .logo-img'), a = myAvatar();
+  if(lg){ lg.style.backgroundImage = a ? `url("${a}")` : ''; lg.style.backgroundSize = a ? 'cover' : ''; lg.style.backgroundPosition = a ? 'center' : ''; }
+  try{ refreshMascotFish(); }catch(e){}
+  try{ if(state.myRows){ renderRank(state.myRows); renderTasks(state.myRows); } }catch(e){}
+}
 function refreshMascotFish(){
   const el = $('#st-mascot .mascot-fish'); if(!el || !state.myRows) return;
-  el.innerHTML = fishSVG(state.mascotMood || 'normal', mascotOpts(state.myRows, state.mascotMood));
+  el.innerHTML = faceHTML(state.mascotMood || 'normal', mascotOpts(state.myRows, state.mascotMood));
   renderProgress();
 }
 function wardCard(it, look, pts){
@@ -5139,8 +5156,8 @@ function showBadgePop(list){
 }
 
 function miniFish(r){
-  if(r.status === 'pending_review') return `<div class="mini-fish">${fishSVG('happy', {still:true})}</div>`;
-  if(r.status === 'done')           return `<div class="mini-fish">${fishSVG(+r.percent >= HIGH_SCORE ? 'jump' : 'happy', {still:true})}</div>`;
+  if(r.status === 'pending_review') return `<div class="mini-fish">${faceHTML('happy', {still:true})}</div>`;
+  if(r.status === 'done')           return `<div class="mini-fish">${faceHTML(+r.percent >= HIGH_SCORE ? 'jump' : 'happy', {still:true})}</div>`;
   return '';
 }
 
@@ -5277,6 +5294,7 @@ async function _reloadStudentCore(){
   renderAlbum(rows);
   renderWardrobe(rows);
   renderRank(rows);
+  applyAvatarEverywhere();
   renderProgress();
   renderGoals();
   glAutoCheck();
@@ -5495,9 +5513,9 @@ function avatarFromFile(file, size = 192){
 async function avatarSave(val){
   const before = state.style || {};
   state.style = {...before, avatar: val};
-  renderAvatar(); renderProgress();
+  renderAvatar(); renderProgress(); applyAvatarEverywhere();
   try{ await YY.saveMyStyle(state.style); }
-  catch(e){ state.style = before; renderAvatar(); renderProgress(); alert('Chưa lưu được ảnh: ' + (e.message || e) + '\n(Đã chạy migration-dot8.sql trong Supabase chưa?)'); }
+  catch(e){ state.style = before; renderAvatar(); renderProgress(); applyAvatarEverywhere(); alert('Chưa lưu được ảnh: ' + (e.message || e) + '\n(Đã chạy migration-dot8.sql trong Supabase chưa?)'); }
 }
 async function avatarPick(inp){
   const f = inp.files && inp.files[0]; inp.value = ''; if(!f) return;
@@ -5898,7 +5916,7 @@ function renderRank(rows){
       <div class="bar" style="margin-top:.4rem"><i style="width:${pct}%"></i></div>
       <div class="muted">${done}/${RANK_AT[nextI]} bài</div>`;
   }
-  $('#st-rank').innerHTML = `<div class="rk-fish">${fishSVG('happy', {...lookOpts(rows), still:true})}</div><div class="rk-main">${main}</div>`;
+  $('#st-rank').innerHTML = `<div class="rk-fish">${faceHTML('happy', {...lookOpts(rows), still:true})}</div><div class="rk-main">${main}</div>`;
 }
 
 function openQuiz(id, url){ location.href = url + (url.includes('?') ? '&' : '?') + 'a=' + id; }
