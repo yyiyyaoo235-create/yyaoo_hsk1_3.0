@@ -833,7 +833,7 @@
           <tbody id="tb-pending"></tbody></table></div>
       </div>
       <div class="grid2">
-        <div class="card"><h2>Cần chú ý</h2><div id="hm-attn"></div></div>
+        <div class="card"><div class="topbar" style="margin-bottom:.5rem"><h2 style="margin:0">Cần chú ý</h2><button class="btn ghost" type="button" onclick="openRemind()">📋 Nhắc bài</button></div><div id="hm-attn"></div></div>
         <div class="card"><h2>Lớp học</h2><div id="hm-classes"></div></div>
       </div>
 
@@ -851,6 +851,7 @@
     <div id="tab-monitor" class="card hidden">
       <div class="topbar" style="margin-bottom:.5rem">
         <h2 style="margin:0">Danh sách bài</h2>
+        <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><button class="btn ghost" type="button" onclick="openRemind()">📋 Nhắc bài</button>
         <select id="flt-status" style="width:auto">
           <option value="">Tất cả trạng thái</option>
           <option value="pending_review">Chờ chấm</option>
@@ -858,7 +859,7 @@
           <option value="overdue">Quá hạn</option>
           <option value="todo">Chưa làm</option>
           <option value="done">Hoàn thành</option>
-        </select>
+        </select></div>
       </div>
       <div class="scroll"><table>
         <thead><tr><th>Học sinh</th><th>Lớp</th><th>Bài</th><th>Loại</th><th>Hạn nộp</th><th>Điểm</th><th>Trạng thái</th><th></th></tr></thead>
@@ -7449,6 +7450,91 @@ async function openGrade(id){
   $('#modal').classList.remove('hidden');
 }
 function closeModal(){ $('#modal').classList.add('hidden'); }
+
+/* ---------------- NHẮC BÀI: gom bài chưa nộp thành tin nhắn dán Zalo ---------------- */
+const RM = { scope: 'all', od: true, redo: true, soon: false, short: true, link: true };
+const rmGiven = (n) => { const p = String(n || '').trim().split(/\s+/); return p[p.length - 1] || ''; };
+const rmDate = (d) => { if(!d) return ''; const x = new Date(d); return x.getDate() + '/' + (x.getMonth() + 1); };
+function rmRows(){
+  const now = new Date();
+  let list = state.rows.filter(r => !(r.open_at && new Date(r.open_at) > now));   // bài chưa mở thì chưa nhắc
+  if(RM.scope.startsWith('c:')){
+    const c = state.classes.find(x => x.id === RM.scope.slice(2));
+    const ids = new Set(((c && c.class_members) || []).map(m => m.student_id));
+    list = list.filter(r => ids.has(r.student_id));
+  }else if(RM.scope.startsWith('s:')){
+    list = list.filter(r => r.student_id === RM.scope.slice(2));
+  }
+  return list.filter(r => (RM.od && r.status === 'overdue') || (RM.redo && r.status === 'needs_redo') || (RM.soon && r.status === 'todo'));
+}
+function rmBuild(){
+  const rows = rmRows();
+  if(!rows.length) return '';
+  const rank = { overdue: 0, needs_redo: 1, todo: 2 };
+  const by = new Map();
+  rows.forEach(r => { if(!by.has(r.student_id)) by.set(r.student_id, { name: r.full_name, items: [] }); by.get(r.student_id).items.push(r); });
+  const gcount = {};
+  by.forEach(o => { const g = rmGiven(o.name); gcount[g] = (gcount[g] || 0) + 1; });
+  const nameOf = (o) => !RM.short || gcount[rmGiven(o.name)] > 1 ? o.name : rmGiven(o.name);   // trùng tên gọi thì dùng họ tên đầy đủ
+  const line = (r) => {
+    const tag = r.status === 'overdue' ? ' ⏰ quá hạn' : r.status === 'needs_redo' ? ' 🔁 làm lại' : '';
+    const due = r.due_at ? ' (hạn ' + rmDate(r.due_at) + ')' : '';
+    return '• ' + r.title + (r.lesson ? ' · ' + r.lesson : '') + due + tag;
+  };
+  const link = RM.link ? '\n\nVào làm bài tại: ' + location.origin + location.pathname : '';
+  const single = RM.scope.startsWith('s:');
+  const groups = [...by.values()].map(o => ({ o, items: o.items.sort((a, b) => rank[a.status] - rank[b.status]) }))
+    .sort((a, b) => rank[a.items[0].status] - rank[b.items[0].status] || nameOf(a.o).localeCompare(nameOf(b.o), 'vi'));
+  if(single){
+    const g = groups[0];
+    return 'Chào em ' + nameOf(g.o) + ' 👋\nCô nhắc em còn ' + g.items.length + ' bài cần hoàn thành nhé:\n' + g.items.map(line).join('\n') + link + '\nEm có khó khăn gì cứ nhắn cô, cô hỗ trợ ngay 💪';
+  }
+  const cls = RM.scope.startsWith('c:') ? (state.classes.find(x => x.id === RM.scope.slice(2)) || {}).name : '';
+  const head = '📢 NHẮC BÀI' + (cls ? ' – ' + cls : '') + ' (' + rmDate(new Date()) + ')\nCác em còn bài cần hoàn thành:\n';
+  return head + '\n' + groups.map(g => '▸ ' + nameOf(g.o) + '\n' + g.items.map(line).join('\n')).join('\n\n') + link + '\n\nEm nào gặp khó khăn cứ nhắn cô nhé. Cô cảm ơn các em 💪';
+}
+function openRemind(){
+  const f = $('#flt-class') && $('#flt-class').value;
+  RM.scope = f ? 'c:' + f : (state.classes.length ? 'c:' + state.classes[0].id : 'all');
+  const stu = (state.students || []).filter(p => p.active !== false).sort((a, b) => String(a.full_name).localeCompare(String(b.full_name), 'vi'));
+  const opts = '<option value="all">Tất cả học sinh</option>'
+    + (state.classes.length ? '<optgroup label="Theo lớp (dán vào nhóm Zalo)">' + state.classes.map(c => `<option value="c:${c.id}">${esc(c.name)}</option>`).join('') + '</optgroup>' : '')
+    + (stu.length ? '<optgroup label="Từng học sinh (nhắn riêng)">' + stu.map(p => `<option value="s:${p.id}">${esc(p.full_name)} (${esc(p.code)})</option>`).join('') + '</optgroup>' : '');
+  $('#modal-body').innerHTML = `
+    <div class="topbar"><h2 style="margin:0">📋 Copy tin nhắn nhắc bài</h2><button class="btn" type="button" onclick="closeModal()">Đóng</button></div>
+    <div class="row" style="margin-top:.6rem"><div><label>Gửi cho</label><select id="rm-scope">${opts}</select></div></div>
+    <div class="checks" style="margin:.7rem 0">
+      <label><input type="checkbox" id="rm-od" ${RM.od ? 'checked' : ''}> Quá hạn</label>
+      <label><input type="checkbox" id="rm-redo" ${RM.redo ? 'checked' : ''}> Cần làm lại</label>
+      <label><input type="checkbox" id="rm-soon" ${RM.soon ? 'checked' : ''}> Chưa làm (chưa tới hạn)</label>
+      <label><input type="checkbox" id="rm-short" ${RM.short ? 'checked' : ''}> Gọi tên (bỏ họ)</label>
+      <label><input type="checkbox" id="rm-link" ${RM.link ? 'checked' : ''}> Kèm link vào web</label>
+    </div>
+    <textarea id="rm-text" rows="12" style="font-size:.9rem;line-height:1.5"></textarea>
+    <div class="muted" id="rm-note" style="margin:.3rem 0 .6rem"></div>
+    <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><button class="btn pri" type="button" id="rm-copy" onclick="copyRemind()">📋 Copy tin nhắn</button>
+      <span class="muted">Sửa trực tiếp trong khung nếu muốn, rồi bấm Copy. Đổi lựa chọn phía trên sẽ soạn lại từ đầu.</span></div>`;
+  $('#rm-scope').value = RM.scope;
+  const again = () => { RM.scope = $('#rm-scope').value; RM.od = $('#rm-od').checked; RM.redo = $('#rm-redo').checked; RM.soon = $('#rm-soon').checked; RM.short = $('#rm-short').checked; RM.link = $('#rm-link').checked; rmRender(); };
+  ['#rm-scope', '#rm-od', '#rm-redo', '#rm-soon', '#rm-short', '#rm-link'].forEach(id => $(id).addEventListener('change', again));
+  rmRender();
+  $('#modal').classList.remove('hidden');
+}
+function rmRender(){
+  const t = rmBuild();
+  $('#rm-text').value = t || 'Hiện không có bài nào cần nhắc ✨';
+  $('#rm-copy').disabled = !t;
+  const n = new Set(rmRows().map(r => r.student_id)).size;
+  $('#rm-note').textContent = t ? n + ' học sinh trong tin nhắn.' : 'Không có học sinh nào khớp với lựa chọn này.';
+  $('#rm-copy').textContent = '📋 Copy tin nhắn';
+}
+async function copyRemind(){
+  const ta = $('#rm-text'), t = ta.value;
+  try{ await navigator.clipboard.writeText(t); }
+  catch(_e){ ta.focus(); ta.select(); try{ document.execCommand('copy'); }catch(__e){ prompt('Sao chép nội dung này:', t); return; } }
+  $('#rm-copy').textContent = '✓ Đã copy — dán vào Zalo nhé';
+}
+
 async function saveGrade(id, autoCorrect, autoTotal, manualMax, status){
   const m = $('#g-manual') ? Math.min(+$('#g-manual').value || 0, manualMax) : 0;
   try{
