@@ -451,6 +451,8 @@
   .pg-tip b{display:block;font-size:.84rem}
   .pg-tip .zh{font-family:KaiTi,'楷体','STKaiti',serif;font-size:.95rem}
   .pg-tip .st-ok{color:#9be7bd} .pg-tip .st-now{color:#ffe08a} .pg-tip .st-no{color:#b8c9d0}
+  .gl-link{display:flex;align-items:center;justify-content:space-between;gap:.6rem;width:100%;margin:.6rem 0;padding:.7rem 1rem;border:1px solid var(--line);border-radius:16px;background:rgba(255,255,255,.88);font:inherit;font-weight:800;color:var(--ink);cursor:pointer;text-align:left}
+  .gl-link span{color:var(--pink);font-size:.85rem;white-space:nowrap}
   .gl-card{margin:.6rem 0}
   .gl-head{display:flex;align-items:center;gap:.6rem;flex-wrap:wrap;justify-content:space-between}
   .gl-head b{font-size:1.05rem}
@@ -711,6 +713,7 @@
     <button class="nav-i on" data-st="home" data-tip="Trang chủ"><span class="ico">🏠</span><span class="lbl">Trang chủ</span></button>
     <button class="nav-i" data-st="tasks" data-tip="Bài của tôi"><span class="ico">📝</span><span class="lbl">Bài của tôi</span><span class="badge hidden" id="st-bd-tasks"></span></button>
     <button class="nav-i" data-st="practice" data-tip="Luyện tập"><span class="ico">🧩</span><span class="lbl">Luyện tập</span></button>
+    <button class="nav-i" data-st="goals" data-tip="Mục tiêu"><span class="ico">🎯</span><span class="lbl">Mục tiêu</span></button>
     <button class="nav-i" data-st="fish" data-tip="Cá của tôi"><span class="ico">🎀</span><span class="lbl">Cá của tôi</span></button>
     <button class="nav-i" data-st="achieve" data-tip="Thành tích"><span class="ico">🏅</span><span class="lbl">Thành tích</span></button>
     <div class="side-foot"><div class="muted" id="st-sbname"></div><button class="foot-btn" onclick="changeMyPw()" data-tip="Đổi mật khẩu"><span class="ico">🔑</span><span class="lbl">Đổi mật khẩu</span></button><button class="foot-btn" onclick="doLogout()" data-tip="Đăng xuất"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="lbl">Đăng xuất</span></button></div>
@@ -729,7 +732,7 @@
     <div id="stab-home">
       <div class="mascot" id="st-mascot"></div>
       <div id="st-progress"></div>
-      <div id="st-goal"></div>
+      <div id="st-goal-link"></div>
       <div class="streak-row" id="st-streak"></div>
       <div class="todo-h"><h2>✅ Việc cần làm hôm nay</h2></div>
       <div id="st-todo"></div>
@@ -745,6 +748,9 @@
     </div>
 
     <!-- luyện tập -->
+    <!-- mục tiêu -->
+    <div id="stab-goals" class="hidden"><div id="st-goal"></div></div>
+
     <div id="stab-practice" class="hidden">
       <div class="sec-title"><h2>🧩 Luyện tập hằng ngày</h2><span class="chip c-yellow" id="st-prac-n"></span></div>
       <div id="st-prac-class" style="margin:.2rem 0 .6rem"></div>
@@ -5301,7 +5307,7 @@ function showWelcome(){
   }catch(e){}
 }
 /* ===== khung học sinh: các trang + bộ lọc bài ===== */
-const ST_TABS = {home:'', tasks:'Bài của tôi', practice:'Luyện tập', fish:'Cá của tôi', achieve:'Thành tích'};
+const ST_TABS = {home:'', tasks:'Bài của tôi', practice:'Luyện tập', goals:'Mục tiêu của mình', fish:'Cá của tôi', achieve:'Thành tích'};
 const OPEN_ST = ['todo', 'overdue', 'needs_redo'];
 const isLockedRow = (r) => r.open_at && new Date(r.open_at).getTime() > Date.now();
 function stGo(tab, keep){
@@ -5636,6 +5642,7 @@ function renderGoals(){
   const el = $('#st-goal'); if(!el) return;
   const list = (state.goals || []).slice().sort((a, b) => glRank(a) - glRank(b) || String(a.target_date || '9').localeCompare(String(b.target_date || '9')) || String(a.created_at || '').localeCompare(String(b.created_at || '')));
   const active = list.filter(g => glRank(g) === 0), rest = list.filter(g => glRank(g) === 1), done = list.filter(g => glRank(g) === 2).slice(-3);
+  const lk = $('#st-goal-link'); if(lk) lk.innerHTML = `<button class="gl-link" onclick="stGo('goals')"><b>🎯 Mục tiêu của mình${active.length ? ' · ' + active.length + ' đang chạy' : ''}</b><span>${active.length ? 'Xem' : 'Đặt mục tiêu'} →</span></button>`;
   const f = state.goalForm, win = (state.glCelebrate || []).map(t => `<div class="gl-win">${esc(t)}</div>`).join('');
   el.innerHTML = `<div class="card gl-card"><div class="gl-head"><b>🎯 Mục tiêu của mình</b>${!f && active.length < GL_MAX ? '<button class="btn pri" onclick="glOpen()">＋ Đặt mục tiêu</button>' : ''}</div>
     ${win}${list.length || f ? '' : '<div class="muted gl-empty">Bạn muốn đạt điều gì? Đặt ngày thi, số ngày luyện mỗi tuần, điểm cao hay bài cần học xong. Đạt mục tiêu cá sẽ thưởng bạn nhé!</div>'}
