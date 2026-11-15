@@ -471,8 +471,19 @@
   .gl-form input[type=text],.gl-form input[type=date],.gl-form select{width:100%;margin-top:.2rem;padding:.45rem .6rem;border:1px solid var(--line);border-radius:10px;font:inherit;background:#fff;box-sizing:border-box}
   .gl-radio{display:flex;gap:.5rem;flex-wrap:wrap;margin-top:.25rem}
   .gl-radio label{flex:1 1 9rem;display:flex;align-items:flex-start;gap:.4rem;padding:.5rem .6rem;border:1.5px solid var(--line);border-radius:12px;background:#fff;color:var(--ink);cursor:pointer;font-size:.8rem}
+  .gl-radio input{width:auto!important;flex:none;margin:.2rem 0 0!important}
+  .gl-radio label>span{flex:1;min-width:0}
   .gl-radio label small{display:block;font-weight:600;color:var(--muted)}
   .gl-radio input:checked + span b{color:var(--pink)}
+  .gl-kinds{display:flex;gap:.4rem;flex-wrap:wrap}
+  .gl-k{flex:1 1 8rem;border:1.5px solid var(--line);background:#fff;border-radius:12px;padding:.45rem .5rem;font:inherit;font-size:.78rem;font-weight:800;cursor:pointer;color:var(--ink);text-align:left}
+  .gl-k small{display:block;font-weight:600;color:var(--muted)}
+  .gl-k.on{border-color:var(--pink);background:var(--pink-soft)}
+  .gl-bar{margin-top:.4rem}
+  .gl-win{background:linear-gradient(90deg,#fff0c9,#ffe3ea);border-radius:14px;padding:.55rem .8rem;font-weight:800;margin:.6rem 0 0;font-size:.88rem}
+  .gl-row.gl-done{opacity:.85}
+  .gl-cd.ok{background:var(--green-soft);color:var(--green)}
+  .gl-sub{margin:.9rem 0 0;font-size:.78rem;font-weight:800;color:var(--muted)}
   .av-card{display:flex;align-items:center;gap:1rem;flex-wrap:wrap}
   .av-prev{width:5rem;height:5rem;flex:none;border-radius:50%;overflow:hidden;border:3px solid #fff;box-shadow:0 4px 14px rgba(20,128,143,.28);background:#D9F3F0}
   .av-prev svg,.av-prev img{display:block;width:100%;height:100%;object-fit:cover}
@@ -4889,7 +4900,7 @@ const SHOP = [
   {key:'bg-sky',    slot:'bg', name:'Nền trời',     color:'#DCEBFF', cost:3},
   {key:'bg-peach',  slot:'bg', name:'Nền đào',      color:'#FFE3C7', cost:3}
 ];
-const earnedPoints = (rows) => doneRows(rows).reduce((n, r) => n + stickersFor(r).reduce((m, x) => m + (x.rare ? POINT_RARE : 1), 0), 0);
+const earnedPoints = (rows) => doneRows(rows).reduce((n, r) => n + stickersFor(r).reduce((m, x) => m + (x.rare ? POINT_RARE : 1), 0), 0) + glBonus();
 const spentPoints = () => (state.items || []).reduce((n, i) => n + (+i.cost || 0), 0);
 function wardItems(rows){
   const done = doneRows(rows).length, names = collNames(rows), rare = new Set();
@@ -5034,7 +5045,8 @@ function badgeStats(rows){
     bestA: st.best, bestW: st.bestW,
     bestD: calcDayStreak(state.practice).best, practices: (state.practice || []).length,
     colProps: collDone('props', rows), colOcc: collDone('occ', rows),
-    stagesDone: stageCounts().stagesDone, coursesDone: stageCounts().coursesDone
+    stagesDone: stageCounts().stagesDone, coursesDone: stageCounts().coursesDone,
+    goalsDone: glStats().goalsDone, goalWeeks: glStats().goalWeeks
   };
 }
 const EXTRA_BADGES = [
@@ -5068,7 +5080,7 @@ function rankBadges(){
     hint: `Hoàn thành ${RANK_AT[i]} bài`, test: c => c.done >= RANK_AT[i]
   }));
 }
-const allBadges = () => [...BASE_BADGES, ...rankBadges(), ...EXTRA_BADGES, ...DAY_BADGES, ...STAGE_BADGES, ...COLL_BADGES, ...giftBadges()];
+const allBadges = () => [...BASE_BADGES, ...rankBadges(), ...EXTRA_BADGES, ...DAY_BADGES, ...STAGE_BADGES, ...GOAL_BADGES, ...COLL_BADGES, ...giftBadges()];
 const badgeFish = (b, o = {}) => emblemFish(b, o);
 function renderBadges(rows){
   const c = badgeStats(rows), L = allBadges(), got = L.filter(b => b.test(c));
@@ -5248,6 +5260,7 @@ async function _reloadStudentCore(){
   renderRank(rows);
   renderProgress();
   renderGoals();
+  glAutoCheck();
   renderCal();
   const gotBadges = renderBadges(rows), freshBadges = newBadges(gotBadges);
   let tab = state.stTab; try{ tab = tab || sessionStorage.getItem('yy_st_tab'); }catch(e){}
@@ -5474,13 +5487,45 @@ async function avatarPick(inp){
 }
 function avatarClear(){ avatarSave(null); }
 
-/* ===== mục tiêu & ngày thi của em: mỗi mục tự chọn "chia sẻ với cô" hoặc "chỉ mình biết" ===== */
+/* ===== mục tiêu của em: thi · luyện đủ ngày mỗi tuần · đạt điểm cao · học xong bài trước hạn.
+   Mỗi mục tiêu tự chọn "chia sẻ với cô" hoặc "chỉ mình biết". Mục tiêu điểm cao và học xong bài tự được tính khi đạt. ===== */
 const GL_MAX = 3;
-const glOver = g => (g.done_at || (g.target_date && dnum(g.target_date) < dnum(todayVN()))) ? 1 : 0;   // đã qua: xếp cuối
+const GL_KINDS = {
+  exam:          {ico:'🎓', name:'Ngày thi',        sub:'Đếm ngược tới kỳ thi'},
+  practice_week: {ico:'🔥', name:'Luyện mỗi tuần',  sub:'Luyện đủ số ngày mỗi tuần'},
+  score:         {ico:'🎯', name:'Điểm cao',        sub:'Đạt điểm cao ở vài bài'},
+  lesson_by:     {ico:'🚩', name:'Học xong bài',    sub:'Xong một bài trước hạn'}
+};
+const glKind = g => g.kind || 'exam';
 const glDays = g => dnum(g.target_date) - dnum(todayVN());
 const glDate = iso => { const p = String(iso || '').split('-'); return p.length < 3 ? '' : p[2] + '/' + p[1] + '/' + p[0]; };
-function glNext(course){   // mục tiêu sắp tới gắn với cấp này
-  return (state.goals || []).filter(g => g.course === course && g.target_date && !g.done_at && glDays(g) >= 0).sort((a, b) => glDays(a) - glDays(b))[0];
+const glRank = g => g.done_at ? 2 : (g.target_date && glKind(g) !== 'practice_week' && glDays(g) < 0 ? 1 : 0);   // 0 đang chạy · 1 quá hạn · 2 đã xong
+const glWk = d => Math.floor((d + 3) / 7);   // số thứ tự tuần, thứ Hai bắt đầu
+const glMade = g => dnum(new Date(g.created_at || Date.now()).toLocaleDateString('en-CA', {timeZone: VN_TZ}));
+function glNext(course){   // kỳ thi sắp tới gắn với cấp này
+  return (state.goals || []).filter(g => glKind(g) === 'exam' && g.course === course && g.target_date && !g.done_at && glDays(g) >= 0).sort((a, b) => glDays(a) - glDays(b))[0];
+}
+function glProgress(g){
+  const k = glKind(g), T = +g.target_value || 0;
+  if(k === 'practice_week'){
+    const per = {}, since = glMade(g), now = glWk(dnum(todayVN()));
+    (state.practice || []).forEach(p => { const d = dnum(p.day); if(d >= since) per[glWk(d)] = (per[glWk(d)] || 0) + 1; });
+    const cur = per[now] || 0, weeks = Object.values(per).filter(n => n >= T).length;
+    return {pct: Math.min(1, cur / (T || 1)), box: `${cur}/${T}`, unit: 'ngày tuần này', cur, weeks, ok: false, weekOk: cur >= T,
+      text: cur >= T ? 'Tuần này bạn đạt rồi! 🎉' : `Còn ${T - cur} ngày luyện nữa là đạt tuần này!` + (weeks ? ` (Đã đạt ${weeks} tuần)` : '')};
+  }
+  if(k === 'score'){
+    const N = +g.target_count || 1, since = new Date(g.created_at || 0);
+    const cnt = doneRows(state.myRows || []).filter(r => r.submitted_at && new Date(r.submitted_at) >= since && +r.percent >= T).length;
+    return {pct: Math.min(1, cnt / N), box: `${Math.min(cnt, N)}/${N}`, unit: 'bài đạt', ok: cnt >= N,
+      text: cnt >= N ? 'Bạn đạt mục tiêu rồi!' : `Còn ${N - cnt} bài đạt từ ${T}% nữa thôi!`};
+  }
+  if(k === 'lesson_by'){
+    const o = myCourseLevels().find(x => x.course === g.course), n = o ? o.n : 0, ok = n > T, d = g.target_date ? glDays(g) : null;
+    return {pct: ok ? 1 : Math.max(0, Math.min(1, (n - 1) / (T || 1))), box: ok ? '✓' : d !== null && d >= 0 ? d : '—', unit: ok ? 'đã xong' : 'ngày', ok,
+      text: ok ? `Bạn đã học xong Bài ${T}!` : d !== null && d < 0 ? 'Lần này chưa kịp hạn, không sao! Bấm ✏️ để đặt hạn mới nhé.' : (n ? `Đang ở Bài ${n}, còn ${T - n + 1} bài nữa là xong Bài ${T}.` : `Khi lớp vào Bài 1, bạn bắt đầu nhé!`)};
+  }
+  return {pct: 0, ok: false};
 }
 function glForecast(g){
   const o = myCourseLevels().find(x => x.course === g.course), cfg = o && COURSE_PATH[o.course], days = glDays(g);
@@ -5494,41 +5539,117 @@ function glForecast(g){
     ? `Còn ${left} bài, nhịp học hiện tại khoảng ${Math.max(1, Math.round(pace))} ngày/bài, bạn kịp rồi, cố lên! 💪`
     : `Còn ${left} bài mà chỉ ${days} ngày. Bạn thử luyện thêm mỗi tuần hoặc hỏi cô để cùng lên kế hoạch nhé.`;
 }
-function renderGoals(){
-  const el = $('#st-goal'); if(!el) return;
-  const list = (state.goals || []).slice().sort((a, b) => glOver(a) - glOver(b) || String(a.target_date || '9').localeCompare(String(b.target_date || '9')));
-  const f = state.goalForm, courses = myCourseLevels().map(o => o.course);
-  const rows = list.map(g => {
-    const d = g.target_date ? glDays(g) : null, past = d !== null && d < 0;
-    const cd = d === null ? '' : g.done_at || past ? '<div class="gl-cd past">Đã qua<b>✓</b></div>' : `<div class="gl-cd${d <= 14 ? ' soon' : ''}">còn<b>${d}</b>ngày</div>`;
-    const fc = !g.done_at && !past ? glForecast(g) : '';
-    const res = g.result ? `<div class="gl-fc">Kết quả: ${esc(g.result)} 🎉</div>` : (past && !g.done_at ? `<div class="gl-fc">Ngày thi đã qua, bạn thi thế nào rồi? <button class="link" onclick="glResult('${g.id}')">Nhập kết quả</button></div>` : '');
-    return `<div class="gl-row"><div class="gl-main"><b>${g.course ? '🎓' : '🎯'} ${esc(g.title)}</b><span class="muted">${g.target_date ? 'Ngày thi: ' + glDate(g.target_date) : ''}</span>${fc ? `<div class="gl-fc">${fc}</div>` : ''}${res}</div>${cd}
-      <div class="gl-act"><button class="gl-share${g.shared ? ' on' : ''}" onclick="glToggleShare('${g.id}')" title="Bấm để đổi">${g.shared ? '👩‍🏫 Cô xem được' : '🔒 Chỉ mình bạn'}</button>
-        <button class="btn" onclick="glOpen('${g.id}')">✏️</button><button class="btn" onclick="glDel('${g.id}')">🗑</button></div></div>`;
-  }).join('');
-  const form = !f ? '' : `<div class="gl-form">
-      <label>Tên mục tiêu<input type="text" id="gl-title" maxlength="60" placeholder="Ví dụ: Thi HSK1" value="${esc(f.title || '')}"></label>
-      <label>Ngày thi<input type="date" id="gl-date" value="${esc(f.target_date || '')}"></label>
-      ${courses.length ? `<label>Ôn cho cấp (để cá tính nhịp học giúp bạn)<select id="gl-course" onchange="glCourseHint(this.value)"><option value="">Không gắn với cấp nào</option>${courses.map(c => `<option value="${esc(c)}"${f.course === c ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select></label>` : ''}
+/* thưởng: mục tiêu tự kiểm chứng được = +3 điểm đồ cho cá; mỗi tuần luyện đủ ngày = +1 điểm; thêm huy hiệu */
+function glStats(){
+  const L = state.goals || [];
+  return {goalsDone: L.filter(g => g.done_at && glKind(g) !== 'exam').length,
+          goalWeeks: L.filter(g => glKind(g) === 'practice_week').reduce((n, g) => n + (glProgress(g).weeks || 0), 0)};
+}
+const glBonus = () => { try{ const t = glStats(); return t.goalsDone * 3 + t.goalWeeks; }catch(e){ return 0; } };
+const GOAL_BADGES = [
+  {id:'goal1',  name:'Cá giữ lời hứa',  hint:'Đạt một mục tiêu do chính bạn đặt',   emo:'🤞', mood:'happy', bg:'#E3F6D8', ring:'#8CCB6B', test:c => c.goalsDone >= 1},
+  {id:'goal3',  name:'Cá nói là làm',   hint:'Đạt 3 mục tiêu do chính bạn đặt',     emo:'🏆', mood:'jump',  bg:'#FFF1BF', ring:'#E8A93A', test:c => c.goalsDone >= 3},
+  {id:'goalwk', name:'Cá đều tay',      hint:'Một tuần luyện đủ số ngày bạn đặt',   emo:'📆', mood:'happy', bg:'#FFE3C7', ring:'#FF9F43', test:c => c.goalWeeks >= 1},
+  {id:'goalwk4',name:'Cá kiên định',    hint:'4 tuần luyện đủ số ngày bạn đặt',     emo:'🔥', mood:'jump',  bg:'#FFD0D6', ring:'#E8456B', test:c => c.goalWeeks >= 4}
+];
+async function glAutoCheck(){
+  if(state._glBusy || !state.goals) return;
+  const todo = state.goals.filter(g => !g.done_at && ['score', 'lesson_by'].includes(glKind(g)) && glProgress(g).ok);
+  const wk = state.goals.filter(g => glKind(g) === 'practice_week' && glProgress(g).weekOk).filter(g => {
+    const key = 'yy_gl_wk_' + g.id + '_' + glWk(dnum(todayVN())); let seen = false;
+    try{ seen = !!localStorage.getItem(key); if(!seen) localStorage.setItem(key, '1'); }catch(e){}
+    return !seen;
+  });
+  if(!todo.length && !wk.length) return;
+  state._glBusy = true;
+  try{
+    for(const g of todo) await YY.saveMyGoal({...g, done_at: new Date().toISOString()});
+    state.glCelebrate = [...todo.map(g => 'Bạn đạt mục tiêu “' + g.title + '”! 🎉'), ...wk.map(g => 'Tuần này bạn luyện đủ ' + g.target_value + ' ngày! 🔥')];
+    await glReload();
+    const card = document.querySelector('#st-goal .gl-card'); if(card) confetti(card);
+    try{ renderWardrobe(state.myRows); const nb = newBadges(renderBadges(state.myRows)); if(nb.length) showBadgePop(nb); }catch(e){}
+  }catch(e){ console.warn('glAutoCheck', e); }
+  finally{ state._glBusy = false; }
+}
+function glRowHTML(g){
+  const k = glKind(g), K = GL_KINDS[k], rk = glRank(g), P = glProgress(g), d = g.target_date ? glDays(g) : null;
+  let cd = '', body = '', bar = '';
+  if(k === 'exam'){
+    cd = g.done_at || rk === 1 ? '<div class="gl-cd past">Đã qua<b>✓</b></div>' : `<div class="gl-cd${d <= 14 ? ' soon' : ''}">còn<b>${d}</b>ngày</div>`;
+    const fc = rk === 0 ? glForecast(g) : '';
+    body = (g.target_date ? `<span class="muted">Ngày thi: ${glDate(g.target_date)}</span>` : '') + (fc ? `<div class="gl-fc">${fc}</div>` : '')
+      + (g.result ? `<div class="gl-fc">Kết quả: ${esc(g.result)} 🎉</div>` : (rk === 1 && !g.done_at ? `<div class="gl-fc">Ngày thi đã qua, bạn thi thế nào rồi? <button class="link" onclick="glResult('${g.id}')">Nhập kết quả</button></div>` : ''));
+  }else{
+    cd = g.done_at ? '<div class="gl-cd ok">Đạt<b>✓</b></div>' : `<div class="gl-cd${k === 'lesson_by' && d !== null && d <= 7 ? ' soon' : ''}">${P.unit.split(' ')[0] === 'ngày' && k === 'lesson_by' ? 'còn' : ''}<b>${P.box}</b>${P.unit}</div>`;
+    body = (g.target_date && k === 'lesson_by' ? `<span class="muted">Hạn: ${glDate(g.target_date)}</span>` : '') + `<div class="gl-fc">${g.done_at ? 'Bạn đã đạt mục tiêu này, giỏi lắm! 🎉' : P.text}</div>`;
+    bar = `<div class="bar gl-bar"><i style="width:${Math.round(P.pct * 100)}%"></i></div>`;
+  }
+  return `<div class="gl-row${g.done_at ? ' gl-done' : ''}"><div class="gl-main"><b>${K.ico} ${esc(g.title)}</b>${body}${bar}</div>${cd}
+    <div class="gl-act"><button class="gl-share${g.shared ? ' on' : ''}" onclick="glToggleShare('${g.id}')" title="Bấm để đổi">${g.shared ? '👩‍🏫 Cô xem được' : '🔒 Chỉ mình bạn'}</button>
+      <button class="btn" onclick="glOpen('${g.id}')">✏️</button><button class="btn" onclick="glDel('${g.id}')">🗑</button></div></div>`;
+}
+function glFormHTML(f){
+  const k = f.kind || 'exam', courses = myCourseLevels().map(o => o.course);
+  const kinds = f.id ? '' : `<div><label style="margin:0">Bạn muốn đặt mục tiêu gì?</label><div class="gl-kinds">${Object.entries(GL_KINDS).map(([key, v]) =>
+    `<button type="button" class="gl-k${key === k ? ' on' : ''}" onclick="glKindSet('${key}')">${v.ico} ${v.name}<small>${v.sub}</small></button>`).join('')}</div></div>`;
+  const courseSel = (req) => courses.length ? `<label>${req ? 'Cấp học' : 'Ôn cho cấp (để cá tính nhịp học giúp bạn)'}<select id="gl-course" onchange="glKindSet('${k}')">${req ? '' : '<option value="">Không gắn với cấp nào</option>'}${courses.map(c => `<option value="${esc(c)}"${(f.course || (req ? courses[0] : '')) === c ? ' selected' : ''}>${esc(c)}</option>`).join('')}</select></label>` : (req ? '<div class="muted">Bạn cần vào một lớp có cấp học trước nhé.</div>' : '');
+  let fields = '';
+  if(k === 'exam') fields = `<label>Tên kỳ thi<input type="text" id="gl-title" maxlength="60" placeholder="Ví dụ: Thi HSK1" value="${esc(f.title || '')}"></label>
+      <label>Ngày thi<input type="date" id="gl-date" value="${esc(f.target_date || '')}"></label>${courseSel(false)}`;
+  if(k === 'practice_week') fields = `<label>Mỗi tuần mình luyện tập mấy ngày?<select id="gl-val">${[2, 3, 4, 5, 6, 7].map(n => `<option value="${n}"${(+f.target_value || 5) === n ? ' selected' : ''}>${n} ngày mỗi tuần</option>`).join('')}</select></label>`;
+  if(k === 'score') fields = `<label>Đạt từ bao nhiêu %?<select id="gl-val">${[70, 80, 90, 100].map(n => `<option value="${n}"${(+f.target_value || 90) === n ? ' selected' : ''}>Từ ${n}% trở lên</option>`).join('')}</select></label>
+      <label>Ở mấy bài?<select id="gl-cnt">${[1, 2, 3, 5, 10].map(n => `<option value="${n}"${(+f.target_count || 3) === n ? ' selected' : ''}>${n} bài</option>`).join('')}</select></label>
+      <div class="muted">Chỉ tính các bài nộp sau khi bạn đặt mục tiêu.</div>`;
+  if(k === 'lesson_by'){
+    const c = f.course || courses[0], ls = ((COURSES[c] || {}).lessons || []);
+    fields = courseSel(true) + `<label>Học xong bài nào?<select id="gl-val">${ls.map(([n, zh]) => `<option value="${n}"${(+f.target_value || 0) === n ? ' selected' : ''}>Bài ${n} · ${esc(zh)}</option>`).join('')}</select></label>
+      <label>Trước ngày<input type="date" id="gl-date" value="${esc(f.target_date || '')}"></label>`;
+  }
+  return `<div class="gl-form">${kinds}${fields}
       <div><label style="margin:0">Ai được xem mục tiêu này?</label><div class="gl-radio">
         <label><input type="radio" name="gl-sh" value="0"${f.shared ? '' : ' checked'}><span><b>🔒 Chỉ mình biết</b><small>Cô không nhìn thấy</small></span></label>
         <label><input type="radio" name="gl-sh" value="1"${f.shared ? ' checked' : ''}><span><b>👩‍🏫 Chia sẻ với cô</b><small>Cô thấy để giúp bạn đúng lúc</small></span></label></div></div>
       <div class="av-btns" style="margin:0"><button class="btn pri" onclick="glSave()">Lưu mục tiêu</button><button class="btn" onclick="glClose()">Hủy</button></div></div>`;
-  el.innerHTML = `<div class="card gl-card"><div class="gl-head"><b>🎯 Mục tiêu của mình</b>${!f && list.length < GL_MAX ? '<button class="btn pri" onclick="glOpen()">＋ Đặt ngày thi</button>' : ''}</div>
-    ${list.length || f ? '' : '<div class="muted gl-empty">Bạn sắp thi chưa? Đặt ngày thi để cá cùng bạn đếm ngược nhé!</div>'}${rows}${form}</div>`;
 }
-function glOpen(id){ state.goalForm = id ? {...(state.goals || []).find(g => g.id === id)} : {}; renderGoals(); }
+function renderGoals(){
+  const el = $('#st-goal'); if(!el) return;
+  const list = (state.goals || []).slice().sort((a, b) => glRank(a) - glRank(b) || String(a.target_date || '9').localeCompare(String(b.target_date || '9')) || String(a.created_at || '').localeCompare(String(b.created_at || '')));
+  const active = list.filter(g => glRank(g) === 0), rest = list.filter(g => glRank(g) === 1), done = list.filter(g => glRank(g) === 2).slice(-3);
+  const f = state.goalForm, win = (state.glCelebrate || []).map(t => `<div class="gl-win">${esc(t)}</div>`).join('');
+  el.innerHTML = `<div class="card gl-card"><div class="gl-head"><b>🎯 Mục tiêu của mình</b>${!f && active.length < GL_MAX ? '<button class="btn pri" onclick="glOpen()">＋ Đặt mục tiêu</button>' : ''}</div>
+    ${win}${list.length || f ? '' : '<div class="muted gl-empty">Bạn muốn đạt điều gì? Đặt ngày thi, số ngày luyện mỗi tuần, điểm cao hay bài cần học xong. Đạt mục tiêu cá sẽ thưởng bạn nhé!</div>'}
+    ${active.map(glRowHTML).join('')}${rest.map(glRowHTML).join('')}${done.length ? '<div class="gl-sub">✅ Đã đạt</div>' + done.map(glRowHTML).join('') : ''}${f ? glFormHTML(f) : ''}</div>`;
+}
+function glRead(){   // giữ những gì em đã gõ khi đổi loại mục tiêu / cấp
+  const f = state.goalForm; if(!f) return;
+  const v = id => { const e = $('#' + id); return e ? e.value : undefined; };
+  if(v('gl-title') !== undefined) f.title = v('gl-title');
+  if(v('gl-date') !== undefined) f.target_date = v('gl-date');
+  if(v('gl-course') !== undefined) f.course = v('gl-course') || null;
+  const sh = document.querySelector('input[name=gl-sh]:checked'); if(sh) f.shared = sh.value === '1';
+}
+function glOpen(id){ state.goalForm = id ? {...(state.goals || []).find(g => g.id === id)} : {kind: 'exam'}; renderGoals(); }
 function glClose(){ state.goalForm = null; renderGoals(); }
-function glCourseHint(c){ const t = $('#gl-title'); if(c && t && (!t.value.trim() || /^Thi HSK\d$/.test(t.value.trim()))) t.value = 'Thi ' + c; }
+function glKindSet(k){ glRead(); const f = state.goalForm; if(f.kind !== k){ f.target_value = null; f.target_count = null; f.target_date = f.kind === 'exam' || k === 'exam' ? '' : f.target_date; } f.kind = k; renderGoals(); }
 async function glReload(){ try{ state.goals = await YY.listMyGoals(); }catch(e){} renderGoals(); try{ renderProgress(); }catch(e){} }
 async function glSave(){
-  const title = $('#gl-title').value.trim(), date = $('#gl-date').value;
-  if(!title){ alert('Bạn đặt tên cho mục tiêu nhé.'); return; }
-  if(!date){ alert('Bạn chọn ngày thi nhé.'); return; }
-  const g = {id: state.goalForm.id, title, target_date: date, course: ($('#gl-course') || {}).value || null, shared: document.querySelector('input[name=gl-sh]:checked').value === '1'};
-  try{ await YY.saveMyGoal(g); state.goalForm = null; await glReload(); }
-  catch(e){ alert('Chưa lưu được mục tiêu: ' + (e.message || e) + '\n(Đã chạy migration-dot9.sql trong Supabase chưa?)'); }
+  glRead(); const f = state.goalForm, k = f.kind || 'exam', val = +($('#gl-val') || {}).value || null, cnt = +($('#gl-cnt') || {}).value || null;
+  let g = {id: f.id, kind: k, shared: !!f.shared, course: f.course || null, target_date: f.target_date || null, target_value: null, target_count: null, title: (f.title || '').trim(), result: f.result, done_at: f.done_at};
+  if(k === 'exam'){
+    if(!g.title){ alert('Bạn đặt tên kỳ thi nhé.'); return; }
+    if(!g.target_date){ alert('Bạn chọn ngày thi nhé.'); return; }
+  }else if(k === 'practice_week'){
+    g.target_value = val; g.target_date = null; g.course = null; g.title = `Luyện ${val} ngày mỗi tuần`;
+  }else if(k === 'score'){
+    g.target_value = val; g.target_count = cnt; g.target_date = null; g.course = null; g.title = `Đạt từ ${val}% ở ${cnt} bài`;
+  }else if(k === 'lesson_by'){
+    if(!g.course){ alert('Bạn chọn cấp học nhé.'); return; }
+    if(!g.target_date){ alert('Bạn chọn ngày hạn nhé.'); return; }
+    g.target_value = val; g.title = `Học xong Bài ${val} ${g.course} trước ${glDate(g.target_date)}`;
+    if(g.id) g.done_at = null;
+  }
+  try{ await YY.saveMyGoal(g); state.goalForm = null; await glReload(); glAutoCheck(); }
+  catch(e){ alert('Chưa lưu được mục tiêu: ' + (e.message || e) + '\n(Đã chạy migration-dot9.sql và migration-dot10.sql trong Supabase chưa?)'); }
 }
 async function glToggleShare(id){
   const g = (state.goals || []).find(x => x.id === id); if(!g) return;
