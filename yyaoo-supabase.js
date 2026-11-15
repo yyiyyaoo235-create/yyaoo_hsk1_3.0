@@ -226,6 +226,10 @@ const YY_CONFIG = {
   YY.listSharedGoals = async () =>
     fetchAll(() => sb.from('student_goals').select('*').eq('shared', true).order('target_date', { ascending: true, nullsFirst: false }).order('id'));
 
+  // Giáo viên: ngày bắt đầu từng bài của mọi lớp (để tính nhịp học của từng em)
+  YY.listAllLessonDates = async () =>
+    fetchAll(() => sb.from('lesson_log').select('class_id, lesson, started_on').order('class_id').order('lesson'));
+
   // Học sinh: ngày bắt đầu từng bài của các lớp mình (RLS tự lọc)
   YY.listMyLessonDates = async () =>
     unwrap(await sb.from('lesson_log').select('class_id, lesson, started_on'));
