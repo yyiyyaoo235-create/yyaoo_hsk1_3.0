@@ -508,6 +508,25 @@
   @keyframes pgHop{0%,100%{transform:translateY(0)}40%{transform:translateY(-14px) rotate(-8deg)}70%{transform:translateY(2px)}}
   @keyframes pgWaves{to{background-position:.9rem 0}}
   @keyframes pgWave{0%,100%{transform:rotate(-6deg)}50%{transform:rotate(7deg)}}
+  .sch-next{display:flex;align-items:center;gap:1rem;background:linear-gradient(135deg,#e6f6ff,#fff0f6);border:2px dashed #7fb8e0}
+  .sch-next .big{font-size:1.5rem;font-weight:800;color:#1b5f86;line-height:1.15}
+  .sch-next .when{font-weight:700}
+  .sch-cd{margin-left:auto;text-align:center;background:#fff;border-radius:1rem;padding:.5rem .9rem;min-width:5.2rem;border:1px solid var(--line)}
+  .sch-cd b{display:block;font-size:1.5rem;color:var(--pink)}
+  .sch-mcal{display:grid;grid-template-columns:repeat(7,1fr);gap:.3rem}
+  .sch-mcal .wd{font-size:.72rem;text-align:center;color:var(--muted);font-weight:700}
+  .sch-mcal .d{min-height:3.3rem;border-radius:.6rem;background:rgba(160,185,195,.15);padding:.2rem;font-size:.75rem;display:flex;flex-direction:column;gap:2px}
+  .sch-mcal .d.o{opacity:.35}
+  .sch-mcal .d.td{outline:2px solid var(--pink)}
+  .sch-mcal .d i{font-style:normal;font-size:.62rem;border-radius:.35rem;padding:1px 3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .sch-mcal .d i.up{border:1.5px dashed #5aa0cc;background:#eaf6ff;color:#1b5f86}
+  .sch-mcal .d i.pa{background:#d9f3e3;color:#1f6b45}
+  .sch-mcal .d i.ab{background:#fde4e4;color:#a23b24}
+  .sch-nav{display:flex;align-items:center;justify-content:space-between;margin-bottom:.5rem}
+  .sch-les{padding:.6rem 0;border-bottom:1px solid var(--line)}
+  .sch-les .cn{white-space:pre-wrap;margin-top:.25rem}
+  .hm-plan{background:#eaf6ff;border:2px dashed #7fb8e0}
+  .hm-plan.warn{background:#fff6dd;border-color:#e0b43f}
   .cal{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);grid-template-columns:repeat(12,1fr);gap:.25rem;max-width:26rem}
   .cal i{display:block;aspect-ratio:1;border-radius:.3rem;background:rgba(160,185,195,.25)}
   .cal i.on{background:#2bb5c4}
@@ -713,6 +732,7 @@
       <button class="side-toggle" id="st-side-toggle" type="button" aria-label="Thu gọn / mở rộng thanh trái" data-tip="Thu gọn"><svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M15 6l-6 6 6 6"/></svg></button></div>
     <div class="side-h">HỌC TẬP</div>
     <button class="nav-i on" data-st="home" data-tip="Trang chủ"><span class="ico">🏠</span><span class="lbl">Trang chủ</span></button>
+    <button class="nav-i" data-st="schedule" data-tip="Lịch học"><span class="ico">📅</span><span class="lbl">Lịch học</span></button>
     <button class="nav-i" data-st="tasks" data-tip="Bài của tôi"><span class="ico">📝</span><span class="lbl">Bài của tôi</span><span class="badge hidden" id="st-bd-tasks"></span></button>
     <button class="nav-i" data-st="practice" data-tip="Luyện tập"><span class="ico">🧩</span><span class="lbl">Luyện tập</span></button>
     <button class="nav-i" data-st="goals" data-tip="Mục tiêu"><span class="ico">🎯</span><span class="lbl">Mục tiêu</span></button>
@@ -733,11 +753,22 @@
     <!-- trang chủ -->
     <div id="stab-home">
       <div class="mascot" id="st-mascot"></div>
+      <div id="st-next-lesson"></div>
       <div id="st-progress"></div>
       <div id="st-goal-link"></div>
       <div class="streak-row" id="st-streak"></div>
       <div class="todo-h"><h2>✅ Việc cần làm hôm nay</h2></div>
       <div id="st-todo"></div>
+    </div>
+
+    <!-- lịch học -->
+    <div id="stab-schedule" class="hidden">
+      <div id="st-sch-next"></div>
+      <div class="sec-title"><h2>🗓️ Lịch tháng</h2></div>
+      <div class="card"><div id="st-sch-cal"></div>
+        <div class="muted" style="margin-top:.5rem">Ô nét đứt xanh = buổi sắp tới · ô xanh lá = đã học · ô đỏ = vắng.</div></div>
+      <div class="sec-title"><h2>📖 Các buổi đã học</h2><span class="chip c-green" id="st-sch-n"></span></div>
+      <div class="card" id="st-sch-list"></div>
     </div>
 
     <!-- bài của tôi -->
@@ -813,6 +844,7 @@
 
     <!-- trang chủ -->
     <div id="tab-home">
+      <div id="hm-planned"></div>
       <div class="stats">
         <div class="stat s1" onclick="go('monitor','pending_review')"><span>Chờ chấm</span><b id="n-pending" class="skel skel-num">0</b></div>
         <div class="stat s2" onclick="go('monitor','needs_redo')"><span>Cần làm lại</span><b id="n-redo" class="skel skel-num">0</b></div>
@@ -1095,6 +1127,8 @@
     .panel-inner > .cal-card,
     .panel-inner > #dd-stats-card,
     .panel-inner > #dd-unpaid-banner,
+    .panel-inner > #dd-planned-today,
+    .panel-inner > #dd-planned-overdue,
     .panel-inner > #income-chart-card,
     .panel-inner > .dd-row-cal-form,
     .panel-inner > .bieudo-row-top,
@@ -1303,7 +1337,20 @@
   .income-chart-legend-dot{width:10px; height:10px; border-radius:3px; display:inline-block; flex:none;}
   .unpaid-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; background:var(--gold-tint); border-color:var(--gold);}
   .unpaid-banner span{font-size:14px; color:var(--ink); font-weight:500;}
-  .stats-grid{display:grid; grid-template-columns:1fr 1fr; gap:12px; margin-top:2px;}
+  .stats-grid{display:grid; grid-template-columns:repeat(auto-fit,minmax(140px,1fr)); gap:12px; margin-top:2px;}
+  .stat-box-plan{background:#EAF3FB; border:1.5px dashed #7FA9D6;}
+  .stat-box-total{background:var(--jade-tint); border:1.5px solid var(--jade);}
+  .stat-sub{font-size:11.5px; color:var(--ink-soft); margin-top:2px;}
+  .planned-banner{display:flex; align-items:center; justify-content:space-between; gap:12px; background:#EAF3FB; border-color:#7FA9D6;}
+  .planned-banner span{font-size:14px; color:var(--ink); font-weight:500;}
+  .cal-pill.is-planned{border:1.5px dashed currentColor; opacity:.92; cursor:pointer; font-style:italic;}
+  .cal-pill.is-planned:hover{opacity:1; filter:brightness(.97);}
+  .pl-card-head{display:flex; align-items:center; justify-content:space-between; gap:10px; margin-bottom:8px;}
+  .pl-form{border:1.5px dashed var(--line); border-radius:10px; padding:10px; margin:8px 0; display:grid; gap:8px;}
+  .pl-row{display:flex; justify-content:space-between; align-items:flex-start; gap:10px; padding:9px 0; border-bottom:1px solid var(--line);}
+  .pl-row.is-overdue{background:var(--gold-tint); border-radius:8px; padding-left:8px; padding-right:8px;}
+  .pl-when{font-weight:700; font-size:13.5px;}
+  .pl-actions{display:flex; gap:4px; flex-wrap:wrap; justify-content:flex-end;}
   .stat-box{border-radius:8px; padding:10px 12px;}
   .stat-box-sessions{background:var(--jade-tint);}
   .stat-box-revenue{background:var(--gold-tint);}
@@ -1637,13 +1684,23 @@
   <main>
     <section id="tab-diemdanh" class="tab-panel">
       <div class="panel-inner">
+        <div class="card planned-banner" id="dd-planned-today" hidden>
+          <span id="dd-planned-today-text"></span>
+          <button class="btn-outline small" id="dd-planned-today-go" type="button">Điểm danh</button>
+        </div>
+        <div class="card unpaid-banner" id="dd-planned-overdue" hidden>
+          <span id="dd-planned-overdue-text"></span>
+          <button class="btn-outline small" id="dd-planned-overdue-go" type="button">Xem ngay</button>
+        </div>
         <div class="card" id="dd-stats-card">
           <div class="row-2">
             <label class="field"><span>Thống kê tháng</span><input type="month" id="dd-stats-month"></label>
           </div>
           <div class="stats-grid">
-            <div class="stat-box stat-box-sessions"><div class="stat-label">Buổi đã dạy</div><div class="stat-value" id="dd-stat-sessions">0</div></div>
-            <div class="stat-box stat-box-revenue"><div class="stat-label">Dự kiến tổng thu</div><div class="stat-value" id="dd-stat-revenue">0đ</div></div>
+            <div class="stat-box stat-box-sessions"><div class="stat-label">Buổi đã dạy</div><div class="stat-value" id="dd-stat-sessions">0</div><div class="stat-sub" id="dd-stat-planned-n"></div></div>
+            <div class="stat-box stat-box-revenue"><div class="stat-label">Thu từ buổi đã dạy</div><div class="stat-value" id="dd-stat-revenue">0đ</div></div>
+            <div class="stat-box stat-box-plan"><div class="stat-label">Dự kiến thêm (buổi sắp tới)</div><div class="stat-value" id="dd-stat-extra">0đ</div></div>
+            <div class="stat-box stat-box-total"><div class="stat-label">Tổng dự kiến tháng</div><div class="stat-value" id="dd-stat-total">0đ</div></div>
           </div>
         </div>
         <div class="card unpaid-banner" id="dd-unpaid-banner" hidden>
@@ -1680,6 +1737,27 @@
                 <div id="dd-list" class="att-list"></div>
                 <button class="btn-primary" id="dd-save" style="width:100%;">Lưu buổi học</button>
               </div>
+            </div>
+            <div class="card" id="dd-planned-card">
+              <div class="pl-card-head">
+                <h3 class="card-title" style="margin:0">Lịch học dự kiến</h3>
+                <button class="btn-outline small" id="pl-add" type="button">＋ Thêm buổi tiếp theo</button>
+              </div>
+              <div class="pl-form" id="pl-form" hidden>
+                <div class="row-2">
+                  <label class="field"><span>Lớp</span><select id="pl-class"></select></label>
+                  <label class="field"><span>Ngày</span><input type="date" id="pl-date"></label>
+                </div>
+                <div class="row-2">
+                  <label class="field"><span>Giờ học</span><input type="text" id="pl-time" placeholder="VD: 18:00 - 19:30"></label>
+                  <label class="field"><span>Ghi chú (tuỳ chọn)</span><input type="text" id="pl-note" placeholder="VD: Ôn bài 5, mang vở viết"></label>
+                </div>
+                <div style="display:flex;gap:8px;justify-content:flex-end">
+                  <button class="btn-outline small" id="pl-cancel" type="button">Hủy</button>
+                  <button class="btn-primary small" id="pl-save" type="button">Lưu buổi dự kiến</button>
+                </div>
+              </div>
+              <div id="pl-list" class="mini-list"></div>
             </div>
             <div class="card">
               <h3 class="card-title">Buổi học đã lưu ngày này</h3>
@@ -1872,7 +1950,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
 <script type="text/plain" id="dd-app">
 (function(){
 
-  var state = { settings:{teacherName:'',bankName:'',bankAccount:'',accountHolder:'',qrImage:'',avatarImage:''}, classes:[], sessions:[], payments:[], colorFilter:null };
+  var state = { settings:{teacherName:'',bankName:'',bankAccount:'',accountHolder:'',qrImage:'',avatarImage:''}, classes:[], sessions:[], payments:[], planned:[], colorFilter:null };
 
   function qs(sel, root){ return (root||document).querySelector(sel); }
   function qsa(sel, root){ return Array.prototype.slice.call((root||document).querySelectorAll(sel)); }
@@ -1986,6 +2064,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   function saveClasses(){ return DDStore.save('classes', state.classes); }
   function saveSessions(){ return DDStore.save('sessions', state.sessions); }
   function savePayments(){ return DDStore.save('payments', state.payments); }
+  function savePlanned(){ return DDStore.save('planned', state.planned); }
 
   // ---------- Avatar (ảnh đại diện trên header) ----------
   function renderAvatar(){
@@ -2157,8 +2236,18 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         if(bill) revenue += billAmount(bill, monthValue);
       });
     });
+    var today = todayStr(), extra = 0, nPlan = 0;
+    state.planned.forEach(function(pl){
+      if(pl.date.slice(0,7)!==monthValue || pl.date<today || hasSessionFor(pl)) return;
+      var pcls = findClass(pl.classId); if(!pcls) return;
+      nPlan++;
+      pcls.students.forEach(function(st){ if(isActiveOn(st, pl.date)) extra += Number(getStudentPrice(st, monthValue))||0; });
+    });
     qs('#dd-stat-sessions').textContent = sessionCount;
+    qs('#dd-stat-planned-n').textContent = nPlan ? ('+ '+nPlan+' buổi dự kiến') : '';
     qs('#dd-stat-revenue').textContent = formatVND(revenue);
+    qs('#dd-stat-extra').textContent = formatVND(extra);
+    qs('#dd-stat-total').textContent = formatVND(revenue+extra);
   }
   ddStatsMonth.addEventListener('change', renderDiemDanhStats);
 
@@ -2496,8 +2585,26 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
         var t = classTone(s.classId);
         html += '<span class="cal-pill" style="background:'+t.bg+';color:'+t.ink+';box-shadow:inset 3px 0 0 '+t.dot+';padding-left:7px" title="'+escapeHtml(c?(classAbbr(c)+' · '+c.name):'(lớp đã xóa)')+'"><span class="cal-pill-ab">'+escapeHtml(c?classAbbr(c):'?')+'</span><span class="cal-pill-nm">'+escapeHtml(c?c.name:'(lớp đã xóa)')+'</span></span>';
       });
+      var planItems = state.planned.filter(function(pl){ return pl.date===iso && passFilter(pl.classId) && !hasSessionFor(pl); });
+      var room = Math.max(0, 4-Math.min(dayItems.length,4));
+      planItems.slice(0, room).forEach(function(pl){
+        var pc = findClass(pl.classId);
+        var pt = classTone(pl.classId);
+        var ptitle = 'Dự kiến · '+(pc?(pc.name):'(lớp đã xóa)')+(pl.time?' · '+pl.time:'')+(pl.note?' — '+pl.note:'')+' (bấm để điểm danh)';
+        html += '<span class="cal-pill is-planned" data-pl="'+escapeHtml(pl.id)+'" style="background:'+pt.wash+';color:'+pt.ink+';padding-left:7px" title="'+escapeHtml(ptitle)+'"><span class="cal-pill-ab">'+escapeHtml(pc?classAbbr(pc):'?')+'</span><span class="cal-pill-nm">'+escapeHtml(pc?pc.name:'(lớp đã xóa)')+'</span></span>';
+      });
+      var totalShown = Math.min(dayItems.length,4)+Math.min(planItems.length,room);
+      var totalAll = dayItems.length+planItems.length;
       if(dayItems.length>4) html += '<span class="cal-more">+'+(dayItems.length-4)+' buổi</span>';
+      else if(totalAll>totalShown) html += '<span class="cal-more">+'+(totalAll-totalShown)+' dự kiến</span>';
       cell.innerHTML = html;
+      qsa('[data-pl]', cell).forEach(function(el){
+        el.addEventListener('click', function(ev){
+          ev.stopPropagation();
+          var pl = state.planned.find(function(x){ return x.id===el.getAttribute('data-pl'); });
+          if(pl) openPlanned(pl);
+        });
+      });
       cell.addEventListener('click', function(){ selectDate(this.dataset.date); });
       grid.appendChild(cell);
     }
@@ -2537,6 +2644,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     if(!ddStatsMonth.value) ddStatsMonth.value = currentMonthStr();
     renderDiemDanhStats();
     refreshUnpaidBanner();
+    renderPlannedBanners();
     var d0 = new Date(ddDate.value+'T00:00:00');
     calState.year = d0.getFullYear(); calState.month = d0.getMonth();
     ddDateLabel.textContent = 'Ngày '+formatDate(ddDate.value);
@@ -2551,6 +2659,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       loadAttendanceForm();
     }
     renderTodayList();
+    renderPlannedList();
   }
   ddClass.addEventListener('change', function(){ loadAttendanceForm(); paintClassSelect(); });
   qs('#dd-goto-class').addEventListener('click', function(){ try{ window.go('people'); }catch(e){} });
@@ -2714,13 +2823,29 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       date: ddDate.value, classId: cls.id, time: ddTime.value.trim(),
       content: ddContent.value.trim(), attendance: attendance
     };
+    var isNewSession = idx<0;
     if(idx>=0) state.sessions[idx]=record; else state.sessions.push(record);
-    saveSessions().then(function(){
-      showToast('Đã lưu buổi học');
+    // Buổi dự kiến cùng lớp, cùng ngày được chuyển thành buổi thật (xóa dòng dự kiến)
+    var hadPlanned = state.planned.some(function(pl){ return pl.classId===cls.id && pl.date===record.date; });
+    if(hadPlanned) state.planned = state.planned.filter(function(pl){ return !(pl.classId===cls.id && pl.date===record.date); });
+    var chain = saveSessions();
+    if(hadPlanned) chain = chain.then(function(){ return savePlanned(); });
+    chain.then(function(){
+      showToast(hadPlanned ? 'Đã lưu buổi học (đã chuyển từ lịch dự kiến)' : 'Đã lưu buổi học');
       renderTodayList();
       renderCalendar();
       renderDiemDanhStats();
       refreshUnpaidBanner();
+      renderPlannedBanners();
+      renderPlannedList();
+      // Hỏi thêm buổi tiếp theo nếu lớp chưa có lịch sau buổi này
+      var recent = record.date >= addDaysIso(todayStr(), -3);
+      var hasNext = state.planned.some(function(pl){ return pl.classId===cls.id && pl.date>record.date; });
+      if(isNewSession && recent && !hasNext){
+        setTimeout(function(){
+          if(confirm('Lớp '+cls.name+' chưa có buổi tiếp theo, thêm luôn?')) plOpenForm(null, cls.id, record);
+        }, 150);
+      }
     });
   });
 
@@ -2752,6 +2877,117 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
       ddTodayList.appendChild(row);
     });
   }
+
+  // ---------- Lịch học dự kiến ----------
+  var plEditId = null;
+  var plForm = qs('#pl-form'), plClass = qs('#pl-class'), plDate = qs('#pl-date'), plTime = qs('#pl-time'), plNote = qs('#pl-note');
+  var WD_VN = ['CN','Th 2','Th 3','Th 4','Th 5','Th 6','Th 7'];
+  function addDaysIso(iso, n){ var d = new Date(iso+'T00:00:00'); d.setDate(d.getDate()+n); return isoOf(d.getFullYear(), d.getMonth(), d.getDate()); }
+  function whenText(pl){ var d = new Date(pl.date+'T00:00:00'); return WD_VN[d.getDay()]+' · '+formatDate(pl.date)+(pl.time?' · '+pl.time:''); }
+  function hasSessionFor(pl){ return state.sessions.some(function(x){ return x.date===pl.date && x.classId===pl.classId; }); }
+  function sortedPlanned(){ return state.planned.slice().sort(function(a,b){ var ka=a.date+' '+(a.time||''), kb=b.date+' '+(b.time||''); return ka<kb?-1:(ka>kb?1:0); }); }
+  function overduePlanned(){ var t = todayStr(); return sortedPlanned().filter(function(pl){ return pl.date<t && !hasSessionFor(pl); }); }
+  function todayPlanned(){ var t = todayStr(); return sortedPlanned().filter(function(pl){ return pl.date===t && !hasSessionFor(pl); }); }
+  function plClassName(pl){ var c = findClass(pl.classId); return c ? c.name : '(lớp đã xóa)'; }
+
+  // Mở buổi dự kiến: nhảy tới ngày đó, điền sẵn lớp + giờ vào form điểm danh
+  function openPlanned(pl){
+    var d = new Date(pl.date+'T00:00:00'); calState.year = d.getFullYear(); calState.month = d.getMonth();
+    selectDate(pl.date);
+    if(state.classes.some(function(c){ return c.id===pl.classId; })){
+      ddClass.value = pl.classId; paintClassSelect(); loadAttendanceForm();
+    }
+    var exists = state.sessions.some(function(x){ return x.date===pl.date && x.classId===pl.classId; });
+    if(!exists && pl.time) ddTime.value = pl.time;
+    if(!exists && pl.note && !ddContent.value) ddContent.placeholder = 'Ghi chú dự kiến: '+pl.note;
+    try{ ddClass.closest('.card').scrollIntoView({behavior:'smooth', block:'start'}); }catch(e){}
+    showToast('Đã điền sẵn lớp và giờ từ lịch dự kiến');
+  }
+
+  function renderPlannedBanners(){
+    var tb = qs('#dd-planned-today'), ob = qs('#dd-planned-overdue');
+    var td = todayPlanned(), od = overduePlanned();
+    if(td.length){
+      qs('#dd-planned-today-text').textContent = '📅 Hôm nay có '+td.length+' buổi dự kiến: '+td.map(function(pl){ return plClassName(pl)+(pl.time?' ('+pl.time+')':''); }).join(' · ');
+      tb.hidden = false;
+    } else tb.hidden = true;
+    if(od.length){
+      qs('#dd-planned-overdue-text').textContent = '⚠ '+od.length+' buổi dự kiến đã qua nhưng chưa điểm danh: '+od.slice(0,3).map(function(pl){ return plClassName(pl)+' ('+formatDate(pl.date).slice(0,5)+')'; }).join(', ')+(od.length>3?'…':'');
+      ob.hidden = false;
+    } else ob.hidden = true;
+  }
+  qs('#dd-planned-today-go').addEventListener('click', function(){ var td = todayPlanned(); if(td.length) openPlanned(td[0]); });
+  qs('#dd-planned-overdue-go').addEventListener('click', function(){ var od = overduePlanned(); if(od.length) openPlanned(od[0]); });
+
+  function renderPlannedList(){
+    var box = qs('#pl-list'); if(!box) return;
+    var t = todayStr();
+    var items = sortedPlanned().filter(function(pl){ return passFilter(pl.classId) && (pl.date>=t || !hasSessionFor(pl)); });
+    // ẩn buổi đã qua mà đã điểm danh (không còn ý nghĩa) – chỉ giữ buổi sắp tới + buổi quá hạn chưa điểm danh
+    items = items.filter(function(pl){ return pl.date>=t ? !hasSessionFor(pl) : true; }).slice(0, 12);
+    box.innerHTML = '';
+    if(!items.length){ box.innerHTML = '<p class="hint">Chưa có buổi dự kiến nào. Bấm “＋ Thêm buổi tiếp theo” sau mỗi buổi dạy.</p>'; return; }
+    items.forEach(function(pl){
+      var cls = findClass(pl.classId);
+      var over = pl.date<t;
+      var row = document.createElement('div');
+      row.className = 'pl-row'+(over?' is-overdue':'');
+      var tn = classTone(pl.classId);
+      if(!over){ row.style.borderLeft = '4px dashed '+tn.dot; row.style.paddingLeft = '10px'; }
+      row.innerHTML =
+        '<div><div class="pl-when">'+escapeHtml(whenText(pl))+(over?' <span class="badge badge-adjust">Đã qua · chưa điểm danh</span>':'')+'</div>'+
+        '<div>'+(cls?tagHtml(cls):'')+escapeHtml(plClassName(pl))+'</div>'+
+        (pl.note?'<p class="hint">'+escapeHtml(pl.note)+'</p>':'')+'</div>'+
+        '<div class="pl-actions"><button class="btn-text" data-act="go">Điểm danh</button><button class="btn-text" data-act="edit">Sửa</button><button class="btn-text danger" data-act="del">Xóa</button></div>';
+      qs('[data-act="go"]', row).addEventListener('click', function(){ openPlanned(pl); });
+      qs('[data-act="edit"]', row).addEventListener('click', function(){ plOpenForm(pl); });
+      qs('[data-act="del"]', row).addEventListener('click', function(){
+        if(!confirm('Xóa hẳn buổi dự kiến '+whenText(pl)+' (lớp '+plClassName(pl)+')?')) return;
+        state.planned = state.planned.filter(function(x){ return x.id!==pl.id; });
+        savePlanned().then(plRefreshAll);
+      });
+      box.appendChild(row);
+    });
+  }
+  function plRefreshAll(){ renderCalendar(); renderPlannedList(); renderPlannedBanners(); renderDiemDanhStats(); }
+
+  // Mở form thêm/sửa. pl = buổi cần sửa (hoặc null = thêm mới); presetClassId, lastSession = gợi ý cho buổi mới
+  function plOpenForm(pl, presetClassId, lastSession){
+    if(!state.classes.length){ showToast('Chưa có lớp nào'); return; }
+    populateClassSelect(plClass, false);
+    plEditId = pl ? pl.id : null;
+    var classId = pl ? pl.classId : (presetClassId || ddClass.value || state.classes[0].id);
+    plClass.value = classId;
+    if(pl){ plDate.value = pl.date; plTime.value = pl.time||''; plNote.value = pl.note||''; }
+    else {
+      // gợi ý: 7 ngày sau buổi gần nhất của lớp, cùng giờ với buổi đó
+      var last = lastSession || state.sessions.filter(function(x){ return x.classId===classId; }).sort(function(a,b){ return a.date<b.date?1:-1; })[0];
+      var sug = last ? addDaysIso(last.date, 7) : todayStr();
+      if(sug<todayStr()) sug = todayStr();
+      plDate.value = sug; plTime.value = last ? (last.time||'') : ''; plNote.value = '';
+    }
+    plForm.hidden = false;
+    try{ plForm.scrollIntoView({behavior:'smooth', block:'center'}); }catch(e){}
+  }
+  qs('#pl-add').addEventListener('click', function(){ plOpenForm(null); });
+  qs('#pl-cancel').addEventListener('click', function(){ plForm.hidden = true; plEditId = null; });
+  qs('#pl-save').addEventListener('click', function(){
+    var classId = plClass.value, date = plDate.value;
+    if(!classId || !date){ alert('Chọn lớp và ngày học.'); return; }
+    var dup = state.planned.find(function(x){ return x.classId===classId && x.date===date && x.id!==plEditId; });
+    if(dup){ alert('Lớp này đã có buổi dự kiến vào ngày '+formatDate(date)+'. Hãy sửa buổi đó.'); return; }
+    if(state.sessions.some(function(x){ return x.classId===classId && x.date===date; })){
+      if(!confirm('Ngày '+formatDate(date)+' lớp này đã có buổi điểm danh. Vẫn thêm lịch dự kiến?')) return;
+    }
+    var rec = { id: plEditId || genId(), classId: classId, date: date, time: plTime.value.trim(), note: plNote.value.trim() };
+    var i = state.planned.findIndex(function(x){ return x.id===rec.id; });
+    if(i>=0) state.planned[i] = rec; else state.planned.push(rec);
+    savePlanned().then(function(){
+      plForm.hidden = true; plEditId = null;
+      showToast('Đã lưu buổi dự kiến');
+      plRefreshAll();
+    });
+  });
 
   // ---------- Lịch sử ----------
   function refreshHistory(){
@@ -4178,7 +4414,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // Portal (tab Lớp & học sinh) vừa ghi liên kết học sinh vào localStorage: nạp lại để sổ không ghi đè bằng bản cũ trong bộ nhớ
   window.__ddReloadClasses = function(){ state.classes = DDStore.data.classes; try{ renderPortalLink(); }catch(e){} try{ refreshDiemDanh(); }catch(e){} };
   window.__ddReload = function(){ return DDStore.load(true).then(function(d){
-    state.settings = d.settings; state.classes = d.classes; state.sessions = d.sessions; state.payments = d.payments;
+    state.settings = d.settings; state.classes = d.classes; state.sessions = d.sessions; state.payments = d.payments; state.planned = d.planned || [];
     try{ migratePriceHistory(); }catch(e){} try{ ensureClassColors(); }catch(e){} try{ renderPortalLink(); }catch(e){} try{ refreshDiemDanh(); }catch(e){}
   }); };
   window.__ddClassTag = function(id){ var c = findClass(id); return c ? {abbr: classAbbr(c), tone: classTone(id)} : null; };
@@ -4187,7 +4423,7 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
   // ---------- Init ----------
   function loadAll(){
     return DDStore.load().then(function(d){
-      state.settings = d.settings; state.classes = d.classes; state.sessions = d.sessions; state.payments = d.payments;
+      state.settings = d.settings; state.classes = d.classes; state.sessions = d.sessions; state.payments = d.payments; state.planned = d.planned || [];
     }).catch(function(e){
       qs('#loading').innerHTML = '<div style="text-align:center;max-width:30rem;padding:1rem"><div style="color:#8a2b22;font-weight:700;margin-bottom:.7rem">⚠ Không tải được sổ điểm danh'+(navigator.onLine===false?' (bạn đang mất mạng)':'')+': '+escapeHtml(String((e&&e.message)||e))+'</div><button type="button" onclick="location.reload()" style="padding:.5rem 1rem;border-radius:999px;border:1px solid #14808f;background:#fff;color:#0e5f6b;font-weight:700;cursor:pointer">↻ Thử lại</button></div>';
       throw e;
@@ -4213,8 +4449,8 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
    nhưng đọc/ghi qua các bảng ledger_* + classes. Chỉ gửi phần thay đổi so với lần lưu trước. */
 const DDStore = (() => {
   const EMPTY_SET = { teacherName:'', bankName:'', bankAccount:'', accountHolder:'', qrImage:'', avatarImage:'' };
-  const data = { settings: Object.assign({}, EMPTY_SET), classes: [], sessions: [], payments: [] };
-  let snap = { classes: new Map(), students: new Map(), sessions: new Map(), payments: new Map(), settings: '' };
+  const data = { settings: Object.assign({}, EMPTY_SET), classes: [], sessions: [], payments: [], planned: [] };
+  let snap = { classes: new Map(), students: new Map(), sessions: new Map(), payments: new Map(), planned: new Map(), settings: '' };
   let queue = Promise.resolve(), loading = null;
   const sb = () => YY.sb;
   const chk = (r) => { if(r.error) throw r.error; return r.data; };
@@ -4236,13 +4472,14 @@ const DDStore = (() => {
   }
 
   function takeSnap(){
-    const s = { classes: new Map(), students: new Map(), sessions: new Map(), payments: new Map(), settings: J(data.settings) };
+    const s = { classes: new Map(), students: new Map(), sessions: new Map(), payments: new Map(), planned: new Map(), settings: J(data.settings) };
     data.classes.forEach(c => {
       s.classes.set(c.id, c.name);
       c.students.forEach(st => s.students.set(st.id, studentSnap(c.id, st)));
     });
     data.sessions.forEach(x => s.sessions.set(x.id, J(x)));
     data.payments.forEach(p => s.payments.set(p.id, J(p)));
+    (data.planned || []).forEach(p => s.planned.set(p.id, J(p)));
     return s;
   }
   const studentRow = (st) => ({ id: st.id, name: st.name, contact: st.contact || null, profile_id: st.portalId || null,
@@ -4255,7 +4492,7 @@ const DDStore = (() => {
     if(loading && !force) return loading;
     loading = (async () => {
       if(force) await queue;   // chờ các lần lưu đang chạy xong rồi mới nạp lại, khỏi mất thay đổi
-      const [cls, stu, enr, ses, att, pay, setRow, profs] = await Promise.all([
+      const [cls, stu, enr, ses, att, pay, setRow, profs, plan] = await Promise.all([
         fetchAll('classes', 'id,name,kind,created_at', ['created_at', 'id']),
         fetchAll('ledger_students', '*', ['created_at', 'id']),
         fetchAll('ledger_enrollments', '*', ['class_id', 'ledger_student_id']),
@@ -4263,7 +4500,8 @@ const DDStore = (() => {
         fetchAll('ledger_attendance', '*', ['session_id', 'ledger_student_id']),
         fetchAll('ledger_payments', '*', ['id']),
         sb().from('ledger_settings').select('data').eq('id', 1).maybeSingle().then(chk),
-        fetchAll('profiles', 'id,code', ['id'])
+        fetchAll('profiles', 'id,code', ['id']),
+        fetchAll('ledger_planned', '*', ['date', 'id']).catch(() => [])   // chưa chạy migration-dot12.sql → coi như chưa có lịch dự kiến
       ]);
       const code = {}; profs.forEach(p => { code[p.id] = p.code; });
       const stById = new Map(stu.map(s => [s.id, s]));
@@ -4286,6 +4524,7 @@ const DDStore = (() => {
         attendance: (attBy[x.id] || []).map(a => clean({ studentId: a.ledger_student_id, present: !!a.present, billable: !!a.billable,
           comment: a.comment || '', priceOverride: a.price_override, adjustReason: a.adjust_reason })) }));
       data.payments = pay.map(p => clean({ id: p.id, studentId: p.ledger_student_id, month: p.month, paidAt: p.paid_at, amount: p.amount }));
+      data.planned = plan.map(x => clean({ id: x.id, classId: x.class_id, date: x.date, time: x.time || '', note: x.note || '' }));
       data.settings = Object.assign({}, EMPTY_SET, (setRow && setRow.data) || {});
       snap = takeSnap();
       return data;
@@ -4353,6 +4592,14 @@ const DDStore = (() => {
       const gone = [...snap.payments.keys()].filter(id => !cur.has(id));
       for(const part of chunks(gone, 100)) chk(await sb().from('ledger_payments').delete().in('id', part));
       snap.payments = new Map(list.map(p => [p.id, J(p)]));
+    },
+    async planned(list){
+      const cur = new Map(list.map(p => [p.id, p]));
+      const rows = list.filter(p => snap.planned.get(p.id) !== J(p)).map(p => ({ id: p.id, class_id: p.classId, date: p.date, time: p.time || null, note: p.note || null }));
+      for(const part of chunks(rows, 200)) chk(await sb().from('ledger_planned').upsert(part, { onConflict: 'id' }));
+      const gone = [...snap.planned.keys()].filter(id => !cur.has(id));
+      for(const part of chunks(gone, 100)) chk(await sb().from('ledger_planned').delete().in('id', part));
+      snap.planned = new Map(list.map(p => [p.id, J(p)]));
     },
     async settings(obj){
       if(snap.settings === J(obj)) return;
@@ -5281,6 +5528,10 @@ async function _reloadStudentCore(){
   state.lessonDates = await (YY.listMyLessonDates ? YY.listMyLessonDates().catch(() => []) : Promise.resolve([]));
   const rows = rows1.filter(r => !arch.has(r.assignment_id));
   state.myClasses = myClasses;
+  try{
+    [state.myLessons, state.myPlanned] = await Promise.all([YY.listMyLessons ? YY.listMyLessons() : [], YY.listMyPlanned ? YY.listMyPlanned() : []]);
+  }catch(e){ console.warn('Lịch học:', e); state.myLessons = state.myLessons || []; state.myPlanned = state.myPlanned || []; }
+  try{ renderSchedule(); }catch(e){ console.warn(e); }
   PRACTICE = (mats || []).filter(m => m.type === 'practice').sort((a, b) => b.lesson - a.lesson)
     .map(m => ({level: m.course, title: (m.lesson ? 'Bài ' + m.lesson + ' · ' : '') + m.title, url: m.url}));
   state.practice = practice; state.awards = awards; state.myRows = rows;
@@ -5326,7 +5577,7 @@ function showWelcome(){
   }catch(e){}
 }
 /* ===== khung học sinh: các trang + bộ lọc bài ===== */
-const ST_TABS = {home:'', tasks:'Bài của tôi', practice:'Luyện tập', goals:'Mục tiêu của mình', fish:'Cá của tôi', achieve:'Thành tích'};
+const ST_TABS = {home:'', schedule:'Lịch học', tasks:'Bài của tôi', practice:'Luyện tập', goals:'Mục tiêu của mình', fish:'Cá của tôi', achieve:'Thành tích'};
 const OPEN_ST = ['todo', 'overdue', 'needs_redo'];
 const isLockedRow = (r) => r.open_at && new Date(r.open_at).getTime() > Date.now();
 function stGo(tab, keep){
@@ -6006,6 +6257,73 @@ function attLine(studentId){
   if(!r) return '';
   return `<div class="muted">Điểm danh 30 ngày: ${r.present} có mặt · ${r.absent} vắng</div>`;
 }
+/* ===== LỊCH HỌC (học sinh): chỉ thấy lịch + nội dung + có mặt/vắng của chính mình; không có nhận xét, giá, học phí ===== */
+const SCH = { y: null, m: null };
+const WD_VN = ['CN', 'Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7'];
+function schToday(){ return new Date(Date.now() + 7 * 36e5).toISOString().slice(0, 10); }  // ngày theo giờ Việt Nam (UTC+7)
+function schDmy(iso){ return iso.split('-').reverse().join('/'); }
+function schDow(iso){ return WD_VN[new Date(iso + 'T00:00:00Z').getUTCDay()]; }
+function schDiff(iso){ return Math.round((Date.parse(iso + 'T00:00:00Z') - Date.parse(schToday() + 'T00:00:00Z')) / 864e5); }
+function schNextCard(pl){
+  if(!pl) return '<div class="card"><div class="muted">📅 Cô chưa xếp buổi học tiếp theo. Có lịch mới cô sẽ cập nhật ở đây nhé!</div></div>';
+  const d = schDiff(pl.date), cd = d === 0 ? 'Hôm nay' : d === 1 ? 'Ngày mai' : 'Còn ' + d + ' ngày';
+  return `<div class="card sch-next"><div><div class="muted">📅 Buổi học tiếp theo</div>
+    <div class="big">${esc(schDow(pl.date))}, ${schDmy(pl.date)}</div>
+    <div class="when">${pl.time ? '⏰ ' + esc(pl.time) + ' · ' : ''}${esc(pl.class_name || 'Lớp')}</div>
+    ${pl.note ? `<div class="muted">📝 ${esc(pl.note)}</div>` : ''}</div>
+    <div class="sch-cd"><b>${d === 0 ? '🎉' : d}</b><span class="muted">${d === 0 ? 'Hôm nay' : d === 1 ? 'ngày nữa' : 'ngày nữa'}</span></div></div>`;
+}
+function schMonthCal(){
+  const t = schToday();
+  if(SCH.y == null){ SCH.y = +t.slice(0, 4); SCH.m = +t.slice(5, 7) - 1; }
+  const first = new Date(Date.UTC(SCH.y, SCH.m, 1)), dim = new Date(Date.UTC(SCH.y, SCH.m + 1, 0)).getUTCDate();
+  const lead = (first.getUTCDay() + 6) % 7, total = Math.ceil((lead + dim) / 7) * 7;
+  const byDate = {};
+  (state.myPlanned || []).forEach(p => (byDate[p.date] = byDate[p.date] || []).push({k: 'up', p}));
+  (state.myLessons || []).forEach(l => (byDate[l.date] = byDate[l.date] || []).push({k: l.present ? 'pa' : 'ab', p: l}));
+  let h = `<div class="sch-nav"><button class="btn" onclick="schMove(-1)">‹</button><b>Tháng ${String(SCH.m + 1).padStart(2, '0')}/${SCH.y}</b><button class="btn" onclick="schMove(1)">›</button></div><div class="sch-mcal">`;
+  ['Th 2', 'Th 3', 'Th 4', 'Th 5', 'Th 6', 'Th 7', 'CN'].forEach(w => { h += `<div class="wd">${w}</div>`; });
+  for(let i = 0; i < total; i++){
+    const dt = new Date(Date.UTC(SCH.y, SCH.m, 1 - lead + i)), iso = dt.toISOString().slice(0, 10), other = dt.getUTCMonth() !== SCH.m;
+    const items = (byDate[iso] || []).map(({k, p}) => `<i class="${k}" title="${esc(p.class_name || '')}${p.time ? ' · ' + esc(p.time) : ''}">${p.time ? esc(String(p.time).slice(0, 5)) : (k === 'up' ? 'Học' : k === 'ab' ? 'Vắng' : 'Đã học')}</i>`).join('');
+    h += `<div class="d${other ? ' o' : ''}${iso === t ? ' td' : ''}"><span>${dt.getUTCDate()}</span>${items}</div>`;
+  }
+  return h + '</div>';
+}
+function schMove(n){ SCH.m += n; if(SCH.m < 0){ SCH.m = 11; SCH.y--; } if(SCH.m > 11){ SCH.m = 0; SCH.y++; } const el = $('#st-sch-cal'); if(el) el.innerHTML = schMonthCal(); }
+function renderSchedule(){
+  const up = (state.myPlanned || []).slice().sort((a, b) => (a.date + (a.time || '')).localeCompare(b.date + (b.time || '')));
+  const next = up[0] || null;
+  const nh = $('#st-next-lesson'); if(nh) nh.innerHTML = next ? schNextCard(next) : '';
+  const sn = $('#st-sch-next'); if(sn) sn.innerHTML = schNextCard(next);
+  const cal = $('#st-sch-cal'); if(cal) cal.innerHTML = schMonthCal();
+  const ls = (state.myLessons || []).slice().sort((a, b) => b.date.localeCompare(a.date));
+  const n = $('#st-sch-n'); if(n) n.textContent = ls.length + ' buổi';
+  const box = $('#st-sch-list'); if(!box) return;
+  box.innerHTML = ls.length ? ls.map(l => `<div class="sch-les"><div><b>${schDow(l.date)}, ${schDmy(l.date)}</b>${l.time ? ' · ' + esc(l.time) : ''} · ${esc(l.class_name || '')}
+      <span class="chip ${l.present ? 'c-green' : 'c-pink'}" style="margin-left:.4rem">${l.present ? 'Có mặt' : 'Vắng'}</span></div>
+      <div class="cn">${l.content ? '📖 ' + esc(l.content) : '<span class="muted">Cô chưa ghi nội dung buổi này.</span>'}</div></div>`).join('')
+    : '<div class="muted">Chưa có buổi học nào được ghi lại.</div>';
+}
+
+/* ===== NHẮC BUỔI DỰ KIẾN (giáo viên, Trang chủ) ===== */
+function renderPlannedHome(){
+  const box = document.getElementById('hm-planned'); if(!box) return;
+  const pl = (DDStore.data.planned || []), ses = DDStore.data.sessions || [], cls = DDStore.data.classes || [];
+  const name = Object.fromEntries(cls.map(c => [c.id, c.name]));
+  const today = new Date(Date.now() + 7 * 36e5).toISOString().slice(0, 10);
+  const done = (p) => ses.some(s => s.date === p.date && s.classId === p.classId);
+  const td = pl.filter(p => p.date === today && !done(p)).sort((a, b) => (a.time || '').localeCompare(b.time || ''));
+  const od = pl.filter(p => p.date < today && !done(p)).sort((a, b) => a.date.localeCompare(b.date));
+  const dmy = (d) => d.split('-').reverse().join('/');
+  let h = '';
+  if(td.length) h += `<div class="card hm-plan"><b>📅 Hôm nay có ${td.length} buổi dự kiến</b><div class="muted">${td.map(p => esc(name[p.classId] || 'Lớp') + (p.time ? ' (' + esc(p.time) + ')' : '')).join(' · ')}</div>
+    <button class="btn" style="margin-top:.4rem" onclick="go('diemdanh')">Mở sổ điểm danh</button></div>`;
+  if(od.length) h += `<div class="card hm-plan warn"><b>⚠ ${od.length} buổi dự kiến đã qua nhưng chưa điểm danh</b><div class="muted">${od.slice(0, 4).map(p => esc(name[p.classId] || 'Lớp') + ' (' + dmy(p.date).slice(0, 5) + ')').join(', ')}${od.length > 4 ? '…' : ''}</div>
+    <button class="btn" style="margin-top:.4rem" onclick="go('diemdanh')">Xử lý ngay</button></div>`;
+  box.innerHTML = h;
+}
+
 function renderAttendanceHome(){
   const box = document.getElementById('hm-att'); if(!box) return;
   const { sessions, byId, clsName } = ddStats();
@@ -6021,7 +6339,7 @@ function renderAttendanceHome(){
 window.addEventListener('storage', (e) => {
   if(e.key && e.key.startsWith('diemdanh_')){ try{ renderAttendanceHome(); renderPeople(); }catch(err){} }
 });
-window.addEventListener('dd-changed', () => { try{ renderAttendanceHome(); renderPeople(); }catch(err){} });
+window.addEventListener('dd-changed', () => { try{ renderAttendanceHome(); renderPeople(); }catch(err){} try{ renderPlannedHome(); }catch(err){} });
 // sổ vừa đổi lớp/học sinh => Supabase đã tự cập nhật lớp portal; nạp lại phía portal (không nạp lại sổ để khỏi ghi đè lúc đang nhập)
 let ddReloadT = null;
 window.addEventListener('dd-classes-changed', () => { clearTimeout(ddReloadT); ddReloadT = setTimeout(() => { try{ reloadTeacher({ skipDD: true }); }catch(err){ console.warn(err); } }, 900); });
@@ -6134,7 +6452,7 @@ function renderRows(){
 }
 
 function renderHome(){
-  try{ renderAttendanceHome(); }catch(e){ console.warn(e); }
+  try{ renderAttendanceHome(); renderPlannedHome(); }catch(e){ console.warn(e); }
   const sel = $('#flt-class'), keep = sel.value;
   sel.innerHTML = '<option value="">Tất cả lớp</option>' + state.classes.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
   sel.value = keep;
