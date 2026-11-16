@@ -234,6 +234,17 @@ const YY_CONFIG = {
   YY.listMyLessonDates = async () =>
     unwrap(await sb.from('lesson_log').select('class_id, lesson, started_on'));
 
+  // Học sinh: buổi đã học của CHÍNH MÌNH (nội dung + Có mặt/Vắng; không có nhận xét/giá) — migration-dot12.sql
+  YY.listMyLessons = async () => {
+    try { return unwrap(await sb.rpc('my_lessons')) || []; }
+    catch (e) { if (/my_lessons|function|schema cache/i.test(e.message || '')) return []; throw e; }
+  };
+  // Học sinh: buổi học dự kiến sắp tới của lớp mình — migration-dot12.sql
+  YY.listMyPlanned = async () => {
+    try { return unwrap(await sb.rpc('my_planned')) || []; }
+    catch (e) { if (/my_planned|function|schema cache/i.test(e.message || '')) return []; throw e; }
+  };
+
   // Học sinh: các lớp của mình (RLS tự lọc theo class_members); bỏ lớp đã lưu trữ
   YY.listMyClasses = async () =>
     unwrap(await sb.from('classes').select('id, name, course, current_lesson, kind').or('archived.is.null,archived.eq.false'));
