@@ -2316,6 +2316,82 @@ var qrcode=function(){var t=function(t,r){var e=t,n=g[r],o=null,i=0,a=null,u=[],
     });
   });
 
+  // ---------- Chọn khoảng giờ (Từ – Đến, có nhãn Sáng/Trưa/Chiều/Tối) ----------
+  // Giữ nguyên ô text gốc (ẩn đi) làm nơi lưu "HH:MM - HH:MM", nên dữ liệu cũ và logic lưu không đổi.
+  function setupTimeRange(input){
+    if(!input || input._tr) return; input._tr = true;
+    var native = Object.getOwnPropertyDescriptor(HTMLInputElement.prototype, 'value');
+    function period(t){
+      if(!t) return '';
+      var h = parseInt(t.split(':')[0], 10);
+      return h < 11 ? '🌅 Sáng' : h < 13 ? '☀️ Trưa' : h < 18 ? '🌤️ Chiều' : '🌙 Tối';
+    }
+    function pad(n){ return (n<10?'0':'')+n; }
+    function norm(h, m){ return pad(+h)+':'+m; }
+    var wrap = document.createElement('div');
+    wrap.style.cssText = 'display:flex;flex-wrap:wrap;gap:6px 8px;align-items:center';
+    function mk(){
+      var box = document.createElement('div');
+      box.style.cssText = 'display:flex;flex-direction:column;gap:2px;flex:1;min-width:7.5rem';
+      var i = document.createElement('input'); i.type = 'time'; i.style.cssText = 'width:100%;min-width:0';
+      var b = document.createElement('small'); b.style.cssText = 'color:var(--muted);min-height:1.1em';
+      box.appendChild(i); box.appendChild(b); wrap.appendChild(box);
+      return {i:i, b:b};
+    }
+    var from = mk();
+    var arrow = document.createElement('span'); arrow.textContent = '→'; arrow.style.cssText = 'align-self:flex-start;padding-top:.5rem';
+    wrap.appendChild(arrow);
+    var to = mk();
+    var oldNote = document.createElement('small'); oldNote.style.cssText = 'color:var(--muted);flex-basis:100%'; oldNote.hidden = true;
+    wrap.appendChild(oldNote);
+    // Nút chọn nhanh: sửa danh sách này để đổi các khung giờ hay dùng
+    var QUICK = [['07:30','09:00'],['14:30','16:00'],['19:30','21:00']];
+    var quick = document.createElement('div');
+    quick.style.cssText = 'flex-basis:100%;display:flex;flex-wrap:wrap;gap:6px';
+    QUICK.forEach(function(q){
+      var bt = document.createElement('button'); bt.type = 'button';
+      bt.textContent = q[0]+'–'+q[1];
+      bt.style.cssText = 'border:1px solid var(--line,#cde7ec);background:#fff;color:inherit;border-radius:999px;padding:.2rem .7rem;font:inherit;font-size:.85em;cursor:pointer';
+      bt.addEventListener('click', function(){ from.i.value = q[0]; to.i.value = q[1]; compose(); });
+      quick.appendChild(bt);
+    });
+    wrap.appendChild(quick);
+    input.style.display = 'none';
+    input.parentNode.appendChild(wrap);
+
+    function refreshBadges(){ from.b.textContent = period(from.i.value); to.b.textContent = period(to.i.value); }
+    function compose(){
+      refreshBadges();
+      var v = from.i.value && to.i.value ? from.i.value+' - '+to.i.value : (from.i.value || '');
+      native.set.call(input, v); oldNote.hidden = true;
+    }
+    function fromText(v){
+      var ts = (v||'').match(/(\d{1,2})\s*[:h.]\s*(\d{2})/g) || [];
+      var p = ts.map(function(s){ var m = s.match(/(\d{1,2})\s*[:h.]\s*(\d{2})/); return norm(m[1], m[2]); });
+      from.i.value = p[0] || ''; to.i.value = p[1] || '';
+      refreshBadges();
+      oldNote.hidden = !(v && !p.length);
+      if(!oldNote.hidden) oldNote.textContent = 'Giờ đã lưu: "'+v+'" (chọn lại giờ nếu muốn đổi)';
+    }
+    from.i.addEventListener('change', function(){
+      if(from.i.value && !to.i.value){            // tự gợi ý giờ kết thúc = +90 phút
+        var a = from.i.value.split(':'), t = (+a[0])*60 + (+a[1]) + 90;
+        if(t < 24*60) to.i.value = pad(Math.floor(t/60))+':'+pad(t%60);
+      }
+      compose();
+    });
+    to.i.addEventListener('change', compose);
+    // khi code khác gán .value (mở buổi cũ, điền từ lịch dự kiến...) thì ô chọn giờ cập nhật theo
+    Object.defineProperty(input, 'value', {
+      configurable: true,
+      get: function(){ return native.get.call(input); },
+      set: function(v){ native.set.call(input, v); fromText(v == null ? '' : String(v)); }
+    });
+    fromText(native.get.call(input));
+  }
+  setupTimeRange(qs('#dd-time'));
+  setupTimeRange(qs('#pl-time'));
+
   // ---------- Điểm danh ----------
   var ddDate = qs('#dd-date'), ddClass = qs('#dd-class'), ddNoClass = qs('#dd-noclass'),
       ddFormWrap = qs('#dd-form'), ddContent = qs('#dd-content'), ddList = qs('#dd-list'),
