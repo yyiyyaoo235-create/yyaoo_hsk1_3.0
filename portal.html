@@ -543,6 +543,25 @@
   .sch-ul li{position:relative;padding-left:1rem}
   .sch-ul li::before{content:'';position:absolute;left:.15rem;top:.62em;width:.38rem;height:.38rem;border-radius:50%;background:var(--pink);opacity:.55}
   .sch-more{display:block;margin:.5rem auto 0}
+  .cs-top{display:flex;align-items:center;gap:.8rem;flex-wrap:wrap}
+  .cs-top h2{margin:0;font-size:1.2rem}
+  .cs-chips{display:flex;gap:.35rem;flex-wrap:wrap}
+  .cs-bar{height:.55rem;border-radius:99px;background:var(--gray-soft);overflow:hidden;margin:.6rem 0 .25rem}
+  .cs-bar i{display:block;height:100%;border-radius:99px;background:linear-gradient(90deg,#7fd6c2,var(--pink))}
+  .cs-sub{font-size:.82rem;color:var(--muted);font-weight:600;display:flex;gap:.9rem;flex-wrap:wrap}
+  .cs-stage{font-size:.72rem;font-weight:800;letter-spacing:.06em;color:var(--muted);margin:1.1rem 0 .4rem}
+  .cs-les{background:rgba(255,255,255,.95);border:1px solid var(--line);border-radius:16px;margin:.4rem 0;overflow:hidden}
+  .cs-les>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.7rem;padding:.55rem .8rem}
+  .cs-les>summary::-webkit-details-marker{display:none}
+  .cs-les[open]>summary{background:var(--pink-soft)}
+  .cs-n{flex:none;min-width:2rem;height:2rem;border-radius:11px;background:#eaf8fa;color:var(--pink);display:grid;place-items:center;font-weight:800;font-size:.85rem}
+  .cs-les.now .cs-n{background:var(--pink);color:#fff}
+  .cs-nm{flex:1;min-width:0;font-weight:700;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cs-ico{display:flex;gap:.5rem;font-size:.78rem;font-weight:700;color:var(--muted);flex:none}
+  .cs-it{display:flex;align-items:center;gap:.6rem;padding:.5rem .8rem;border-top:1px solid var(--line)}
+  .cs-ic{flex:none;width:1.6rem;text-align:center}
+  .cs-t{flex:1;min-width:0;font-size:.92rem;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .cs-it .btn{padding:.25rem .7rem;font-size:.8rem;flex:none}
   .hm-plan{background:#eaf6ff;border:2px dashed #7fb8e0}
   .hm-plan.warn{background:#fff6dd;border-color:#e0b43f}
   .cal{display:grid;grid-auto-flow:column;grid-template-rows:repeat(7,1fr);grid-template-columns:repeat(12,1fr);gap:.25rem;max-width:26rem}
@@ -751,6 +770,7 @@
     <div class="side-h">HỌC TẬP</div>
     <button class="nav-i on" data-st="home" data-tip="Trang chủ"><span class="ico">🏠</span><span class="lbl">Trang chủ</span></button>
     <button class="nav-i" data-st="schedule" data-tip="Lịch học"><span class="ico">📅</span><span class="lbl">Lịch học</span></button>
+    <button class="nav-i" data-st="course" data-tip="Khóa học"><span class="ico">📚</span><span class="lbl">Khóa học</span></button>
     <button class="nav-i" data-st="tasks" data-tip="Bài của tôi"><span class="ico">📝</span><span class="lbl">Bài của tôi</span><span class="badge hidden" id="st-bd-tasks"></span></button>
     <button class="nav-i" data-st="practice" data-tip="Luyện tập"><span class="ico">🧩</span><span class="lbl">Luyện tập</span></button>
     <button class="nav-i" data-st="goals" data-tip="Mục tiêu"><span class="ico">🎯</span><span class="lbl">Mục tiêu</span></button>
@@ -788,6 +808,9 @@
       <div class="sec-title"><h2>📖 Các buổi đã học</h2><span class="chip c-green" id="st-sch-n"></span></div>
       <div class="card" id="st-sch-list"></div>
     </div>
+
+    <!-- khóa học của em -->
+    <div id="stab-course" class="hidden"><div id="st-course"></div></div>
 
     <!-- bài của tôi -->
     <div id="stab-tasks" class="hidden">
@@ -5554,7 +5577,9 @@ async function _reloadStudentCore(){
   state.practice = practice; state.awards = awards; state.myRows = rows;
   state.style = style || {}; state.items = items;
   const ev = detectEvents(rows);
+  state.stMats = mats || [];
   renderTasks(rows);
+  try{ renderStCourse(); }catch(e){ console.warn('Khóa học:', e); }
   renderTodo(rows);
   renderMascot(rows, ev);
   renderStreaks(rows);
@@ -5594,7 +5619,7 @@ function showWelcome(){
   }catch(e){}
 }
 /* ===== khung học sinh: các trang + bộ lọc bài ===== */
-const ST_TABS = {home:'', schedule:'Lịch học', tasks:'Bài của tôi', practice:'Luyện tập', goals:'Mục tiêu của mình', fish:'Cá của tôi', achieve:'Thành tích'};
+const ST_TABS = {home:'', schedule:'Lịch học', course:'Khóa học', tasks:'Bài của tôi', practice:'Luyện tập', goals:'Mục tiêu của mình', fish:'Cá của tôi', achieve:'Thành tích'};
 const OPEN_ST = ['todo', 'overdue', 'needs_redo'];
 const isLockedRow = (r) => r.open_at && new Date(r.open_at).getTime() > Date.now();
 function stGo(tab, keep){
@@ -5636,6 +5661,70 @@ function renderTasks(rows){
   $('#st-homework').innerHTML = list('homework');
   const n = rows.filter(r => OPEN_ST.includes(r.status) && !isLockedRow(r)).length, bd = $('#st-bd-tasks');
   bd.textContent = n; bd.classList.toggle('hidden', !n);
+}
+/* ===== KHÓA HỌC của em: bài đã dạy → bài giảng / luyện tập / kiểm tra / bài tập về nhà ===== */
+const stCs = { course: null, open: {} };
+function renderStCourse(){
+  const box = $('#st-course'); if(!box) return;
+  const cls = (state.myClasses || []).filter(c => c.course), cur = {};
+  cls.forEach(c => { cur[c.course] = Math.max(cur[c.course] || 0, +c.current_lesson || 0); });
+  const courses = Object.keys(cur);
+  if(!courses.length){ box.innerHTML = '<div class="card muted">Lớp của em chưa gắn với khóa học nào. Cô sẽ cập nhật sớm nhé!</div>'; return; }
+  if(!stCs.course || cur[stCs.course] === undefined) stCs.course = courses[0];
+  const c = stCs.course, N = cur[c], mats = (state.stMats || []).filter(m => m.course === c);
+  const info = COURSES[c] || {lessons: []}, nameOf = (n) => (info.lessons.find(r => r[0] === n) || [0, ''])[1];
+  const path = (typeof COURSE_PATH !== 'undefined' && COURSE_PATH[c]) || null;
+  const B = {};   // bài -> {lec, prac, tests, hw}
+  const bk = (n) => B[n] || (B[n] = {lec: [], prac: [], tests: [], hw: []});
+  mats.forEach(m => { const n = +m.lesson || 0; if(n > N) return;
+    if(m.type === 'lecture') bk(n).lec.push(m); else if(m.type === 'practice') bk(n).prac.push(m); });
+  (state.myRows || []).forEach(r => {
+    const um = (state.stMats || []).find(m => m.url === r.content_url);
+    let rc = um ? um.course : null;
+    if(!rc){ const hm = /HSK\s*(\d)/i.exec(r.title || ''); rc = hm ? 'HSK' + hm[1] : (courses.length === 1 ? courses[0] : null); }
+    if(rc !== c) return;
+    let n = um ? (+um.lesson || 0) : 0;
+    if(!um){ const lm = /(\d+)\s*(?:[–-]\s*(\d+))?/.exec(r.lesson || ''); if(lm) n = +(lm[2] || lm[1]); }
+    if(n > N) n = 0;
+    (r.kind === 'test' ? bk(n).tests : bk(n).hw).push(r);
+  });
+  const done = Object.values(B).flatMap(b => b.tests).filter(r => r.percent != null);
+  const avg = done.length ? Math.round(done.reduce((t, r) => t + +r.percent, 0) / done.length) : null;
+  const need = (state.myRows || []).filter(r => OPEN_ST.includes(r.status) && !isLockedRow(r) && Object.values(B).some(b => b.tests.includes(r) || b.hw.includes(r))).length;
+  const chips = courses.length > 1 ? `<div class="cs-chips">${courses.map(k => `<button type="button" class="btn${k === c ? ' pri' : ''}" onclick="stCs.course='${k}';renderStCourse()">${esc(k)}</button>`).join('')}</div>` : '';
+  let h = `<div class="card"><div class="cs-top"><h2>${esc(c)}</h2>${chips}<span class="chip c-pink" style="margin-left:auto">📍 Đang học Bài ${N}</span></div>`
+    + (path ? `<div class="cs-bar"><i style="width:${Math.min(100, Math.round(N / path.total * 100))}%"></i></div>` : '')
+    + `<div class="cs-sub">${path ? `<span>Bài ${N}/${path.total}</span>` : ''}${done.length ? `<span>📝 ${done.length} bài kiểm tra · TB ${avg}%</span>` : ''}${need ? `<span style="color:var(--yellow)">● ${need} bài cần làm</span>` : ''}</div></div>`;
+  if(!N){ box.innerHTML = h + '<div class="card muted" style="margin-top:.8rem">Cô chưa bắt đầu khóa này. Dạy tới bài nào, bài đó sẽ hiện ở đây nhé!</div>'; return; }
+  const itLec = (m) => `<div class="cs-it"><span class="cs-ic">📖</span><div class="cs-t">${esc(m.title)}</div><a class="btn pri" href="${esc(m.url)}" target="_blank" rel="noopener">Xem lại</a></div>`;
+  const itPrac = (m) => `<div class="cs-it"><span class="cs-ic">🧩</span><div class="cs-t">${esc(m.title)}</div><a class="btn" href="${esc(m.url)}">Luyện</a></div>`;
+  const itRow = (r) => {
+    let btn = '';
+    if(isLockedRow(r)) btn = `<button class="btn" disabled>🔒 ${fmt(r.open_at)}</button>`;
+    else if(r.status === 'todo' || r.status === 'overdue') btn = `<button class="btn pri" onclick="openQuiz('${r.assignment_id}','${esc(r.content_url)}')">Làm bài</button>`;
+    else if(r.status === 'needs_redo' && r.attempt < r.max_attempts) btn = `<button class="btn pri" onclick="openQuiz('${r.assignment_id}','${esc(r.content_url)}')">Làm lại</button>`;
+    return `<div class="cs-it"><span class="cs-ic">${r.kind === 'test' ? '📝' : '📚'}</span><div class="cs-t">${esc(r.title)}</div>${r.percent != null ? `<b>${r.percent}%</b>` : ''}${chip(r.status)}${btn}</div>`;
+  };
+  const lesson = (n) => {
+    const b = B[n] || {lec: [], prac: [], tests: [], hw: []};
+    const all = b.lec.length + b.prac.length + b.tests.length + b.hw.length;
+    if(!all && n) return '';
+    const k = c + ':' + n, isOpen = stCs.open[k] !== undefined ? stCs.open[k] : n === N;
+    const best = b.tests.filter(r => r.percent != null).map(r => +r.percent);
+    const ico = [b.lec.length ? '📖' : '', b.prac.length ? '🧩' : '', b.tests.length ? '📝' + (best.length ? ' ' + Math.max(...best) + '%' : '') : '', b.hw.length ? '📚' : ''].filter(Boolean).join(' ');
+    const todo = b.tests.concat(b.hw).some(r => OPEN_ST.includes(r.status) && !isLockedRow(r));
+    return `<details class="cs-les${n === N ? ' now' : ''}"${isOpen ? ' open' : ''} ontoggle="stCs.open['${k}']=this.open">
+      <summary><span class="cs-n">${n || '⋯'}</span><span class="cs-nm ${n ? 'zh' : ''}">${n ? esc(nameOf(n)) : 'Ôn tập chung'}</span>${todo ? '<span class="chip c-yellow">Cần làm</span>' : ''}<span class="cs-ico">${ico}</span></summary>
+      ${b.lec.map(itLec).join('')}${b.prac.map(itPrac).join('')}${b.tests.map(itRow).join('')}${b.hw.map(itRow).join('')}</details>`;
+  };
+  const stages = path ? path.stages.slice().reverse() : [[1, N]];
+  stages.forEach(([a, z], i) => {
+    const top = Math.min(z, N); if(a > N) return;
+    let inner = ''; for(let n = top; n >= a; n--) inner += lesson(n);
+    if(inner) h += `<div class="cs-stage">CHẶNG ${path ? path.stages.length - i : 1} · BÀI ${a}–${z}</div>` + inner;
+  });
+  if(B[0] && (B[0].lec.length + B[0].prac.length + B[0].tests.length + B[0].hw.length)) h += `<div class="cs-stage">KHÁC</div>` + lesson(0);
+  box.innerHTML = h;
 }
 function setTaskFilter(k){ state.taskFilter = k; renderTasks(state.myRows); }
 function renderTodo(rows){
