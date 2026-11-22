@@ -917,9 +917,9 @@
         <button class="btn pri" id="cr-import-b" type="button">Nhập tài liệu mẫu lên Supabase</button>
       </div>
       <div class="card cr-tools">
-        <div class="cr-search"><span>🔍</span><input id="cr-q" placeholder="Tìm tài liệu… (vd: bài 5, từ vựng, nghe)" autocomplete="off"><button type="button" class="x hidden" id="cr-qx" title="Xóa tìm kiếm">✕</button></div>
+        <div class="cr-search"><span>🔍</span><input id="cr-q" placeholder="Tìm…" autocomplete="off"><button type="button" class="x hidden" id="cr-qx" title="Xóa tìm kiếm">✕</button></div>
         <div class="cr-pills" id="cr-pills"></div>
-        <div class="cr-tact"><span class="muted" id="cr-chk-msg"></span><button class="btn" id="cr-chk" type="button" title="Kiểm tra file có trên GitHub Pages chưa">🩺 Kiểm tra link</button></div>
+        <div class="cr-tact"><span class="muted" id="cr-chk-msg"></span><button class="btn" id="cr-chk" type="button" title="Kiểm tra file có trên GitHub Pages chưa">🩺 Kiểm tra</button></div>
       </div>
       <div class="cr-split"><div class="cr-list" id="cr-list"></div><div id="cr-detail"></div></div>
     </div>
@@ -6650,13 +6650,13 @@ function crFlat(){ return crUI.q.trim() !== '' || !['all', 'empty'].includes(crU
 function renderCourse(){
   const code = state.course, c = COURSES[code], real = c.lessons, L = crLessons(code);
   $('#cr-name').textContent = code;
-  $('#cr-sub').textContent = c.book;
+  $('#cr-sub').textContent = ''; $('#cr-name').title = c.book;
   /* lớp đang học cấp này: chọn "đang học tới bài X" ngay tại đây */
   const myCls = (state.classes || []).filter(x => x.course === code);
-  const optL = (cur) => `<option value="0"${cur ? '' : ' selected'}>Chưa bắt đầu</option>` + real.map(([n]) => `<option value="${n}"${cur === n ? ' selected' : ''}>Bài ${n}</option>`).join('');
+  const optL = (cur) => `<option value="0"${cur ? '' : ' selected'}>Chưa học</option>` + real.map(([n]) => `<option value="${n}"${cur === n ? ' selected' : ''}>Bài ${n}</option>`).join('');
   $('#cr-classes').innerHTML = myCls.length
-    ? myCls.map(x => `<span class="cr-cls">${clsPill(x)}${real.length ? `<label class="cr-cl-sel">đang học<select onchange="crSetLesson('${x.id}',this.value)">${optL(+x.current_lesson || 0)}</select></label>` : ''}</span>`).join('')
-    : '<span class="muted">Chưa có lớp nào gắn với cấp này — chọn ở mục “Lớp &amp; học sinh”.</span>';
+    ? myCls.map(x => `<span class="cr-cls">${clsPill(x)}${real.length ? `<label class="cr-cl-sel" title="Lớp đang học tới bài nào">📍<select onchange="crSetLesson('${x.id}',this.value)">${optL(+x.current_lesson || 0)}</select></label>` : ''}</span>`).join('')
+    : '<span class="muted">Chưa có lớp</span>';
   const seedRows = MAT_SEED.filter(m => m.course === code).length;
   $('#cr-import').classList.toggle('hidden', matsOf().length > 0 || !seedRows);
   $('#cr-import-t').textContent = seedRows + ' tài liệu mẫu (các bài giảng đã dựng) sẵn sàng nhập; đường dẫn sai thì xóa ✕ và thêm lại.';
@@ -6676,7 +6676,7 @@ function renderCourse(){
   const pill = (k, label, cnt) => `<button type="button" class="cr-pill${f === k ? ' on' : ''}" onclick="crSetF('${k}')">${label}<b>${cnt}</b></button>`;
   $('#cr-pills').innerHTML = pill('all', 'Tất cả', mine.length)
     + CR_ORDER.map(t => pill(t, MAT_TYPES[t].ico + ' ' + MAT_TYPES[t].label, mine.filter(m => m.type === t).length)).join('')
-    + pill('empty', '⚠️ Bài trống', emptyN);
+    + pill('empty', '⚠️ Trống', emptyN);
   $('#cr-qx').classList.toggle('hidden', !crUI.q);
 
   /* các bài hiển thị ở cột trái */
@@ -6698,11 +6698,10 @@ function renderCourse(){
   /* cột trái */
   const dots = (n) => CR_ORDER.map(t => { const k = byL(n).filter(m => m.type === t).length; return `<i class="${k ? 'on' : ''}" style="--dc:${CR_COL[t]}" title="${MAT_TYPES[t].label}: ${k}"></i>`; }).join('');
   const nowOf = (n) => myCls.filter(x => (+x.current_lesson || 0) === n && n);
-  $('#cr-list').innerHTML = `<div class="cr-list-h">DANH SÁCH BÀI (${real.length})</div>
-    <div class="cr-legend">${CR_ORDER.map(t => `<span><i style="--dc:${CR_COL[t]}"></i>${MAT_TYPES[t].label}</span>`).join('')}</div>`
+  $('#cr-list').innerHTML = ''
     + (vis.length ? vis.map(([n, zh]) => `<button type="button" class="cr-li2${!flat && n === sel ? ' on' : ''}" data-n="${n}" onclick="crPick(${n})">
         <span class="cr-n">${n || '⋯'}</span>
-        <span class="cr-lt"><b class="${n ? 'zh' : ''}">${esc(zh)}</b>${nowOf(n).length ? '<small>📍 đang học</small>' : ''}</span>
+        <span class="cr-lt"><b class="${n ? 'zh' : ''}">${esc(zh)}</b>${nowOf(n).length ? '<small>📍</small>' : ''}</span>
         <span class="cr-dots">${dots(n)}</span></button>`).join('')
       : '<div class="cr-hint">Không có bài nào khớp.</div>');
 
@@ -6731,14 +6730,14 @@ function renderCourse(){
     const prev = vis[i - 1], next = vis[i + 1], now = nowOf(n);
     html += `<div class="cr-dh"><div>
         <div class="cr-dh-t">${n ? 'BÀI ' + n + ' <span class="zh" style="font-weight:700;color:var(--muted)">' + esc(zh) + '</span>' : esc(zh)}</div>
-        ${now.length ? `<div class="cr-now">📍 ${now.map(x => 'Lớp ' + esc(x.name)).join(', ')} đang học bài này</div>` : ''}</div>
-      <div><button class="btn" ${prev ? `onclick="crPick(${prev[0]})"` : 'disabled style="opacity:.4"'}>← Bài trước</button>
-        <button class="btn" ${next ? `onclick="crPick(${next[0]})"` : 'disabled style="opacity:.4"'}>Bài sau →</button></div></div>`;
-    html += CR_GROUPS.map(([gt, types]) => `<div class="cr-gt">${gt}</div><div class="cr-grp">` + types.map(t => {
+        ${now.length ? `<div class="cr-now">📍 ${now.map(x => esc(x.name)).join(', ')}</div>` : ''}</div>
+      <div><button class="btn" ${prev ? `onclick="crPick(${prev[0]})"` : 'disabled style="opacity:.4"'} title="Bài trước">←</button>
+        <button class="btn" ${next ? `onclick="crPick(${next[0]})"` : 'disabled style="opacity:.4"'} title="Bài sau">→</button></div></div>`;
+    html += CR_GROUPS.map(([gt, types]) => `<div style="height:.5rem" title="${gt}"></div><div class="cr-grp">` + types.map(t => {
       const g = crGroup(code, n, t), ty = MAT_TYPES[t];
-      return `<div><div class="cr-sec-h" style="color:${CR_COL[t]}"><span>${ty.ico} ${ty.label.toUpperCase()}</span><small>${CR_SUB[t]} · ${g.length}</small>
+      return `<div><div class="cr-sec-h" style="color:${CR_COL[t]}"><span>${ty.ico} ${ty.label.toUpperCase()}</span><small>${g.length}</small>
           <button class="link" onclick="crOpenForm(null,{lesson:${n},type:'${t}'})">＋ Thêm</button></div>`
-        + (g.length ? g.map((m, k) => crCard(m, '', {i: k, n: g.length})).join('') : '<div class="cr-hint">Chưa có — bấm ＋ Thêm.</div>') + '</div>';
+        + (g.length ? g.map((m, k) => crCard(m, '', {i: k, n: g.length})).join('') : '<div class="cr-hint">Chưa có</div>') + '</div>';
     }).join('') + '</div>').join('');
   }
   $('#cr-detail').innerHTML = html;
