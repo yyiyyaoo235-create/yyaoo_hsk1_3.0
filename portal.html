@@ -228,7 +228,14 @@
   mark{background:#ffe9a8;color:inherit;border-radius:4px;padding:0 .1rem}
   #cr-toast{position:fixed;left:50%;bottom:1.4rem;transform:translate(-50%,1rem);background:#1b3a46;color:#fff;font-weight:700;font-size:.82rem;padding:.45rem .9rem;border-radius:12px;opacity:0;pointer-events:none;transition:.18s;z-index:300}
   #cr-toast.show{opacity:1;transform:translate(-50%,0)}
+  .cr-split.mini{grid-template-columns:4.4rem minmax(0,1fr)}
+  .cr-split.mini .cr-list{padding:.5rem .3rem .6rem;align-items:center}
+  .cr-split.mini .cr-li2{padding:.25rem;gap:0;justify-content:center}
+  .cr-split.mini .cr-lt,.cr-split.mini .cr-dots{display:none}
+  .cr-li2.now .cr-n{position:relative}
+  .cr-li2.now .cr-n::after{content:'';position:absolute;top:-.2rem;right:-.2rem;width:.55rem;height:.55rem;border-radius:50%;background:var(--yellow);border:2px solid #fff}
   @media(max-width:820px){
+    .cr-split.mini{grid-template-columns:1fr}
     .cr-split{grid-template-columns:1fr}
     .cr-list{position:static;max-height:none;flex-direction:row;overflow-x:auto;padding-bottom:.4rem}
     .cr-list-h,.cr-legend{display:none}
@@ -875,7 +882,7 @@
     <!-- mục tiêu: của cô + các em chia sẻ -->
     <div id="tab-goals" class="hidden">
       <div class="card"><div class="gl-head"><h2 style="margin:0">🎯 Mục tiêu của cô</h2><span id="tg-add"></span></div>
-        <div class="muted" style="margin-top:.2rem">Chỉ mình cô nhìn thấy. Em và phụ huynh không thấy mục này.</div><div id="tg-own"></div></div>
+        <div class="muted" style="margin-top:.2rem">Chỉ mình cô thấy.</div><div id="tg-own"></div></div>
       <div class="card"><h2>👩‍🎓 Mục tiêu các em chia sẻ</h2><div id="hm-goals"></div></div>
     </div>
 
@@ -934,15 +941,15 @@
           <div><label>Tên bài</label><input id="as-title" placeholder="Kiểm tra HSK1 · Bài 1–3" required></div>
           <div><label>Bài học</label><input id="as-lesson" placeholder="Bài 4"></div>
         </div>
-        <label>Đường dẫn file đề HTML (đã đẩy lên GitHub Pages)</label>
+        <label>File đề (trên GitHub Pages)</label>
         <input id="as-url" placeholder="de/hsk1-bai4.html" required>
         <div class="row">
-          <div><label>Mở lúc (để trống = mở ngay)</label><input id="as-open" type="datetime-local"></div>
+          <div><label>Mở lúc (trống = ngay)</label><input id="as-open" type="datetime-local"></div>
           <div><label>Hạn nộp</label><input id="as-due" type="datetime-local"></div>
         </div>
         <div class="row">
           <div><label>Số lần được làm</label><input id="as-max" type="number" min="1" value="2"></div>
-          <div><label>% đạt (dưới mức này → làm lại)</label><input id="as-pass" type="number" min="0" max="100" value="80"></div>
+          <div><label>% đạt (dưới → làm lại)</label><input id="as-pass" type="number" min="0" max="100" value="80"></div>
           <div><label>Lượt nghe mỗi audio</label><input id="as-listen" type="number" min="1" value="3"></div>
         </div>
         <label>Giao cho lớp</label><div class="checks" id="as-classes"></div>
@@ -952,11 +959,11 @@
       </form>
       <hr style="border:none;border-top:1px solid var(--line,#cde7ec);margin:1.4rem 0 1rem">
       <h2>Bài đã giao</h2>
-      <p class="muted">Mỗi dòng là một lần giao. Giao nhầm thì bấm Xóa ở dòng đó (có tải bản sao lưu trước khi xóa).</p>
+      <p class="muted">Giao nhầm thì bấm Xóa ở dòng đó (có tải bản sao lưu).</p>
       <div style="margin:.6rem 0">
         <button class="btn ghost" type="button" id="restore-btn">↩ Khôi phục từ file sao lưu</button>
         <input type="file" id="restore-file" accept=".json,application/json" hidden>
-        <span class="muted"> Chọn file <b>sao-luu-bai-….json</b> đã tải về khi xóa.</span>
+        
       </div>
       <div id="assigned-list"><div class="skel skel-line w90"></div><div class="skel skel-line w60"></div><div class="skel skel-line w75"></div></div>
     </div>
@@ -964,12 +971,12 @@
     <!-- lớp và học sinh -->
     <div id="tab-people" class="hidden">
       <div class="card">
-        <div class="topbar" style="flex-wrap:wrap;gap:.5rem"><h2 style="margin:0">Lớp học</h2>
+        <div class="topbar" style="flex-wrap:wrap;gap:.5rem"><span></span>
           <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
             <button class="btn pri" type="button" onclick="FEE.openAdd()">＋ Thêm học sinh</button>
           </div></div>
         <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin:.5rem 0 .2rem">
-          <input id="pp-search" type="search" placeholder="🔍 Tìm học sinh theo tên hoặc mã…" oninput="renderPeople()" style="max-width:20rem">
+          <input id="pp-search" type="search" placeholder="🔍 Tìm học sinh…" oninput="renderPeople()" style="max-width:20rem">
           <label id="pp-off-box" style="display:none;margin:0"><input type="checkbox" id="pp-off" onchange="renderPeople()"> Hiện cả <span id="pp-off-n">0</span> em đã nghỉ</label>
         </div>
         <div id="pp-fee-total" class="muted" style="margin:.3rem 0"></div>
@@ -981,7 +988,7 @@
         </form>
       </div>
       <details class="card" id="pp-table-card">
-        <summary style="cursor:pointer"><b>Bảng tất cả học sinh</b> <span class="muted">— thêm vào lớp, năm sinh, giới tính</span></summary>
+        <summary style="cursor:pointer"><b>Bảng tất cả học sinh</b></summary>
         <div class="scroll" style="margin-top:.6rem"><table>
           <thead><tr><th>Mã</th><th>Họ tên</th><th>Lớp</th><th>Năm sinh</th><th>Giới tính</th><th>Thêm vào lớp</th><th>Huy hiệu / Mật khẩu</th></tr></thead>
           <tbody id="pp-students"></tbody>
@@ -992,8 +999,7 @@
     <!-- kỷ lục -->
     <div id="tab-records" class="card hidden">
       <h2>Bảng vàng học tập</h2>
-      <div class="muted" style="margin-bottom:.4rem">Tính từ các bài đã chấm</div>
-      <div class="scroll"><table>
+            <div class="scroll"><table>
         <thead><tr><th>Hạng</th><th>Học sinh</th><th>Số bài</th><th>Cao nhất</th><th>Trung bình</th><th>Sticker</th><th>Chuỗi đúng hạn</th><th>Chuỗi tuần</th><th>Chuỗi ngày</th></tr></thead>
         <tbody id="tb-records"></tbody></table></div>
     </div>
@@ -6558,7 +6564,7 @@ const matsOf = () => state.mats || [];
 state.course = 'HSK1';
 /* ===== Kho tài liệu v2 ===== */
 // crUI: trạng thái giao diện (bài đang xem theo từng cấp, từ khóa tìm, bộ lọc, kết quả kiểm tra link)
-const crUI = {sel:{}, q:'', f:'all', link:{}, scroll:false};
+const crUI = {sel:{}, q:'', f:'all', link:{}, scroll:false, open:(() => { try{ return localStorage.getItem('cr-list-open') === '1'; }catch(e){ return false; } })()};
 const CR_ORDER = ['lecture', 'practice', 'test', 'homework'];
 const CR_COL = {lecture:'#1aa6a6', practice:'#e3a82b', test:'#e0643f', homework:'#3aa76d'};
 const CR_GROUPS = [
@@ -6698,8 +6704,9 @@ function renderCourse(){
   /* cột trái */
   const dots = (n) => CR_ORDER.map(t => { const k = byL(n).filter(m => m.type === t).length; return `<i class="${k ? 'on' : ''}" style="--dc:${CR_COL[t]}" title="${MAT_TYPES[t].label}: ${k}"></i>`; }).join('');
   const nowOf = (n) => myCls.filter(x => (+x.current_lesson || 0) === n && n);
+  $('#cr-list').parentElement.classList.toggle('mini', !crUI.open && !flat);
   $('#cr-list').innerHTML = ''
-    + (vis.length ? vis.map(([n, zh]) => `<button type="button" class="cr-li2${!flat && n === sel ? ' on' : ''}" data-n="${n}" onclick="crPick(${n})">
+    + (vis.length ? vis.map(([n, zh]) => `<button type="button" class="cr-li2${!flat && n === sel ? ' on' : ''}${nowOf(n).length ? ' now' : ''}" data-n="${n}" onclick="crPick(${n})" title="${n ? 'Bài ' + n : ''}">
         <span class="cr-n">${n || '⋯'}</span>
         <span class="cr-lt"><b class="${n ? 'zh' : ''}">${esc(zh)}</b>${nowOf(n).length ? '<small>📍</small>' : ''}</span>
         <span class="cr-dots">${dots(n)}</span></button>`).join('')
@@ -6731,8 +6738,8 @@ function renderCourse(){
     html += `<div class="cr-dh"><div>
         <div class="cr-dh-t">${n ? 'BÀI ' + n + ' <span class="zh" style="font-weight:700;color:var(--muted)">' + esc(zh) + '</span>' : esc(zh)}</div>
         ${now.length ? `<div class="cr-now">📍 ${now.map(x => esc(x.name)).join(', ')}</div>` : ''}</div>
-      <div><button class="btn" ${prev ? `onclick="crPick(${prev[0]})"` : 'disabled style="opacity:.4"'} title="Bài trước">←</button>
-        <button class="btn" ${next ? `onclick="crPick(${next[0]})"` : 'disabled style="opacity:.4"'} title="Bài sau">→</button></div></div>`;
+      <div><button class="btn" ${prev ? `onclick="crPick(${prev[0]},1)"` : 'disabled style="opacity:.4"'} title="Bài trước">←</button>
+        <button class="btn" ${next ? `onclick="crPick(${next[0]},1)"` : 'disabled style="opacity:.4"'} title="Bài sau">→</button></div></div>`;
     html += CR_GROUPS.map(([gt, types]) => `<div style="height:.5rem" title="${gt}"></div><div class="cr-grp">` + types.map(t => {
       const g = crGroup(code, n, t), ty = MAT_TYPES[t];
       return `<div><div class="cr-sec-h" style="color:${CR_COL[t]}"><span>${ty.ico} ${ty.label.toUpperCase()}</span><small>${g.length}</small>
@@ -6750,8 +6757,9 @@ function renderCourse(){
 
 /* --- thao tác giao diện --- */
 function crSetF(k){ crUI.f = (crUI.f === k && k !== 'all') ? 'all' : k; renderCourse(); }
-function crPick(n){
+function crPick(n, keep){
   crUI.sel[state.course] = n;
+  if(!keep && !crFlat()){ crUI.open = !crUI.open; try{ localStorage.setItem('cr-list-open', crUI.open ? '1' : '0'); }catch(e){} }   // bấm số: mở đủ hộp; bấm thêm lần nữa: thu gọn
   if(crFlat()){
     const g = document.getElementById('crg-' + n);
     if(g){ g.scrollIntoView({behavior:'smooth', block:'start'}); g.classList.add('flash'); setTimeout(() => g.classList.remove('flash'), 1200); }
@@ -7297,7 +7305,7 @@ const FEE = (() => {
       const rows = sts.map(s => stRow(dd, s, profById)).join('')
         + orphans.map(m => `<div class="fs-row"><div class="fs-name"><span class="zh">${esc(m.profiles?.full_name || m.student_id)}</span> <span class="chip c-gray">chưa vào sổ</span></div></div>`).join('');
       const kindTxt = act <= 1 ? '1-1' : 'Nhóm ' + act + ' em';
-      const courseTxt = c.course ? c.course + ' · tới Bài ' + (c.current_lesson || 0) : 'Chưa chọn cấp';
+      const courseTxt = c.course ? c.course + ' · Bài ' + (c.current_lesson || 0) : 'Chưa chọn cấp';
       const mm = /HSK\s*([1-4])/i.exec(c.name || ''); const mis = (mm && ('HSK' + mm[1]) !== c.course) ? 'HSK' + mm[1] : '';
       const nextN = (c.current_lesson || 0) + 1;
       const lv = lvOf(c.course), tag = tagOf(c, dd);
@@ -7312,7 +7320,7 @@ const FEE = (() => {
           <div>${badge(tag)}<b class="cls-name">${esc(c.name)}</b>${isAuto ? ' <span class="muted" title="Tên tự cập nhật theo cấp và thành viên">✨</span>' : ''}${act > 1 ? ` <span class="chip c-gray">${kindTxt}</span>` : ''}
             <div class="muted" style="margin-top:.15rem">${esc(courseTxt)}${mis ? ` <a href="#" class="chip c-yellow" onclick="saveClass('${c.id}',{course:'${mis}'});return false" title="Tên lớp ghi ${mis} nhưng cấp đang khác — bấm để sửa">⚠ Đặt cấp ${mis}</a>` : ''}</div></div>
           <div class="cls-meta">
-            ${c.course ? `<button class="btn" type="button" onclick="saveClass('${c.id}',{current_lesson:${nextN}})" title="Sang Bài ${nextN}">＋1 bài → ${nextN}</button>` : ''}
+            ${c.course ? `<button class="btn" type="button" onclick="saveClass('${c.id}',{current_lesson:${nextN}})" title="Sang Bài ${nextN}">＋1 bài</button>` : ''}
             <details class="mnu"><summary class="btn" title="Thao tác với lớp">⋯</summary><div class="mnu-list">
               <button type="button" onclick="openClassEdit('${c.id}')">📚 Sửa cấp &amp; bài</button>
               <button type="button" onclick="renameClass('${c.id}')">✎ Đổi tên lớp</button>
@@ -7321,9 +7329,9 @@ const FEE = (() => {
             </div></details>
           </div>
         </div>
-        <div class="cls-sum"><span>📅 <b>${nSes}</b> buổi tháng này</span>${exp - got > 0 ? `<a href="#" class="chip c-pink" onclick="go('diemdanh');return false" title="Mở Sổ điểm danh để thu tiền">Còn nợ ${vnd(exp - got)} →</a>` : (exp > 0 ? '<span class="chip c-green">Đã thu đủ</span>' : '')}</div>
+        <div class="cls-sum"><span>📅 <b>${nSes}</b> buổi</span>${exp - got > 0 ? `<a href="#" class="chip c-pink" onclick="go('diemdanh');return false" title="Mở Sổ điểm danh để thu tiền">Nợ ${vnd(exp - got)} →</a>` : (exp > 0 ? '<span class="chip c-green">Đã thu đủ</span>' : '')}</div>
         <div class="fs-list">${rows || '<div class="muted" style="padding:.4rem 0">Chưa có học sinh.</div>'}</div>
-        <div style="margin-top:.4rem"><button class="btn ghost" type="button" onclick="FEE.openAdd('${c.id}')">＋ Thêm học sinh vào lớp này</button></div>
+        <div style="margin-top:.4rem"><button class="btn ghost" type="button" onclick="FEE.openAdd('${c.id}')">＋ Thêm học sinh</button></div>
       </div>`;
       const np = dd.students.filter(x => !x.leftAt && latest(x) === 0).length;
       return { c, act, exp, got, lv, tag, orph: orphans.length, np, hit: !q || sts.length > 0 || noTone(c.name).includes(noTone(q)), html };
@@ -7333,7 +7341,7 @@ const FEE = (() => {
     }
     const vis = items.filter(x => x.hit);
     if(!items.length){
-      box.innerHTML = '<div class="muted">Chưa có lớp nào. Bấm "Thêm học sinh" để tạo lớp đầu tiên.</div>';
+      box.innerHTML = '<div class="muted">Chưa có lớp. Bấm “＋ Thêm học sinh”.</div>';
     }else if(!vis.length){
       box.innerHTML = '<div class="muted" style="padding:.6rem 0">Không có học sinh nào khớp “' + esc(q) + '”.</div>';
     }else{
@@ -7346,12 +7354,12 @@ const FEE = (() => {
     }
     const nOrph = items.reduce((t, x) => t + x.orph, 0), nNp = items.reduce((t, x) => t + x.np, 0);
     let bar = '';
-    if(nOrph) bar += `<div class="sync-bar"><span>⚠ <b>${nOrph}</b> em có trong lớp portal nhưng chưa vào sổ điểm danh.</span><button class="btn pri" type="button" onclick="FEE.syncFix(this)">Sửa tự động</button></div>`;
-    if(nNp){ const f = items.find(x => x.np); bar += `<div class="sync-bar soft"><span>🏷 <b>${nNp}</b> em chưa nhập giá mỗi buổi.</span><button class="btn" type="button" onclick="FEE.select('${f.c.id}')">Xem lớp ${esc(f.c.name)}</button></div>`; }
+    if(nOrph) bar += `<div class="sync-bar"><span>⚠ <b>${nOrph}</b> em chưa vào sổ điểm danh.</span><button class="btn pri" type="button" onclick="FEE.syncFix(this)">Sửa tự động</button></div>`;
+    if(nNp){ const f = items.find(x => x.np); bar += `<div class="sync-bar soft"><span>🏷 <b>${nNp}</b> em chưa có giá/buổi.</span><button class="btn" type="button" onclick="FEE.select('${f.c.id}')">Xem</button></div>`; }
     if(bar) box.insertAdjacentHTML('afterbegin', bar);
     const tot = $('#pp-fee-total');
     if(tot) tot.innerHTML = `Tháng ${month.split('-').reverse().join('/')}: ` + (sumExp - sumGot > 0
-      ? `<b style="color:#c0392b">còn nợ ${vnd(sumExp - sumGot)}</b> · <a href="#" onclick="go('diemdanh');return false">Mở Sổ điểm danh để thu tiền →</a>`
+      ? `<b style="color:#c0392b">còn nợ ${vnd(sumExp - sumGot)}</b> · <a href="#" onclick="go('diemdanh');return false">Thu tiền →</a>`
       : (sumExp > 0 ? '<b style="color:var(--green)">đã thu đủ</b>' : 'chưa phát sinh học phí'));
   }
 
@@ -7367,15 +7375,15 @@ const FEE = (() => {
       ? (p ? `<button class="btn ghost" onclick="FEE.unpay('${s.id}')" title="Bỏ đánh dấu đã thu">↩ Hoàn tác</button>` : `<button class="btn pri" onclick="FEE.pay('${cls.id}','${s.id}')">Đã thu</button>`) : '';
     return `<div class="fs-row${off ? ' off' : ''}">
       <div class="fs-name"><span class="zh">${esc(s.name)}</span> ${acct}${off ? ' <span class="chip c-gray">đã nghỉ</span>' : ''}${(!off && lp === 0) ? ' <span class="chip c-yellow" title="Mở Hồ sơ & giá buổi để nhập giá">chưa nhập giá</span>' : ''}
-        <div class="muted">30 ngày: ${a.yes} có mặt · ${a.no} vắng</div></div>
+        <div class="muted" title="30 ngày gần nhất">✓ ${a.yes} · ✗ ${a.no}</div></div>
       <div class="fs-debt">${debt}</div>
       <div class="fs-act"><details class="mnu"><summary class="btn" title="Thao tác với em">⋯</summary><div class="mnu-list">
         <button type="button" onclick="FEE.openProfile('${cls.id}','${s.id}')">👤 Hồ sơ &amp; giá buổi</button>
         ${!s.portalId ? `<button type="button" onclick="FEE.openAccount('${cls.id}','${s.id}')">➕ Tạo tài khoản portal</button>` : ''}
         ${s.portalId ? `<button type="button" onclick="resetPw('${s.portalId}')">🔑 Đặt lại mật khẩu</button><button type="button" onclick="openGift('${s.portalId}')">🎁 Tặng huy hiệu</button>` : ''}
         <hr>
-        ${off ? `<button type="button" onclick="FEE.back('${cls.id}','${s.id}')">↩ Học lại</button>` : `<button type="button" onclick="FEE.leave('${cls.id}','${s.id}')" title="Rời lớp, không nhận bài, giữ tài khoản và lịch sử">⏸ Cho nghỉ (giữ lịch sử)</button>`}
-        <button type="button" class="danger" onclick="FEE.remove('${cls.id}','${s.id}')">✕ Bỏ khỏi lớp (chỉ khi chưa điểm danh)</button>
+        ${off ? `<button type="button" onclick="FEE.back('${cls.id}','${s.id}')">↩ Học lại</button>` : `<button type="button" onclick="FEE.leave('${cls.id}','${s.id}')" title="Rời lớp, không nhận bài, giữ tài khoản và lịch sử">⏸ Cho nghỉ</button>`}
+        <button type="button" class="danger" onclick="FEE.remove('${cls.id}','${s.id}')" title="Chỉ bỏ được khi chưa điểm danh">✕ Bỏ khỏi lớp</button>
       </div></details></div>
     </div>`;
   }
