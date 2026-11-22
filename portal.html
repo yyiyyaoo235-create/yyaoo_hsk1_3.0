@@ -156,6 +156,7 @@
   .ico.g{background:var(--green-soft)}
   .nav-i.course[data-course]{cursor:pointer}.nav-i.course[data-course]:hover{background:#eaf8fa}.nav-i.course.on{background:var(--pink-soft);color:var(--pink)}
   .nav-i .soon{margin-left:auto;font-size:.6rem;font-weight:800;color:var(--muted)}
+  .nav-morec{color:var(--muted)}
   .cr-les{border:1px solid var(--line);border-radius:16px;background:#fff;margin:.5rem 0;overflow:hidden}
   .cr-les>summary{list-style:none;cursor:pointer;display:flex;align-items:center;gap:.6rem;padding:.6rem .9rem;font-weight:800}
   .cr-les>summary::-webkit-details-marker{display:none}
@@ -250,6 +251,8 @@
   .stat{cursor:pointer;transition:box-shadow .15s}
   .stat:hover{box-shadow:0 4px 14px rgba(20,128,143,.14)}
   .quick{display:flex;justify-content:flex-end;gap:.5rem;flex-wrap:wrap;margin-bottom:1rem}
+  .hm-pend{display:flex;align-items:center;justify-content:space-between;gap:.8rem;flex-wrap:wrap}
+  .hm-pend .hm-pend-act{display:flex;align-items:center;gap:.8rem}
   .grid2{display:grid;grid-template-columns:1fr 1fr;gap:1rem}
   .link{color:var(--pink);font-weight:800;font-size:.8rem;background:none;border:0;padding:0}
   .li{display:flex;justify-content:space-between;align-items:center;gap:.6rem;padding:.5rem 0;border-bottom:1px solid var(--line)}
@@ -260,7 +263,7 @@
   @media(max-width:880px){
     .shell{grid-template-columns:1fr}
     .side{position:static;height:auto;flex-direction:row;overflow-x:auto;padding:.6rem;align-items:center;border-right:0;border-bottom:1px solid var(--line)}
-    .side-h,.brand,.nav-i.course,.side-foot,#side-tip{display:none}
+    .side-h,.brand,.nav-i.course,.nav-morec,.course-more,.side-foot,#side-tip{display:none}
     .shell,.shell.collapsed{--sw:auto}
     .shell.collapsed .nav-i .lbl{display:inline}
     .shell.collapsed .side{padding:.6rem;align-items:center}
@@ -401,6 +404,15 @@
   .st-shell.collapsed #st-sbname{display:none}
   .st-shell.collapsed .side-foot{flex-direction:column;align-items:center;gap:.15rem}
   .only-mobile{display:none}
+  .as-sub{display:flex;gap:.4rem;flex-wrap:wrap;margin:0 0 .9rem}
+  .as-sub .btn b{background:var(--gray-soft);border-radius:99px;padding:0 .45rem;font-size:.7rem;margin-left:.3rem}
+  .as-sub .btn.pri b{background:rgba(255,255,255,.3)}
+  .as-adv{margin:.8rem 0 .2rem}
+  .as-adv>summary{cursor:pointer;font-weight:700;list-style:none;display:flex;align-items:center;gap:.5rem}
+  .as-adv>summary::-webkit-details-marker{display:none}
+  .as-adv>summary::before{content:'▸';color:var(--muted);transition:transform .15s}
+  .as-adv[open]>summary::before{transform:rotate(90deg)}
+  .as-adv>summary .muted{font-weight:400;font-size:.85rem}
   .seg{display:flex;gap:.4rem;flex-wrap:wrap;margin:.2rem 0 .8rem}
   .seg .btn{display:inline-flex;align-items:center;gap:.35rem}
   .seg .btn b{background:var(--gray-soft);border-radius:99px;padding:0 .45rem;font-size:.7rem}
@@ -904,14 +916,16 @@
     <button class="nav-i" data-tab="monitor" data-tip="Giám sát học sinh"><span class="ico">📊</span><span class="lbl">Giám sát học sinh</span><span class="badge" id="bd-pending"></span></button>
     <button class="nav-i" data-tab="assign" data-tip="Giao bài"><span class="ico">📝</span><span class="lbl">Giao bài</span></button>
     <button class="nav-i" data-tab="people" data-tip="Lớp &amp; học sinh"><span class="ico">👩‍🎓</span><span class="lbl">Lớp &amp; học sinh</span></button>
-    <button class="nav-i" data-tab="records" data-tip="Kỷ lục học tập"><span class="ico">🏆</span><span class="lbl">Kỷ lục học tập</span></button>
     <button class="nav-i" data-tab="goals" data-tip="Mục tiêu"><span class="ico">🎯</span><span class="lbl">Mục tiêu</span><span class="badge" id="bd-goals"></span></button>
     <button class="nav-i" data-tab="diemdanh" data-tip="Sổ điểm danh &amp; học phí"><span class="ico">📒</span><span class="lbl">Sổ điểm danh</span></button>
     <div class="side-h">KHOÁ HỌC</div>
     <div class="nav-i course" data-course="HSK1" data-tip="HSK1"><span class="ico g">📗</span><span class="lbl">HSK1</span></div>
-    <div class="nav-i course" data-course="HSK2" data-tip="HSK2"><span class="ico g">📘</span><span class="lbl">HSK2</span><span class="soon">chưa dạy</span></div>
-    <div class="nav-i course" data-course="HSK3" data-tip="HSK3"><span class="ico g">📙</span><span class="lbl">HSK3</span><span class="soon">chưa dạy</span></div>
     <div class="nav-i course" data-course="HSK4" data-tip="HSK4"><span class="ico g">📕</span><span class="lbl">HSK4</span></div>
+    <button class="nav-i nav-morec" id="course-more-btn" type="button" data-tip="Khóa khác" aria-expanded="false" aria-controls="course-more"><span class="ico g">＋</span><span class="lbl">Khóa khác</span></button>
+    <div id="course-more" class="course-more hidden">
+      <div class="nav-i course" data-course="HSK2" data-tip="HSK2"><span class="ico g">📘</span><span class="lbl">HSK2</span><span class="soon">chưa dạy</span></div>
+      <div class="nav-i course" data-course="HSK3" data-tip="HSK3"><span class="ico g">📙</span><span class="lbl">HSK3</span><span class="soon">chưa dạy</span></div>
+    </div>
     <div class="side-foot"><div class="muted" id="sb-name"></div><button class="foot-btn" onclick="doLogout()" data-tip="Đăng xuất"><svg class="i" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"><path d="M9 21H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h4M16 17l5-5-5-5M21 12H9"/></svg><span class="lbl">Đăng xuất</span></button></div>
   </aside>
   <div id="side-tip" role="tooltip"></div>
@@ -929,19 +943,7 @@
         <div class="stat s3" onclick="go('monitor','overdue')"><span>Quá hạn</span><b id="n-over" class="skel skel-num">0</b></div>
         <div class="stat s4" onclick="go('monitor','done')"><span>Hoàn thành</span><b id="n-done" class="skel skel-num">0</b></div>
       </div>
-      <div class="quick">
-        <button class="btn pri" onclick="go('assign')">Giao bài</button>
-        <button class="btn" onclick="go('people')">Lớp &amp; học sinh</button>
-        <button class="btn" onclick="go('records')">Kỷ lục học tập</button>
-      </div>
-      <div class="card">
-        <div class="topbar" style="margin-bottom:.5rem"><h2 style="margin:0">Bài chờ chấm</h2>
-          <div style="display:flex;gap:.8rem;align-items:center"><select id="flt-class" style="width:auto"></select>
-          <button class="link" onclick="go('monitor','pending_review')">Xem tất cả</button></div></div>
-        <div class="scroll"><table>
-          <thead><tr><th>Học sinh</th><th>Lớp</th><th>Bài tập</th><th>Đã nộp</th><th>Trạng thái</th><th></th></tr></thead>
-          <tbody id="tb-pending"></tbody></table></div>
-      </div>
+      <div class="card hm-pend" id="hm-pending"><div class="skel skel-line w60"></div></div>
       <div class="grid2">
         <div class="card"><div class="topbar" style="margin-bottom:.5rem"><h2 style="margin:0">Cần chú ý</h2><button class="btn ghost" type="button" onclick="openRemind()">📋 Nhắc bài</button></div><div id="hm-attn"></div></div>
         <div class="card"><h2>Lớp học</h2><div id="hm-classes"></div></div>
@@ -959,6 +961,10 @@
 
     <!-- giám sát -->
     <div id="tab-monitor" class="card hidden">
+      <div class="as-sub">
+        <button type="button" class="btn pri" onclick="go('monitor')">Bài nộp</button>
+        <button type="button" class="btn" onclick="go('records')">🏆 Kỷ lục học tập</button>
+      </div>
       <div class="topbar" style="margin-bottom:.5rem">
         <h2 style="margin:0">Danh sách bài</h2>
         <div style="display:flex;gap:.6rem;align-items:center;flex-wrap:wrap"><button class="btn ghost" type="button" onclick="openRemind()">📋 Nhắc bài</button>
@@ -1004,7 +1010,11 @@
 
     <!-- giao bài -->
     <div id="tab-assign" class="card hidden">
-      <h2>Giao bài mới</h2>
+      <div class="as-sub" id="as-sub">
+        <button type="button" class="btn pri" data-as="new" onclick="asSub('new')">Giao bài mới</button>
+        <button type="button" class="btn" data-as="list" onclick="asSub('list')">Bài đã giao<b id="as-count">0</b></button>
+      </div>
+      <div id="as-pane-new">
       <form id="assign-form">
         <div class="row">
           <div><label>Loại</label>
@@ -1018,17 +1028,21 @@
           <div><label>Mở lúc (trống = ngay)</label><input id="as-open" type="datetime-local"></div>
           <div><label>Hạn nộp</label><input id="as-due" type="datetime-local"></div>
         </div>
-        <div class="row">
-          <div><label>Số lần được làm</label><input id="as-max" type="number" min="1" value="2"></div>
-          <div><label>% đạt (dưới → làm lại)</label><input id="as-pass" type="number" min="0" max="100" value="80"></div>
-          <div><label>Lượt nghe mỗi audio</label><input id="as-listen" type="number" min="1" value="3"></div>
-        </div>
+        <details class="as-adv" id="as-adv">
+          <summary>Tùy chọn <span class="muted" id="as-adv-sum"></span></summary>
+          <div class="row">
+            <div><label>Số lần được làm</label><input id="as-max" type="number" min="1" value="2"></div>
+            <div><label>% đạt (dưới → làm lại)</label><input id="as-pass" type="number" min="0" max="100" value="80"></div>
+            <div><label>Lượt nghe mỗi audio</label><input id="as-listen" type="number" min="1" value="3"></div>
+          </div>
+        </details>
         <label>Giao cho lớp</label><div class="checks" id="as-classes"></div>
         <label>Hoặc giao riêng cho học sinh</label><div class="checks" id="as-students"></div>
         <div class="err" id="as-msg"></div>
         <button class="btn pri" type="submit">Giao bài</button>
       </form>
-      <hr style="border:none;border-top:1px solid var(--line,#cde7ec);margin:1.4rem 0 1rem">
+      </div>
+      <div id="as-pane-list" class="hidden">
       <h2>Bài đã giao</h2>
       <p class="muted">Giao nhầm: bấm Xóa ở dòng đó (có sao lưu).</p>
       <div style="margin:.6rem 0">
@@ -1037,6 +1051,7 @@
         
       </div>
       <div id="assigned-list"><div class="skel skel-line w90"></div><div class="skel skel-line w60"></div><div class="skel skel-line w75"></div></div>
+      </div>
     </div>
 
     <!-- lớp và học sinh -->
@@ -1044,6 +1059,10 @@
       <div class="card">
         <div class="topbar" style="flex-wrap:wrap;gap:.5rem"><span></span>
           <div style="display:flex;gap:.5rem;align-items:center;flex-wrap:wrap">
+            <form id="class-form" style="display:flex;gap:.4rem;align-items:center;flex-wrap:wrap;margin:0">
+              <input id="cl-name" placeholder="Tên lớp mới, vd: Lớp HSK1 tối T3-T5" required style="min-width:15rem;margin:0">
+              <button class="btn" type="submit">＋ Tạo lớp</button>
+            </form>
             <button class="btn pri" type="button" onclick="FEE.openAdd()">＋ Thêm học sinh</button>
           </div></div>
         <div style="display:flex;gap:.8rem;align-items:center;flex-wrap:wrap;margin:.5rem 0 .2rem">
@@ -1053,10 +1072,6 @@
         <div id="pp-fee-total" class="muted" style="margin:.3rem 0"></div>
         <div id="pp-classes"></div>
         <div id="pp-arch-classes"></div>
-        <form id="class-form" class="row" style="margin-top:.6rem;align-items:end">
-          <div><label>Tạo lớp trống</label><input id="cl-name" placeholder="Lớp HSK1 tối T3-T5" required></div>
-          <div><button class="btn" type="submit">Tạo lớp</button></div>
-        </form>
       </div>
       <details class="card" id="pp-table-card">
         <summary style="cursor:pointer"><b>Bảng tất cả học sinh</b></summary>
@@ -1069,6 +1084,10 @@
 
     <!-- kỷ lục -->
     <div id="tab-records" class="card hidden">
+      <div class="as-sub">
+        <button type="button" class="btn" onclick="go('monitor')">Bài nộp</button>
+        <button type="button" class="btn pri" onclick="go('records')">🏆 Kỷ lục học tập</button>
+      </div>
       <h2>Bảng vàng học tập</h2>
             <div class="scroll"><table>
         <thead><tr><th>Hạng</th><th>Học sinh</th><th>Số bài</th><th>Cao nhất</th><th>Trung bình</th><th>Sticker</th><th>Chuỗi đúng hạn</th><th>Chuỗi tuần</th><th>Chuỗi ngày</th></tr></thead>
@@ -6541,7 +6560,7 @@ function teacherLoading(){
   if(state.loadedT) return;                       // đã có dữ liệu: giữ nguyên, chỉ báo trên nút
   T_STATS.forEach(id => { const el = $(id); if(!el) return; el.textContent = '0'; el.classList.add('skel', 'skel-num'); el.closest('.stat')?.classList.remove('err'); });
   const set = (id, h) => { const el = $(id); if(el) el.innerHTML = h; };
-  set('#tb-pending', skelRows(6, 3)); set('#tb-rows', skelRows(8, 4)); set('#tb-records', skelRows(9, 3));
+  set('#hm-pending', skelLines(1)); set('#tb-rows', skelRows(8, 4)); set('#tb-records', skelRows(9, 3));
   set('#hm-attn', skelLines(3)); set('#hm-classes', skelLines(3)); set('#hm-att', skelLines(2));
   set('#assigned-list', skelLines(3)); set('#pp-classes', skelCards(2));
 }
@@ -6556,7 +6575,7 @@ function teacherError(e){
   T_STATS.forEach(id => { const el = $(id); if(!el) return; el.classList.remove('skel', 'skel-num'); if(first){ el.textContent = '—'; el.closest('.stat')?.classList.add('err'); } });
   if(first){
     const set = (id, h) => { const el = $(id); if(el) el.innerHTML = h; };
-    set('#tb-pending', errRow(6, msg, 'reloadTeacher()')); set('#tb-rows', errRow(8, msg, 'reloadTeacher()')); set('#tb-records', errRow(9, msg, 'reloadTeacher()'));
+    set('#hm-pending', errBox(msg, 'reloadTeacher()')); set('#tb-rows', errRow(8, msg, 'reloadTeacher()')); set('#tb-records', errRow(9, msg, 'reloadTeacher()'));
     set('#hm-attn', errBox(msg, 'reloadTeacher()')); set('#hm-classes', errBox(msg, 'reloadTeacher()')); set('#hm-att', errBox(msg, 'reloadTeacher()'));
     set('#assigned-list', errBox(msg, 'reloadTeacher()')); set('#pp-classes', errBox(msg, 'reloadTeacher()'));
   }
@@ -6627,20 +6646,15 @@ function renderRows(){
 
 function renderHome(){
   try{ renderAttendanceHome(); renderPlannedHome(); }catch(e){ console.warn(e); }
-  const sel = $('#flt-class'), keep = sel.value;
-  sel.innerHTML = '<option value="">Tất cả lớp</option>' + state.classes.map(c => `<option value="${c.id}">${esc(c.name)}</option>`).join('');
-  sel.value = keep;
-  const inCls = (r) => !sel.value || (state.classes.find(c => c.id === sel.value)?.class_members || []).some(m => m.student_id === r.student_id);
-  const pend = state.rows.filter(r => r.status === 'pending_review' && inCls(r));
-  $('#tb-pending').innerHTML = pend.length ? pend.map(r => `<tr style="--rc:${rowDot(r.student_id)}">
-    <td>${who(r)}</td><td>${clsPills(r.student_id)}</td><td>${lessonOf(r)}</td>
-    <td>${fmt(r.submitted_at)}</td><td>${chip(r.status)}</td><td>${actBtn(r)}</td></tr>`).join('')
-    : `<tr><td colspan="6">
-        <div class="sleepy">
+  const pendAll = state.rows.filter(r => r.status === 'pending_review');
+  const oldest = pendAll.filter(r => r.submission_id).sort((x, y) => new Date(x.submitted_at || 0) - new Date(y.submitted_at || 0))[0];
+  $('#hm-pending').innerHTML = pendAll.length
+    ? `<div><b>${pendAll.length} bài đang chờ chấm</b>${oldest ? `<div class="muted">Nộp sớm nhất: <span class="zh">${esc(oldest.full_name)}</span> · ${lessonOf(oldest)} · ${fmt(oldest.submitted_at)}</div>` : ''}</div>
+       <div class="hm-pend-act"><button class="link" type="button" onclick="go('monitor','pending_review')">Xem danh sách</button>${oldest ? `<button class="btn pri" type="button" onclick="openGrade('${oldest.submission_id}')">Chấm ngay</button>` : ''}</div>`
+    : `<div class="sleepy">
           <div class="mini-fish">${fishSVG('sleep')}</div>
           <div><b>Không có bài nào đang chờ chấm 🎉</b><div class="muted">Cá đang ngủ ngon, cô nghỉ ngơi chút nhé.</div></div>
-        </div>
-      </td></tr>`;
+        </div>`;
   const nPend = state.rows.filter(r => r.status === 'pending_review').length;
   $('#bd-pending').textContent = nPend || '';
   $('#sb-name').textContent = state.me.full_name || '';
@@ -6654,7 +6668,6 @@ function renderHome(){
     return `<div class="li" style="box-shadow:inset 4px 0 0 ${clsTag(c).tone.dot};padding-left:.9rem">${clsPill(c)}<button class="link" onclick="go('people')">${n} học sinh →</button></div>`;
   }).join('') : '<div class="muted">Chưa có lớp nào.</div>';
 }
-$('#flt-class').addEventListener('change', renderHome);
 
 function renderRecords(){
   const by = {};
@@ -6678,17 +6691,28 @@ function renderRecords(){
 }
 $('#flt-status').addEventListener('change', renderRows);
 
-const TITLES = {home:'Tổng quan', monitor:'Giám sát học sinh', assign:'Giao bài', people:'Lớp & học sinh', records:'Kỷ lục học tập', goals:'Mục tiêu', diemdanh:'Sổ điểm danh & học phí', course:'Khóa học'};
+const TITLES = {home:'Tổng quan', monitor:'Giám sát học sinh', assign:'Giao bài', people:'Lớp & học sinh', records:'Giám sát học sinh', goals:'Mục tiêu', diemdanh:'Sổ điểm danh & học phí', course:'Khóa học'};
 function go(tab, status){
   Object.keys(TITLES).forEach(t => $('#tab-'+t).classList.toggle('hidden', t !== tab));
-  document.querySelectorAll('.nav-i[data-tab]').forEach(n => n.classList.toggle('on', n.dataset.tab === tab));
+  document.querySelectorAll('.nav-i[data-tab]').forEach(n => n.classList.toggle('on', n.dataset.tab === (tab === 'records' ? 'monitor' : tab)));
   document.querySelectorAll('.nav-i[data-course]').forEach(n => n.classList.toggle('on', tab === 'course' && n.dataset.course === state.course));
   $('#pg-title').textContent = TITLES[tab];
+  if(tab === 'course' && ['HSK2','HSK3'].includes(state.course)) courseMore(true);
   if(tab === 'diemdanh') loadDD();
   if(status !== undefined){ $('#flt-status').value = status; renderRows(); }
   window.scrollTo(0, 0);
 }
 document.querySelectorAll('.nav-i[data-tab]').forEach(n => n.addEventListener('click', () => go(n.dataset.tab, n.dataset.tab === 'monitor' ? '' : undefined)));
+function courseMore(open){
+  const box = $('#course-more'), btn = $('#course-more-btn'); if(!box || !btn) return;
+  const on = open === undefined ? box.classList.contains('hidden') : !!open;
+  box.classList.toggle('hidden', !on);
+  btn.setAttribute('aria-expanded', String(on));
+  const ic = btn.querySelector('.ico'), lb = btn.querySelector('.lbl');
+  if(ic) ic.textContent = on ? '－' : '＋';
+  if(lb) lb.textContent = on ? 'Ẩn khóa khác' : 'Khóa khác';
+}
+$('#course-more-btn').addEventListener('click', () => courseMore());
 
 /* --- khóa học: Cấp → Bài → Tài liệu --- */
 // Danh sách bài của từng cấp (đổi giáo trình / thêm bài chỉ cần sửa ở đây)
@@ -7042,7 +7066,7 @@ function matAct(id){
   const m = matsOf().find(x => x.id === id); if(!m) return;
   const t = MAT_TYPES[m.type];
   if(t.act === 'open'){ window.open(m.url, '_blank'); return; }
-  go('assign');                                   // Giao: điền sẵn form giao bài
+  go('assign'); asSub('new');                     // Giao: điền sẵn form giao bài
   $('#as-kind').value = t.kind;
   $('#as-title').value = `${m.course} · ${m.lesson ? 'Bài ' + m.lesson + ' · ' : ''}${m.title}`;
   $('#as-lesson').value = m.lesson ? 'Bài ' + m.lesson : '';
@@ -7110,6 +7134,7 @@ function renderAssigned(){
   const all = state.assigned || [];
   const nArch = all.filter(a => a.archived).length;
   const list = all.filter(a => state.showArchAssign ? true : !a.archived);
+  const cEl = $('#as-count'); if(cEl) cEl.textContent = all.filter(a => !a.archived).length;
   const toggle = nArch ? `<label style="display:block;margin:.3rem 0"><input type="checkbox" ${state.showArchAssign ? 'checked' : ''} onchange="state.showArchAssign=this.checked;renderAssigned()"> Hiện cả ${nArch} bài đã lưu trữ</label>` : '';
   if(!list.length){ box.innerHTML = toggle + '<div class="muted">Chưa giao bài nào.</div>'; return; }
   const now = Date.now();
@@ -7207,6 +7232,18 @@ $('#restore-file').addEventListener('change', async (ev) => {
   const f = ev.target.files[0]; ev.target.value = '';
   if(f) await restoreAssigned(f);
 });
+function asSub(k){
+  const isNew = k !== 'list';
+  $('#as-pane-new').classList.toggle('hidden', !isNew);
+  $('#as-pane-list').classList.toggle('hidden', isNew);
+  document.querySelectorAll('#as-sub [data-as]').forEach(b => b.classList.toggle('pri', (b.dataset.as === 'list') === !isNew));
+}
+function asAdvSum(){
+  const el = $('#as-adv-sum'); if(!el) return;
+  el.textContent = '· làm tối đa ' + ($('#as-max').value || '?') + ' lần · đạt từ ' + ($('#as-pass').value || '?') + '% · nghe ' + ($('#as-listen').value || '?') + ' lượt';
+}
+['as-max','as-pass','as-listen'].forEach(id => $('#' + id).addEventListener('input', asAdvSum));
+asAdvSum();
 function renderAssignForm(){
   $('#as-classes').innerHTML = state.classes.map(c =>
     `<label><input type="checkbox" name="cls" value="${c.id}"> ${clsPill(c, true)}</label>`).join('') || '<span class="muted">Chưa có lớp</span>';
@@ -7228,8 +7265,8 @@ $('#assign-form').addEventListener('submit', async (ev) => {
       content_url: $('#as-url').value.trim(), open_at: iso($('#as-open').value), due_at: iso($('#as-due').value),
       max_attempts: +$('#as-max').value, pass_percent: +$('#as-pass').value, listen_limit: +$('#as-listen').value
     }, targets);
-    ev.target.reset(); msg.style.color = 'var(--green)';
-    msg.textContent = '✅ Đã giao “' + made.title + '” lúc ' + fmt(made.created_at || new Date()) + ' cho: ' + sentTo + '. Giao nhầm thì xóa ở mục "Bài đã giao" bên dưới.';
+    ev.target.reset(); asAdvSum(); msg.style.color = 'var(--green)';
+    msg.textContent = '✅ Đã giao “' + made.title + '” lúc ' + fmt(made.created_at || new Date()) + ' cho: ' + sentTo + '. Giao nhầm thì xóa ở tab "Bài đã giao".';
     await reloadTeacher();
   }catch(e){ msg.style.color = '#c0392b'; msg.textContent = 'Lỗi: ' + e.message; }
 });
